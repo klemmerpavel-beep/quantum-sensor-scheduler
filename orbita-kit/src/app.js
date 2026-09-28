@@ -69,9 +69,31 @@
   const wdays = (n) => `${n} ${pl(n, "рабочий день", "рабочих дня", "рабочих дней")}`;
   const title = (i) => C.SHORT[i.num] || i.name;
   const nameAttr = (i) => esc(`${i.name} (№ ${i.num} по План-графику)`);
-  const orgMatch = (i) => !orgKey || i.owners.includes(orgName);
+  // Роли [Р-61]: Исполнитель — Электроприбор, отвечает перед Заказчиком за всё, включая работы соисполнителей;
+  // ФТИ и ИХС — соисполнители по договорам с Электроприбором; СП «Квант» — Заказчик.
+  const EP = "Электроприбор", KV = "СП «Квант»", COS = ["ФТИ им. Иоффе", "ИХС им. Гребенщикова"];
+  const CO_SHORT = { "ФТИ им. Иоффе": "ФТИ", "ИХС им. Гребенщикова": "ИХС" };
+  const resp = (i) => (i.owners.some((o) => o === EP || COS.includes(o)) ? EP : i.owners.includes(KV) ? KV : i.owners[0]);
+  const cosOf = (i) => i.owners.filter((o) => COS.includes(o));
+  const OWNER_F = {
+    ep: (i) => resp(i) === EP, fti: (i) => i.owners.includes("ФТИ им. Иоффе"), ihs: (i) => i.owners.includes("ИХС им. Гребенщикова"), kv: (i) => i.owners.includes(KV),
+  };
+  const orgMatch = (i) => !orgKey || (orgKey === "elektropribor" ? resp(i) === EP : i.owners.includes(orgName));
   const showChain = !orgKey;
-  const ownersText = (i) => i.owners.join(", ");
+  /** Ответственный и участники словами: «Электроприбор · соисполнитель ФТИ им. Иоффе». */
+  const ownersText = (i) => {
+    const r = resp(i), co = cosOf(i);
+    if (r === KV) return "СП «Квант» (Заказчик)";
+    let t = r;
+    if (co.length) t += ` · ${co.length > 1 ? "соисполнители" : "соисполнитель"} ${co.map((o) => (co.length > 1 ? CO_SHORT[o] : o)).join(", ")}`;
+    if (i.owners.includes(KV)) t += " · с участием Заказчика";
+    return t;
+  };
+  /** Краткая форма для таблицы: ответственный + метка участников. */
+  const ownersCell = (i) => {
+    const r = resp(i), tags = cosOf(i).map((o) => CO_SHORT[o]).concat(i.owners.includes(KV) && r !== KV ? ["Заказчик"] : []);
+    return `<span title="${esc(ownersText(i))}">${esc(r === KV ? "Заказчик" : r)}${tags.length ? `<span class="co">+ ${esc(tags.join(", "))}</span>` : ""}</span>`;
+  };
 
   /** Статус: цветная точка + слово; пометки — вторичным текстом [Р-16, Р-51]. */
   const status = (i, withNote = true) => {
@@ -93,7 +115,7 @@
   const sectionOf = (num) => { const p = num.split("."); return p[0] === "2" ? p.slice(0, 2).join(".") : p[0]; };
   const matchesFilters = (i) => {
     const f = S.filters;
-    if (f.owner && !i.owners.includes(f.owner)) return false;
+    if (f.owner && OWNER_F[f.owner] && !OWNER_F[f.owner](i)) return false;
     if (f.section && sectionOf(i.num) !== f.section) return false;
     if (f.search) {
       const s = f.search.toLowerCase().trim();
@@ -136,23 +158,41 @@
   }
   function renderBanners() {
     let h = "";
-    if (orgKey) h += `<div class="banner" role="status">Представление для исполнителя: <b>${esc(orgName)}</b>. Только просмотр.</div>`;
+    if (orgKey) h += `<div class="banner" role="status">${orgKey === "elektropribor" ? `Представление для Исполнителя: <b>${esc(orgName)}</b> — все обязательства, включая работы соисполнителей.` : `Представление для соисполнителя: <b>${esc(orgName)}</b> — работы по договору с Электроприбором.`} Только просмотр.</div>`;
     else if (exec) h += `<div class="banner" role="status">Режим для руководства: только просмотр.</div>`;
     notices.forEach((n) => { h += `<div class="banner warn" role="alert">${ico("alert")} ${esc(n)}</div>`; });
     return h;
   }
   function toolbar(extra = "") {
-    const ownerOpts = ["Электроприбор", "СП «Квант»", "ФТИ им. Иоффе", "ИХС им. Гребенщикова"].filter((o) => !orgKey || o === orgName);
+    const ownerOpts = [["ep", "Электроприбор — все обязательства"], ["fti", "Соисполнитель ФТИ им. Иоффе"], ["ihs", "Соисполнитель ИХС им. Гребенщикова"], ["kv", "С участием Заказчика"]];
     const secOpts = [["1", "Запуск"], ["2.1", "3 квартал 2026 года"], ["2.2", "4 квартал 2026 года"], ["3", "Сдача этапа 1"]];
     return `<div class="toolbar" role="search">
       <label class="field search">${ico("search")}<span class="sr">Поиск по наименованию или номеру</span><input type="search" data-f="search" data-k="f-search" placeholder="Поиск работы" value="${esc(S.filters.search)}"></label>
-      ${orgKey ? "" : `<label class="field"><span class="sr">Исполнитель</span><select data-f="owner" data-k="f-owner"><option value="">Все исполнители</option>${ownerOpts.map((o) => `<option ${S.filters.owner === o ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></label>`}
+      ${orgKey ? "" : `<label class="field"><span class="sr">Исполнитель</span><select data-f="owner" data-k="f-owner"><option value="">Все участники</option>${ownerOpts.map(([v, t]) => `<option value="${v}" ${S.filters.owner === v ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>`}
       <label class="field"><span class="sr">Раздел</span><select data-f="section" data-k="f-section"><option value="">Все разделы</option>${secOpts.map(([v, t]) => `<option value="${v}" ${S.filters.section === v ? "selected" : ""}>${t}</option>`).join("")}</select></label>
       ${anyFilter() ? `<button class="btn link" data-act="reset-filters" data-k="reset-f">Сбросить</button>` : ""}
       <div class="spacer"></div>${extra}
     </div>`;
   }
   const emptyFiltered = () => `<div class="empty" role="status"><p>Нет работ, соответствующих условиям. Измените поиск или сбросьте фильтр.</p><button class="btn" data-act="reset-filters" data-k="reset-f2">Сбросить фильтр</button></div>`;
+
+  /** Заголовок режима: вывод одной фразой и, при необходимости, полоса показателей [Р-60]. */
+  const pageHead = (id, h, lead, extra = "") => `<section class="phead" aria-labelledby="${id}"><div class="pht"><h1 id="${id}">${esc(h)}</h1>${lead ? `<p>${lead}</p>` : ""}</div>${extra}</section>`;
+  /** Подписи вех по дорожкам без наложения; W — ширина полосы в пикселях. */
+  function msLabels(W, top) {
+    const lanes = []; let h = "";
+    MS.forEach((m) => {
+      const x = (xp(m.n) / 100) * W, name = MS_SHORT[m.date] || m.title, w = 44 + name.length * 7;
+      const right = x + w > W, a = right ? x - w : x, b = right ? x : x + w;
+      let lane = lanes.findIndex((r) => a >= r + 12);
+      if (lane < 0) { lanes.push(0); lane = lanes.length - 1; }
+      lanes[lane] = b;
+      h += `<span class="stl-lbl${m.n < T ? " past" : ""}${right ? " r" : ""}" style="left:${xp(m.n)}%;top:${top + lane * 22}px"><b>${fmt(m.n).slice(0, 5)}</b> ${esc(name)}</span>`;
+      h += `<span class="stl-tick" style="left:${xp(m.n)}%;top:${top - 22}px;height:${lane * 22 + 22}px"></span>`;
+    });
+    return { html: h, lanes: lanes.length };
+  }
+  const bandW = (min) => Math.max(min, (root.clientWidth || innerWidth) - 2 * 32 - 2 * 24);
 
   // ── СВОДКА
   function headline() {
@@ -195,38 +235,30 @@
       h += `<span class="stl-bar" style="left:${xp(wk)}%;width:calc(${xp(wk + 7) - xp(wk)}% - 6px)" title="Неделя с ${fmt(wk)}: ${w.list.length} — ${esc(w.list.join("; "))}">${segs.join("")}${w.list.length >= 3 ? `<b>${w.list.length}</b>` : ""}</span>`;
     });
     h += `<div class="stl-axis"></div>`;
-    // подписи вех — по дорожкам без наложения
-    const W = Math.max(720, (root.clientWidth || innerWidth) - 2 * 32 - 2 * 24);
-    const lanes = [];
-    MS.forEach((m) => {
-      const x = (xp(m.n) / 100) * W, name = MS_SHORT[m.date] || m.title, w = 44 + name.length * 7;
-      const right = x + w > W;
-      const a = right ? x - w : x, b = right ? x : x + w;
-      let lane = lanes.findIndex((r) => a >= r + 12);
-      if (lane < 0) { lanes.push(0); lane = lanes.length - 1; }
-      lanes[lane] = b;
-      h += `<span class="stl-ms${m.n < T ? " past" : ""}" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(m.title)}"></span>`;
-      h += `<span class="stl-lbl${m.n < T ? " past" : ""}${right ? " r" : ""}" style="left:${xp(m.n)}%;top:${144 + lane * 22}px"><b>${fmt(m.n).slice(0, 5)}</b> ${esc(name)}</span>`;
-      h += `<span class="stl-tick" style="left:${xp(m.n)}%;height:${lane * 22 + 22}px"></span>`;
-    });
+    const lb = msLabels(bandW(720), 144);
+    MS.forEach((m) => { h += `<span class="stl-ms${m.n < T ? " past" : ""}" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(m.title)}"></span>`; });
+    h += lb.html;
     if (T >= D0 && T <= D1) h += `<div class="stl-today" style="left:${xp(T)}%"><span>сегодня</span></div>`;
     h += `</div></div><div class="legend stl-leg" aria-hidden="true"><span><i class="lg closed"></i>выполнено</span><span><i class="lg overdue-s"></i>просрочено</span><span><i class="lg future"></i>предстоит</span><span><i class="lg ms"></i>веха</span><span>столбик — обязательства со сроком на этой неделе</span></div>`;
-    return `<style>.stl{height:${150 + lanes.length * 22 + 4}px}</style>` + h;
+    return `<style>.stl{height:${150 + lb.lanes * 22 + 4}px}</style>` + h;
   }
-  const OWNERS = ["Электроприбор", "СП «Квант»", "ФТИ им. Иоффе", "ИХС им. Гребенщикова"];
-  /** Исполнители: обязательства, выполнение, просрочка, ближайший срок [Р-58]. */
+  /** Исполнитель, соисполнители и Заказчик: кто за что отвечает [Р-61]. */
   function ownersBlock() {
-    const rows = OWNERS.map((o) => {
-      const l = M.base.filter((i) => i.owners.includes(o));
+    const row = (key, name, role, l, nextWord) => {
       if (!l.length) return "";
       const cl = l.filter((i) => i.closed).length, od = l.filter((i) => i.overdue).length;
       const nx = l.filter((i) => !i.closed && i.due >= T).sort((a, b) => a.due - b.due || a.idx - b.idx)[0];
-      return `<li><button class="orow" data-act="go-owner" data-owner="${esc(o)}" data-k="own-${esc(o)}">
-        <span class="t">${esc(o)}</span><span class="n">выполнено ${cl} из ${l.length}${od ? ` · <span class="bad-t">просрочено ${od}</span>` : ""}</span>
+      return `<li><button class="orow${key === "ep" ? " main" : ""}" data-act="go-owner" data-owner="${key}" data-k="own-${key}">
+        <span class="t">${esc(name)}<span class="role">${role}</span></span><span class="n">выполнено ${cl} из ${l.length}${od ? ` · <span class="bad-t">просрочено ${od}</span>` : ""}</span>
         <span class="prog" role="img" aria-label="Выполнено ${cl} из ${l.length}"><i style="width:${(cl / l.length) * 100}%"></i></span>
-        <span class="nx">${nx ? `ближайший срок <span class="mono">${fmt(nx.due)}</span> — ${esc(title(nx))}` : "открытых обязательств нет"}</span></button></li>`;
-    }).join("");
-    return `<ul class="olist">${rows}</ul>`;
+        <span class="nx">${nx ? `${nextWord} <span class="mono">${fmt(nx.due)}</span> — ${esc(title(nx))}` : "открытых обязательств нет"}</span></button></li>`;
+    };
+    const B = M.base;
+    return `<ul class="olist">${row("ep", "Электроприбор", "Исполнитель · отвечает перед Заказчиком за все обязательства", B.filter((i) => resp(i) === EP), "ближайший срок")}</ul>
+      <p class="osub">Соисполнители — работают по договорам с Электроприбором; требования к ним предъявляются через Исполнителя</p>
+      <ul class="olist">${row("fti", "ФТИ им. Иоффе", "соисполнитель", B.filter(OWNER_F.fti), "ближайший срок")}${row("ihs", "ИХС им. Гребенщикова", "соисполнитель", B.filter(OWNER_F.ihs), "ближайший срок")}</ul>
+      <p class="osub">Заказчик — работы, где требуется участие СП «Квант»</p>
+      <ul class="olist">${row("kv", "СП «Квант»", "Заказчик", B.filter(OWNER_F.kv), "ближайшее")}</ul>`;
   }
   const reason = (t) => {
     const i = t.item;
@@ -289,7 +321,7 @@
       <div class="cols">
         <div class="stack">
           <section class="card" aria-labelledby="h-r"><h2 id="h-r">Требует внимания</h2>${attention()}</section>
-          <section class="card" aria-labelledby="h-o"><h2 id="h-o">Исполнители <span class="note">по обязательствам перед Заказчиком</span></h2>${ownersBlock()}</section>
+          <section class="card" aria-labelledby="h-o"><h2 id="h-o">Исполнитель и соисполнители <span class="note">по обязательствам перед Заказчиком</span></h2>${ownersBlock()}</section>
         </div>
         <section class="card" aria-labelledby="h-ch"><h2 id="h-ch">Путь к демонстрации образца ${chainPill()}<span class="spacer"></span><button class="btn link" data-act="go-chain" data-k="ch-open">На графике ${ico("arrow")}</button></h2>${pathSteps(false, true)}${pathNotes()}</section>
       </div>
@@ -342,21 +374,29 @@
     return h;
   }
   const ganttSr = (i) => (i.kind === "section" ? `Раздел, до ${fmt(i.due)}` : `Срок ${fmt(i.due)}; ${i.closed ? "выполнено" : i.overdue ? `просрочено на ${days(i.overdueDays)}` : `через ${days(i.remain)}`}${showChain && M.chainSet.has(i.num) ? "; на пути к демонстрации образца" : ""}`);
+  /** Итог раздела: выполнено и просрочено по обязательствам перед Заказчиком. */
+  function secSum(num) {
+    const l = M.sections.filter((s) => s.num === num || (num === "2" && s.num.startsWith("2.")));
+    if (!l.length) return "";
+    const t = l.reduce((a, s) => ({ c: a.c + s.closed, n: a.n + s.total, o: a.o + s.overdue }), { c: 0, n: 0, o: 0 });
+    return `<span class="ss">выполнено ${t.c} из ${t.n}</span>${t.o ? `<span class="bad-t">просрочено ${t.o}</span>` : ""}`;
+  }
   function viewGantt() {
     const rows = ganttRows();
-    const seg = `<div class="seg" role="group" aria-label="Показать">${[["all", "Все работы"], ["overdue", "Просроченные"]].concat(showChain ? [["chain", "Путь к демонстрации"]] : []).map(([k, t]) => `<button aria-pressed="${S.slice === k}" data-slice="${k}" data-k="sl-${k}">${t}</button>`).join("")}</div>
-      ${S.collapsed.size ? `<button class="btn ghost" data-act="expand-all" data-k="exp-all">Развернуть всё</button>` : `<button class="btn ghost" data-act="collapse-all" data-k="col-all">Свернуть до разделов</button>`}`;
+    const nSl = { all: M.work.filter((i) => matchesFilters(i)).length, overdue: M.work.filter((i) => i.overdue && matchesFilters(i)).length, chain: M.chainNums.length };
+    const seg = `<div class="seg" role="group" aria-label="Показать">${[["all", "Все работы"], ["overdue", "Просроченные"]].concat(showChain ? [["chain", "Путь к демонстрации"]] : []).map(([k, t]) => `<button aria-pressed="${S.slice === k}" data-slice="${k}" data-k="sl-${k}">${t}<span class="sc${k === "overdue" && nSl.overdue ? " bad" : ""}">${nSl[k]}</span></button>`).join("")}</div>
+      ${S.collapsed.size ? `<button class="btn ghost" data-act="expand-all" data-k="exp-all">Развернуть</button>` : `<button class="btn ghost" data-act="collapse-all" data-k="col-all" title="Свернуть до разделов">Свернуть</button>`}`;
     const has = rows.some((i) => i.kind !== "section");
     let body = "";
     if (!has) body = `<tr><td colspan="5">${emptyFiltered()}</td></tr>`;
     else rows.forEach((i) => {
       const sec = i.kind === "section", canCol = sec || i.kind === "group", exp = !S.collapsed.has(i.num);
-      const ctx = orgKey && !sec && !i.owners.includes(orgName);
+      const ctx = orgKey && !sec && !orgMatch(i);
       body += `<tr class="${sec ? "sec" : ""}${i.kind === "group" ? " grp" : ""}${S.selected === i.num ? " sel" : ""}" data-open="${i.num}" tabindex="0" data-k="row-${i.num}" ${canCol ? `aria-expanded="${exp}"` : ""}>
         <td><div class="nm lv${i.level}">${canCol ? `<button class="chev" data-toggle="${i.num}" aria-expanded="${exp}" aria-label="${exp ? "Свернуть" : "Развернуть"}: ${esc(title(i))}" data-k="tg-${i.num}">${ico("chev")}</button>` : `<span class="chev-sp"></span>`}<span class="t" title="${nameAttr(i)}">${esc(title(i))}</span>${i.kind === "group" && !ctx ? `<span class="cnt">${i.progress.closed}/${i.progress.total}</span>` : ""}</div></td>
-        <td class="own">${sec ? "" : esc(ownersText(i))}</td>
-        <td class="due">${sec ? "" : `<span class="mono">${fmt(i.due)}</span>${ctx ? "" : dueWords(i, true)}`}</td>
-        <td>${sec || ctx ? "" : status(i)}</td>
+        ${sec ? `<td colspan="3" class="secsum">${secSum(i.num)}</td>` : `<td class="own">${ownersCell(i)}</td>
+        <td class="due"><span class="mono">${fmt(i.due)}</span>${ctx ? "" : dueWords(i, true)}</td>
+        <td>${ctx ? "" : status(i)}</td>`}
         <td class="tlcell"><span class="sr">${esc(ganttSr(i))}</span><div aria-hidden="true" class="tlin">${ctx ? "" : barCell(i)}</div></td></tr>`;
     });
     const strip = VARIANT === "registry" && !orgKey ? `<section class="gstrip" aria-label="Ключевые показатели">${kpiTiles()}</section>` : "";
@@ -373,29 +413,36 @@
     if (!items.length) return h + emptyFiltered() + "</div>";
     rows.forEach((i) => {
       if (i.kind === "section") { if (i.level <= 2) h += `<div class="mhead">${esc(title(i))}</div>`; return; }
-      const ctx = orgKey && !i.owners.includes(orgName);
+      const ctx = orgKey && !orgMatch(i);
       h += `<button class="mcard" data-open="${i.num}" data-k="m-${i.num}"><span class="t">${esc(title(i))}</span><span class="r"><span class="mono">${fmt(i.due)}</span>${ctx ? "" : dueWords(i, true) + status(i)}</span></button>`;
     });
     return h + "</div>";
   }
 
-  // ── БЛИЖАЙШИЕ СРОКИ (Фокус)
+  // ── БЛИЖАЙШИЕ СРОКИ (Фокус) [Р-60]
+  const LANES = [["overdue", "Просрочено"], ["h14", "В ближайшие 14 дней"], ["h30", "В течение месяца"], ["h60", "В течение двух месяцев"], ["later", "Позднее"], ["closed", "Выполнено"]];
   function viewFocus() {
     const list = M.work.filter((i) => matchesFilters(i));
-    const lanes = [["overdue", "Просрочено"], ["h14", "В ближайшие 14 дней"], ["h30", "В течение месяца"], ["h60", "В течение двух месяцев"], ["later", "Позднее"], ["closed", "Выполнено"]];
+    const range = { overdue: "срок прошёл", h14: `до ${fmt(T + 14)}`, h30: `${fmt(T + 15)} – ${fmt(T + 30)}`, h60: `${fmt(T + 31)} – ${fmt(T + 60)}`, later: `после ${fmt(T + 60)}`, closed: "работы с отметкой «Закрыто»" };
+    const off = !orgKey && !anyFilter() ? SEED.off_plan_closed : [];
+    const rowsOf = (k) => list.filter((i) => i.horizon === k).sort((a, b) => a.due - b.due || a.idx - b.idx);
+    const cnt = Object.fromEntries(LANES.map(([k]) => [k, rowsOf(k).length + (k === "closed" ? off.length : 0)]));
+    const ctrl = list.filter((i) => i.ctrlPassed).length;
+    const lead = `На ${fmt(T)}: просрочено ${cnt.overdue}, в ближайшие 14 дней — ${cnt.h14}, в течение месяца — ${cnt.h30}, в течение двух месяцев — ${cnt.h60}.${ctrl ? ` У ${ctrl} ${pl(ctrl, "работы", "работ", "работ")} прошла контрольная дата оперативки.` : ""}${anyFilter() ? " Показаны работы по условиям отбора." : ""}`;
+    const strip = `<nav class="hstrip" aria-label="Периоды">${LANES.map(([k, t]) => `<button class="hz ${k}${k === "overdue" && cnt[k] ? " bad" : k === "h14" && cnt[k] ? " warn" : ""}" data-act="go-lane" data-lane="${k}" data-k="hz-${k}"><span class="lbl">${t}</span><span class="val">${cnt[k]}</span><span class="sub">${range[k]}</span></button>`).join("")}</nav>`;
     const agendaBtn = readonly ? "" : `<button class="btn primary" data-act="agenda" data-k="agenda">${ico("file")} Повестка оперативки</button>`;
-    let h = toolbar(agendaBtn) + `<div class="page narrow"><h1 class="sr">Ближайшие сроки</h1>`;
-    if (!list.length) h += emptyFiltered();
-    lanes.forEach(([k, t]) => {
-      const rows = list.filter((i) => i.horizon === k).sort((a, b) => a.due - b.due || a.idx - b.idx);
-      const off = k === "closed" && !orgKey && !anyFilter() ? SEED.off_plan_closed : [];
+    let h = toolbar(agendaBtn) + `<div class="page">` + pageHead("h-focus", "Ближайшие сроки", esc(lead), strip);
+    if (!list.length) return h + emptyFiltered() + `</div>`;
+    LANES.forEach(([k, t]) => {
+      const rows = rowsOf(k), offk = k === "closed" ? off : [];
       const open = k === "later" || k === "closed" ? S.lanes[k] : true;
-      h += `<details class="lane ${k}" ${open ? "open" : ""} data-lane="${k}"><summary data-k="lane-${k}"><span class="chev">${ico("chev")}</span>${t}<span class="cnt">${rows.length + off.length}</span></summary>`;
-      if (!rows.length && !off.length) h += `<p class="muted empty-line">Работ в этом периоде нет.</p>`;
+      h += `<details class="lane ${k}" ${open ? "open" : ""} data-lane="${k}"><summary data-k="lane-${k}"><span class="chev">${ico("chev")}</span>${t}<span class="cnt">${rows.length + offk.length}</span><span class="rng">${range[k]}</span></summary>`;
+      if (!rows.length && !offk.length) h += `<p class="muted empty-line">Работ в этом периоде нет.</p>`;
+      else h += `<div class="fhead" aria-hidden="true"><span>Работа</span><span>Исполнитель</span><span>Срок</span><span>${k === "closed" ? "Выполнено" : "Осталось"}</span><span>Статус</span></div>`;
       rows.forEach((i) => {
-        h += `<button class="frow" data-open="${i.num}" data-k="f-${i.num}" title="${nameAttr(i)}"><span class="t">${esc(title(i))}${i.src === "inherited" ? `<span class="st-note">в составе «${esc(title(M.by[i.inheritedFrom]))}»</span>` : ""}</span><span class="own">${esc(ownersText(i))}</span><span class="mono d">${fmt(i.due)}</span><span class="dw">${dueWords(i, false)}</span><span class="stc">${status(i, false)}${i.ctrlPassed ? `<span class="due-t warn">контрольная дата ${fmt(i.ctrl).slice(0, 5)} прошла</span>` : ""}</span></button>`;
+        h += `<button class="frow" data-open="${i.num}" data-k="f-${i.num}" title="${nameAttr(i)}"><span class="t">${esc(title(i))}${i.src === "inherited" ? `<span class="st-note">в составе «${esc(title(M.by[i.inheritedFrom]))}»</span>` : ""}</span><span class="own">${ownersCell(i)}</span><span class="mono d">${fmt(i.due)}</span><span class="dw">${k === "closed" ? (i.closeDate != null ? `<span class="due-t">${fmt(i.closeDate)}</span>` : `<span class="due-t">дата не указана</span>`) : dueWords(i, false)}</span><span class="stc">${status(i, false)}${i.ctrlPassed ? `<span class="due-t warn">контрольная дата ${fmt(i.ctrl).slice(0, 5)} прошла</span>` : ""}${i.closed && i.noReq ? `<span class="st-note">без документа</span>` : ""}</span></button>`;
       });
-      off.forEach((o) => { h += `<div class="frow" role="note"><span class="t">${esc(o.name)}<span class="st-note">вне План-графика</span></span><span class="own">Электроприбор</span><span class="mono d">${fmt(E.dn(o.transfer))}</span><span class="dw"><span class="due-t">передано</span></span><span class="stc"><span class="st st-closed"><i aria-hidden="true"></i>${esc(o.mark)}</span></span></div>`; });
+      offk.forEach((o) => { h += `<div class="frow" role="note"><span class="t">${esc(o.name)}<span class="st-note">вне План-графика</span></span><span class="own">Электроприбор</span><span class="mono d">${fmt(E.dn(o.transfer))}</span><span class="dw"><span class="due-t">передано</span></span><span class="stc"><span class="st st-closed"><i aria-hidden="true"></i>${esc(o.mark)}</span></span></div>`; });
       h += `</details>`;
     });
     return h + `</div>`;
@@ -404,9 +451,15 @@
   // ── СТАТУСЫ (Доска)
   function viewBoard() {
     const list = M.work.filter((i) => matchesFilters(i));
-    let h = toolbar() + `<h1 class="sr">Работы по статусам</h1>`;
-    if (!list.length) return h + emptyFiltered();
-    h += `<div class="board">`;
+    let h = toolbar();
+    if (!list.length) return h + `<h1 class="sr">Статусы</h1>` + emptyFiltered();
+    const n = (f) => list.filter(f).length;
+    const g = { closed: n((i) => i.cls === "closed"), progress: n((i) => i.cls === "progress"), action: n((i) => i.cls === "action"), future: n((i) => i.cls === "future") };
+    const od = n((i) => i.overdue), inh = n((i) => i.src === "inherited");
+    const lead = `${list.length} ${pl(list.length, "работа", "работы", "работ")}: выполнено ${g.closed}, в работе ${g.progress}, требуют действия ${g.action}, не начато ${g.future}. Просрочено ${od}${inh ? `; у ${inh} статус взят по группе` : ""}.`;
+    const words = { closed: "выполнено", progress: "в работе", action: "требуют действия", future: "не начато" };
+    const dist = `<div class="dist" role="img" aria-label="${esc(lead)}">${["closed", "progress", "action", "future"].filter((c) => g[c]).map((c) => `<span class="dseg ${c}" style="flex-grow:${g[c]}" title="${words[c]}: ${g[c]}">${g[c] / list.length >= 0.1 ? `<b>${g[c]}</b> ${words[c]}` : `<b>${g[c]}</b>`}</span>`).join("")}</div>`;
+    h += `<div class="bhead">${pageHead("h-board", "Статусы", esc(lead), dist)}</div><div class="board">`;
     E.STATUSES.forEach((st) => {
       const cards = list.filter((i) => i.status === st).sort((a, b) => (b.overdue - a.overdue) || a.due - b.due || a.idx - b.idx);
       h += `<section class="col" aria-label="${st}: ${cards.length}"><h3><span class="st st-${E.CLS[st]}"><i aria-hidden="true"></i>${st}</span><span class="cnt">${cards.length}</span></h3><ul>`;
@@ -419,7 +472,7 @@
     return h + `</div>`;
   }
 
-  // ── ВЕХИ
+  // ── ВЕХИ [Р-60]
   function viewMilestones() {
     const list = M.work.filter((i) => matchesFilters(i));
     const clusters = new Map();
@@ -429,31 +482,44 @@
       const near = keys.filter((d) => d >= T && d - T <= 14);
       S.msDate = near.length ? near.reduce((a, d) => (clusters.get(d).length > clusters.get(a).length ? d : a), near[0]) : keys.find((d) => d >= T) ?? keys[keys.length - 1] ?? null;
     }
-    let h = toolbar() + `<div class="page"><h1 class="sr">Вехи этапа</h1>`;
+    const nx = MS.find((m) => m.n >= T);
+    const up = keys.filter((d) => d >= T);
+    const pk = up.length ? up.reduce((a, d) => (clusters.get(d).length > clusters.get(a).length ? d : a), up[0]) : null;
+    const lead = `${nx ? `Следующая веха — ${fmt(nx.n)} «${MS_SHORT[nx.date] || nx.title}», ${nx.n === T ? "сегодня" : `через ${days(nx.n - T)}`}.` : "Все вехи этапа пройдены."}${pk != null ? ` Самая плотная дата впереди — ${fmt(pk)}: ${clusters.get(pk).length} ${pl(clusters.get(pk).length, "работа", "работы", "работ")}.` : ""}`;
+    let h = toolbar() + `<div class="page">` + pageHead("h-ms", "Вехи", esc(lead));
     if (!list.length) return h + emptyFiltered() + "</div>";
     const peak = Math.max(...keys.map((d) => clusters.get(d).length));
-    h += `<section class="card"><h2>Вехи и загрузка по датам <span class="note">столбик — работы со сроком в этот день; нажмите, чтобы увидеть список</span></h2><div class="ms-scroll"><div class="ms-canvas">`;
+    const lb = msLabels(bandW(1060), 212);
+    h += `<section class="card" aria-labelledby="h-msc"><h2 id="h-msc">Вехи и загрузка по датам <span class="note">столбик — работы со сроком в этот день; нажмите, чтобы увидеть список</span></h2><div class="ms-scroll"><div class="ms-canvas" style="height:${212 + lb.lanes * 22 + 4}px">`;
     monthStarts().forEach((m) => { if (xp(m.n) < 96) h += `<span class="ms-month" style="left:${xp(m.n)}%">${m.label}</span>`; });
     h += `<div class="ms-axis"></div>`;
     keys.forEach((d) => {
       const c = clusters.get(d), cl = c.filter((i) => i.closed).length;
       h += `<button class="ms-cl" style="left:${xp(d)}%" aria-pressed="${S.msDate === d}" data-ms="${d}" data-k="ms-${d}" title="${fmt(d)}: ${c.length}" aria-label="${fmt(d)}: ${c.length} ${pl(c.length, "работа", "работы", "работ")}, выполнено ${cl}">${c.map((i) => `<i class="${i.overdue ? "overdue" : i.cls}"></i>`).join("")}</button>`;
-      if (c.length >= 5 || c.length === peak) h += `<span class="ms-cn" style="left:${xp(d)}%;bottom:${60 + c.length * 10 + 6}px"><span class="mono">${fmt(d).slice(0, 5)}</span> · ${c.length}</span>`;
+      if (c.length >= 5 || c.length === peak) h += `<span class="ms-cn" style="left:${xp(d)}%;bottom:calc(100% - 180px + ${c.length * 10 + 8}px)"><span class="mono">${fmt(d).slice(0, 5)}</span> · ${c.length}</span>`;
     });
-    MS.forEach((m, k) => { h += `<span class="ms-d${m.n < T ? " past" : ""}" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(MS_SHORT[m.date])}"></span><span class="ms-dn mono" style="left:${xp(m.n)}%;top:${k % 2 ? 222 : 206}px">${k + 1}</span>`; });
+    MS.forEach((m) => { h += `<span class="ms-d${m.n < T ? " past" : ""}" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(m.title)}"></span>`; });
+    h += lb.html;
     if (T >= D0 && T <= D1) h += `<div class="ms-today" style="left:${xp(T)}%"><span>сегодня</span></div>`;
-    h += `</div></div><ol class="ms-legend">${MS.map((m, k) => `<li class="${m.n < T ? "past" : ""}"><span class="ms-num mono">${k + 1}</span><span class="mono">${fmt(m.n)}</span><span>${esc(MS_SHORT[m.date] || m.title)}</span></li>`).join("")}</ol>`;
-    h += `<div class="ms-mlist"><ul class="list">${keys.map((d) => { const c = clusters.get(d); return `<li><button class="lrow" data-ms="${d}" data-k="msm-${d}" aria-pressed="${S.msDate === d}"><span class="mono">${fmt(d)}</span><span>${c.length} ${pl(c.length, "работа", "работы", "работ")}</span></button></li>`; }).join("")}</ul></div></section>`;
+    h += `</div></div><div class="ms-mlist"><ul class="list">${keys.map((d) => { const c = clusters.get(d); return `<li><button class="lrow" data-ms="${d}" data-k="msm-${d}" aria-pressed="${S.msDate === d}"><span class="mono">${fmt(d)}</span><span>${c.length} ${pl(c.length, "работа", "работы", "работ")}</span></button></li>`; }).join("")}</ul></div></section>`;
+    // Вехи этапа: готовность к каждой вехе
+    const rowsMs = MS.map((m) => {
+      const due = M.base.filter((i) => i.due <= m.n && orgMatch(i)), open = due.filter((i) => !i.closed).length, od = due.filter((i) => i.overdue).length;
+      const when = m.n < T ? "пройдена" : m.n === T ? "сегодня" : `через ${days(m.n - T)}`;
+      const near = keys.filter((d) => d <= m.n).pop();
+      return `<li><button class="mrow${m.n < T ? " past" : ""}${nx && m.n === nx.n ? " next" : ""}" data-ms="${near ?? ""}" data-k="mr-${m.date}" title="${esc(m.title)}"><span class="md"><span class="dia" aria-hidden="true"></span><span class="mono">${fmt(m.n)}</span></span><span class="mt">${esc(MS_SHORT[m.date] || m.title)}<span class="mw">${when}</span></span><span class="mr">${due.length ? `к вехе выполнено ${due.length - open} из ${due.length}${od ? ` · <span class="bad-t">просрочено ${od}</span>` : ""}` : "обязательств к этой дате нет"}</span></button></li>`;
+    }).join("");
     const sel = S.msDate != null ? clusters.get(S.msDate) : null;
-    if (sel) h += `<section class="card"><h2>Срок ${fmt(S.msDate)} <span class="note">${sel.length} ${pl(sel.length, "работа", "работы", "работ")}</span></h2><ul class="list">${sel.map((i) => `<li><button class="lrow" data-open="${i.num}" data-k="msl-${i.num}" title="${nameAttr(i)}"><span class="t">${esc(title(i))}</span><span class="own">${esc(ownersText(i))}</span><span class="stc">${status(i)}${dueWords(i, true)}</span></button></li>`).join("")}</ul></section>`;
-    return h + `</div>`;
+    h += `<div class="cols even"><section class="card" aria-labelledby="h-msl"><h2 id="h-msl">Вехи этапа <span class="note">готовность — по обязательствам перед Заказчиком со сроком до вехи</span></h2><ul class="mlist3">${rowsMs}</ul></section>`;
+    h += sel ? `<section class="card" aria-labelledby="h-mss"><h2 id="h-mss">Срок ${fmt(S.msDate)} <span class="note">${sel.length} ${pl(sel.length, "работа", "работы", "работ")}</span></h2><ul class="list">${sel.map((i) => `<li><button class="lrow" data-open="${i.num}" data-k="msl-${i.num}" title="${nameAttr(i)}"><span class="t">${esc(title(i))}<span class="own">${esc(ownersText(i))}</span></span><span class="stc">${status(i)}${dueWords(i, true)}</span></button></li>`).join("")}</ul></section>` : `<section class="card"><p class="muted">Выберите дату на полосе.</p></section>`;
+    return h + `</div></div>`;
   }
 
   // ── КАРТОЧКА ПОЗИЦИИ
   function renderPanel() {
     const i = S.selected && M.by[S.selected];
     if (!i) return "";
-    const ctx = orgKey && i.kind !== "section" && !i.owners.includes(orgName);
+    const ctx = orgKey && i.kind !== "section" && !orgMatch(i);
     const dl = (rows) => `<dl>${rows.filter((r) => r[1] != null && r[1] !== "").map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`;
     let h = `<aside class="panel" role="dialog" aria-modal="false" aria-labelledby="p-title">
       <header><div class="ph"><h2 id="p-title" tabindex="-1">${esc(title(i))}</h2><p class="pnum">№ ${i.num} по План-графику</p></div><button class="iconbtn" data-act="close-panel" data-k="p-close" aria-label="Закрыть карточку">${ico("x")}</button></header><div class="body">`;
@@ -487,7 +553,15 @@
       ["Выполнено", i.closed ? (i.closeDate != null ? `<span class="mono">${fmt(i.closeDate)}</span>` : "дата не указана") : null],
     ])}</section>`;
     h += `<section><h3>Официальное наименование</h3><p>${esc(i.name)}</p></section>`;
-    h += `<section><h3>Исполнитель</h3><p>${esc(i.s.owner_raw || "—")}</p></section>`;
+    {
+      const co = cosOf(i), r = resp(i);
+      h += `<section><h3>Ответственность</h3>${dl([
+        ["Отвечает перед Заказчиком", r === KV ? "СП «Квант» (Заказчик)" : "АО «Концерн «ЦНИИ «Электроприбор» (Исполнитель)"],
+        [co.length > 1 ? "Соисполнители" : "Соисполнитель", co.length ? `${esc(co.join(", "))} — по договору с Электроприбором; требования — через Исполнителя` : null],
+        ["Участие Заказчика", i.owners.includes(KV) && r !== KV ? "требуется участие СП «Квант»" : null],
+        ["В План-графике", esc(i.s.owner_raw || "—")],
+      ])}</section>`;
+    }
     if (i.s.output_doc) h += `<section><h3>Представляемые документы</h3><p>${esc(i.s.output_doc)}</p></section>`;
     if (i.closed && i.edit && i.edit.closeDoc) { const cd = i.edit.closeDoc; h += `<section><h3>Подтверждающий документ</h3><p>${cd.name ? esc(cd.name) : "не указан"}${cd.letter ? `, № ${esc(cd.letter)}` : ""}${cd.date ? `, ${fmt(E.dn(cd.date))}` : ""}</p></section>`; }
     if (i.s.status_mark) h += `<section><h3>Отметка вкладки «Важное»</h3><p>${esc(i.s.status_mark)}</p></section>`;
@@ -567,6 +641,11 @@
     if (a === "go-chain") { S.slice = "chain"; clearFilters(); return setView("gantt"); }
     if (a === "go-board") return setView("board");
     if (a === "go-ms") return setView("milestones");
+    if (a === "go-lane") {
+      const k = t.dataset.lane; if (k in S.lanes) S.lanes[k] = true; render();
+      const d = root.querySelector(`details[data-lane="${k}"]`); if (d) { d.scrollIntoView({ block: "start", behavior: "smooth" }); const sm = d.querySelector("summary"); if (sm) sm.focus({ preventScroll: true }); }
+      return;
+    }
     if (a === "go-owner") { S.slice = "all"; clearFilters(); S.filters.owner = t.dataset.owner; return setView("focus"); }
     if (a === "go-section") { S.slice = "all"; clearFilters(); S.filters.section = t.dataset.sec; S.collapsed.clear(); return setView("gantt"); }
     if (a === "close-panel") return closePanel();
@@ -624,7 +703,7 @@
   });
 
   let rz = 0;
-  window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (view === "summary" && !S.agendaOpen) render(); }, 150); });
+  window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ((view === "summary" || view === "milestones") && !S.agendaOpen) render(); }, 150); });
 
   if (!SEED || !Array.isArray(SEED.items) || !SEED.items.length) { root.innerHTML = `<div class="empty" role="alert"><p>Данные План-графика не загружены. Страница не может построить отображение. Обратитесь к руководителю проекта.</p></div>`; return; }
   render();

@@ -204,6 +204,17 @@ function stressPage() {
     await ctx.close();
   }
 
+  // 9. Роли: Исполнитель отвечает и за работы соисполнителей (Р-61)
+  {
+    const { ctx, page, errs } = await open(V1, "today=2026-09-28&view=focus");
+    await page.selectOption('[data-k="f-owner"]', "ep");
+    const hasIhs = await page.$$eval('[data-k="f-2.2.2"]', (e) => e.length === 1);
+    await page.click('[data-k="f-2.2.2"]');
+    const resp = await page.textContent(".panel");
+    ok("Роли: работа ИХС входит в обязательства Электроприбора; соисполнитель — через Исполнителя", hasIhs && resp.includes("Электроприбор» (Исполнитель)") && resp.includes("по договору с Электроприбором") && !errs.length, errs.join("; "));
+    await ctx.close();
+  }
+
   await b.close();
   const pad = (s, n) => (s + " ".repeat(n)).slice(0, n);
   results.forEach(([r, n, i]) => console.log(`${r}  ${pad(n, 88)} ${i}`));
