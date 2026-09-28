@@ -218,6 +218,37 @@ function stressPage() {
     await ctx.close();
   }
 
+  // 10. Согласованность чисел между режимами (итоги не расходятся)
+  {
+    const { ctx, page, errs } = await open(V1, "today=2026-09-28");
+    const num = (t) => Number((t.match(/\d+/) || [NaN])[0]);
+    const m = await page.evaluate(() => { const M = window.__orbita.model; return { work: M.work.length, base: M.base.length, closed: M.base.filter((i) => i.closed).length, overdue: M.base.filter((i) => i.overdue).length }; });
+    const kClosed = num(await page.textContent('[data-k="kpi-closed"] .val')), kOver = num(await page.textContent('[data-k="kpi-overdue"] .val'));
+    const secs = await page.$$eval(".srow .n", (e) => e.map((x) => x.textContent));
+    const secTotal = secs.reduce((a, t) => a + Number(t.match(/из (\d+)/)[1]), 0), secClosed = secs.reduce((a, t) => a + Number(t.match(/^(\d+)/)[1]), 0);
+    const ep = await page.textContent('[data-k="own-ep"] .n'), kv = await page.textContent('[data-k="own-kv"] .n');
+    await page.click('[data-k="tab-board"]');
+    const board = await page.$$eval(".board .col .cnt", (e) => e.reduce((a, x) => a + Number(x.textContent), 0));
+    await page.click('[data-k="tab-focus"]');
+    const lanes = await page.$$eval(".hz .val", (e) => e.reduce((a, x) => a + Number(x.textContent), 0));
+    const offPlan = await page.evaluate(() => window.SEED.off_plan_closed.length);
+    await page.click('[data-k="tab-gantt"]');
+    const allSl = num(await page.textContent('[data-k="sl-all"] .sc')), odSl = num(await page.textContent('[data-k="sl-overdue"] .sc'));
+    const odWork = await page.evaluate(() => window.__orbita.model.work.filter((i) => i.overdue).length);
+    const checks = [
+      ["KPI «Выполнено» = выполненные обязательства", kClosed === m.closed],
+      ["KPI «Просрочено» = просроченные обязательства", kOver === m.overdue],
+      ["Разделы: сумма = база 47, выполнено = KPI", secTotal === m.base && m.base === 47 && secClosed === m.closed],
+      ["Исполнитель + действия только Заказчика = база", num(ep.replace(/^\D*\d+\D+/, "")) + 1 === m.base],
+      ["Колонки «Статусов» = все работы", board === m.work],
+      ["Периоды «Ближайших сроков» = все работы + вне План-графика", lanes === m.work + offPlan],
+      ["Срезы «Графика работ»: все = работы, просроченные = просроченные работы", allSl === m.work && odSl === odWork],
+    ];
+    const bad = checks.filter((c) => !c[1]).map((c) => c[0]);
+    ok("Согласованность чисел между режимами (7 сверок)", !bad.length && !errs.length, bad.join("; ") || `база ${m.base}, работ ${m.work}, ЕП: ${ep.trim()}, Заказчик: ${kv.trim()}`);
+    await ctx.close();
+  }
+
   await b.close();
   const pad = (s, n) => (s + " ".repeat(n)).slice(0, n);
   results.forEach(([r, n, i]) => console.log(`${r}  ${pad(n, 88)} ${i}`));

@@ -17,6 +17,7 @@
     file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/>',
     reset: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
     arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+    printer: '<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/>',
   };
   const ico = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
 
@@ -153,6 +154,7 @@
       <nav class="tabs" role="tablist" aria-label="Режимы отображения">${tabs}</nav>
       <div class="spacer"></div>
       <div class="today" title="${todayFromLink ? "Дата задана параметром ссылки" : "Текущая дата"}">на <b class="mono">${fmt(T)}</b></div>
+      <button class="iconbtn print" data-act="print" data-k="print" aria-label="Печать текущего режима" title="Печать">${ico("printer")}</button>
       <button class="iconbtn theme" data-act="theme" data-k="theme" aria-label="${theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}" title="${theme === "dark" ? "Светлая тема" : "Тёмная тема"}">${ico(theme === "dark" ? "sun" : "moon")}</button>
     </header>`;
   }
@@ -248,10 +250,11 @@
       if (!l.length) return "";
       const cl = l.filter((i) => i.closed).length, od = l.filter((i) => i.overdue).length;
       const nx = l.filter((i) => !i.closed && i.due >= T).sort((a, b) => a.due - b.due || a.idx - b.idx)[0];
+      const old = l.filter((i) => i.overdue).sort((a, b) => a.due - b.due || a.idx - b.idx)[0];
       return `<li><button class="orow${key === "ep" ? " main" : ""}" data-act="go-owner" data-owner="${key}" data-k="own-${key}">
         <span class="t">${esc(name)}<span class="role">${role}</span></span><span class="n">выполнено ${cl} из ${l.length}${od ? ` · <span class="bad-t">просрочено ${od}</span>` : ""}</span>
         <span class="prog" role="img" aria-label="Выполнено ${cl} из ${l.length}"><i style="width:${(cl / l.length) * 100}%"></i></span>
-        <span class="nx">${nx ? `${nextWord} <span class="mono">${fmt(nx.due)}</span> — ${esc(title(nx))}` : "открытых обязательств нет"}</span></button></li>`;
+        <span class="nx">${nx ? `${nextWord} <span class="mono">${fmt(nx.due)}</span> — ${esc(title(nx))}` : old ? `предстоящих сроков нет; дольше всех просрочено — ${esc(title(old))} (срок <span class="mono">${fmt(old.due)}</span>)` : "открытых обязательств нет"}</span></button></li>`;
     };
     const B = M.base;
     return `<ul class="olist">${row("ep", "Электроприбор", "Исполнитель · отвечает перед Заказчиком за все обязательства", B.filter((i) => resp(i) === EP), "ближайший срок")}</ul>
@@ -377,10 +380,10 @@
   const ganttSr = (i) => (i.kind === "section" ? `Раздел, до ${fmt(i.due)}` : `Срок ${fmt(i.due)}; ${i.closed ? "выполнено" : i.overdue ? `просрочено на ${days(i.overdueDays)}` : `через ${days(i.remain)}`}${showChain && M.chainSet.has(i.num) ? "; на пути к демонстрации образца" : ""}`);
   /** Итог раздела: выполнено и просрочено по обязательствам перед Заказчиком. */
   function secSum(num) {
-    const l = M.sections.filter((s) => s.num === num || (num === "2" && s.num.startsWith("2.")));
+    const l = M.base.filter((i) => (num === "2" ? sectionOf(i.num).startsWith("2.") : sectionOf(i.num) === num) && matchesFilters(i));
     if (!l.length) return "";
-    const t = l.reduce((a, s) => ({ c: a.c + s.closed, n: a.n + s.total, o: a.o + s.overdue }), { c: 0, n: 0, o: 0 });
-    return `<span class="ss">выполнено ${t.c} из ${t.n}</span>${t.o ? `<span class="bad-t">просрочено ${t.o}</span>` : ""}`;
+    const c = l.filter((i) => i.closed).length, o = l.filter((i) => i.overdue).length;
+    return `<span class="ss">выполнено ${c} из ${l.length}</span>${o ? `<span class="bad-t">просрочено ${o}</span>` : ""}`;
   }
   function viewGantt() {
     const rows = ganttRows();
@@ -613,8 +616,8 @@
       <header><div class="mh"><h2 id="ag-title">Повестка оперативки на ${fmt(T)}</h2><p class="note">Вопросы к Исполнителю — Электроприбору; по работам соисполнителей спрос через него</p></div><button class="iconbtn" data-act="close-agenda" data-k="ag-x" aria-label="Закрыть">${ico("x")}</button></header>
       <div class="agbar"><div class="agc"><span class="agn bad">${a.counts[0]}</span>просрочено</div><div class="agc"><span class="agn warn">${a.counts[1]}</span>контрольная дата прошла</div><div class="agc"><span class="agn">${a.counts[2]}</span>срок в 14 дней</div><span class="spacer"></span>${seg}</div>
       <p class="note mp">${letter ? "Официальные наименования и номера пунктов План-графика — формат писем Исполнителю: «Наименование — комментарий (п. N)»." : "Краткие наименования работ без номеров; причина и комментарий словами, участие соисполнителей и Заказчика — в скобках."} Учитываются обязательства перед Заказчиком; просроченные подпозиции указаны в строке своей группы, поэтому число меньше, чем в «Ближайших сроках».</p>
-      <label class="sr" for="ag-text">Текст повестки</label><textarea id="ag-text" readonly data-k="ag-text">${esc(text)}</textarea>
-      <footer><span class="note" id="ag-status" role="status"></span><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></footer></div></div>`;
+      <label class="sr" for="ag-text">Текст повестки</label><textarea id="ag-text" readonly data-k="ag-text">${esc(text)}</textarea><div class="ag-print" aria-hidden="true">${esc(text)}</div>
+      <footer><span class="note" id="ag-status" role="status"></span><button class="btn" data-act="print" data-k="ag-print">${ico("printer")} Печать</button><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></footer></div></div>`;
   }
 
   // ── Отрисовка
@@ -667,6 +670,7 @@
     }
     if (t.dataset.open && !t.dataset.act) return openItem(t.dataset.open, t);
     const a = t.dataset.act;
+    if (a === "print") { try { window.print(); } catch (e) { /* печать недоступна */ } return; }
     if (a === "theme") { theme = theme === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", theme); store.set(C.THEME_KEY, theme); return render(); }
     if (a === "reset-filters") { clearFilters(); S.slice = "all"; return render(); }
     if (a === "collapse-all") { M.items.filter((i) => i.kind === "section" && i.num !== "2").forEach((i) => S.collapsed.add(i.num)); return render(); }
@@ -737,6 +741,9 @@
     }
   });
 
+  // Печать всегда в светлой теме [Р-63]
+  window.addEventListener("beforeprint", () => { document.documentElement.setAttribute("data-theme", "light"); });
+  window.addEventListener("afterprint", () => { document.documentElement.setAttribute("data-theme", theme); });
   let rz = 0;
   window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ((view === "summary" || view === "milestones") && !S.agendaOpen) render(); }, 150); });
 
