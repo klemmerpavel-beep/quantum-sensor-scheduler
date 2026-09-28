@@ -12,7 +12,7 @@ SRC = ROOT / "src"
 VARIANTS = {
     "v1": ("panel", "v1-panel.html", "В1 «Панель»"),
     "v2": ("registry", "v2-registry.html", "В2 «Реестр»"),
-    "v3": ("path", "v3-path.html", "В3 «Путь к ЛО»"),
+    "v3": ("path", "v3-path.html", "В3 «Путь к демонстрации»"),
 }
 
 

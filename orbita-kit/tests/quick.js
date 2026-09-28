@@ -16,8 +16,9 @@ const OUT = process.env.QUICK_OUT || "/tmp/claude-0/-home-user-quantum-sensor-sc
   p.on("pageerror", (e) => errs.push("PAGEERROR " + e.message));
   await p.goto(`file://${ROOT}/versions/${ver}.html?view=${view}&today=2026-09-28&theme=${th}${extra}`, { waitUntil: "load" });
   await p.waitForTimeout(1500);
+  if (process.env.CLICK) { await p.click(process.env.CLICK); await p.waitForTimeout(300); }
   const out = `${OUT}/q_${ver}_${view}_${w}_${th}.png`;
-  await p.screenshot({ path: out });
+  if (process.env.SEL) await p.locator(process.env.SEL).first().screenshot({ path: out }); else await p.screenshot({ path: out, fullPage: !!process.env.FULL });
   const rows = await p.evaluate(() => {
     const w = document.querySelector(".gwrap"); if (!w || !w.offsetParent) return null;
     const r = w.getBoundingClientRect();

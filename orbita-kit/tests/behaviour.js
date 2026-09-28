@@ -51,20 +51,20 @@ function stressPage() {
     await page.click('[data-k="p-close"]');
     const after = await kpi(page, "overdue");
     const closed = await kpi(page, "closed");
-    const chain = await page.$eval("#h-ch + .chain + p + p", (e) => e.textContent.trim());
+    const chain = await page.$eval(".pnotes", (e) => e.textContent.trim());
     await page.screenshot({ path: path.join(OUT, "01_close_2.1.7_summary.png") });
     ok("Закрытие: форма реквизита на 2-м нажатии", twoClicks);
     ok("Закрытие 2.1.7: KPI «Просрочено» 2 → 1", before === "2" && after === "1", `${before} → ${after}`);
-    ok("Закрытие 2.1.7: KPI «Закрыто» 11 из 47", closed.startsWith("11"), closed);
+    ok("Закрытие 2.1.7: KPI «Выполнено» 11 из 47", closed.startsWith("11"), closed);
     ok("Закрытие 2.1.7: окно цепочки пересчитано (угроза срыва снята, остаток 2 из 11)", chain.includes("осталось 2 из 11") && !chain.includes("срыв с"), chain);
     await page.click('[data-k="tab-board"]');
-    const inClosedCol = await page.$$eval('.col[aria-label^="Закрыто"] .bcard', (els) => els.some((e) => e.textContent.includes("2.1.7")));
+    const inClosedCol = await page.$$eval('.col[aria-label^="Закрыто"] [data-k="b-2.1.7"]', (els) => els.length === 1);
     ok("Закрытие 2.1.7: карточка в колонке «Закрыто» доски", inClosedCol);
     await page.click('[data-k="tab-gantt"]');
-    const badge = await page.$eval('tr[data-open="2.1.7"] .badge', (e) => e.textContent);
-    ok("Закрытие 2.1.7: статус в «Ганте»", badge.includes("Закрыто"), badge);
+    const badge = await page.$eval('tr[data-open="2.1.7"] .st', (e) => e.textContent);
+    ok("Закрытие 2.1.7: статус в «Графике работ»", badge.includes("Закрыто"), badge);
     await page.click('[data-k="tab-focus"]');
-    const inOverdue = await page.$$eval('details.lane.overdue .frow', (els) => els.some((e) => e.textContent.includes("2.1.7")));
+    const inOverdue = await page.$$eval('details.lane.overdue [data-k="f-2.1.7"]', (els) => els.length > 0);
     ok("Закрытие 2.1.7: ушла из горизонта «Просрочено»", !inOverdue);
     // без реквизита
     await page.click('[data-k="f-2.1.5"]');
@@ -73,8 +73,8 @@ function stressPage() {
     const warn = await page.isVisible(".warnbox");
     const btn = await page.$eval('[data-k="cf-do"]', (e) => e.textContent.trim());
     await page.click('[data-k="cf-do"]');
-    const mark = await page.$eval(".panel .badge", (e) => e.textContent);
-    ok("Закрытие без реквизита: предупреждение и пометка", warn && btn === "Закрыть без реквизита" && mark.includes("без реквизита"), mark);
+    const mark = await page.$eval(".pstat .st", (e) => e.textContent);
+    ok("Закрытие без документа: предупреждение и пометка", warn && btn === "Закрыть без документа" && mark.includes("без документа"), mark);
     await page.screenshot({ path: path.join(OUT, "02_close_without_requisite_panel.png") });
     // повестка
     await page.keyboard.press("Escape");
@@ -131,7 +131,7 @@ function stressPage() {
     const txt = await page.textContent("#h-r + *");
     const closed = await kpi(page, "closed");
     await page.screenshot({ path: path.join(OUT, "06_all_closed_summary.png") });
-    ok("Все закрыты: «Рисков нет: все позиции закрыты», 47 из 47", txt.includes("Рисков нет: все позиции закрыты") && closed.startsWith("47"), closed);
+    ok("Все выполнены: «Рисков нет: все работы выполнены», 47 из 47", txt.includes("Рисков нет: все работы выполнены") && closed.startsWith("47"), closed);
     ok("Сценарий 4: консоль без ошибок", !errs.length, errs.join("; "));
     await ctx.close();
   }
@@ -143,7 +143,7 @@ function stressPage() {
     const foot = await page.textContent("footer.foot");
     await page.click('[data-k="r-2.1.7"]');
     await page.click('[data-k="st-В работе"]');
-    const st = await page.$eval(".panel .badge", (e) => e.textContent);
+    const st = await page.$eval(".pstat .st", (e) => e.textContent);
     await page.screenshot({ path: path.join(OUT, "07_no_localstorage.png") });
     ok("Без localStorage: страница работает, правка применяется, есть уведомление", foot.includes("Отметки хранятся только до перезагрузки страницы") && st.includes("В работе") && !errs.length, errs.join("; "));
     await ctx.close();
@@ -158,7 +158,7 @@ function stressPage() {
     await ctx.close();
     ({ ctx, page, errs } = await open(V1, "org=fti&today=2026-09-28"));
     const tabs = await page.$$eval('[role="tab"]', (e) => e.map((x) => x.textContent));
-    const rows = await page.$$eval("button.frow", (e) => e.map((x) => x.querySelector(".mono").textContent.trim()));
+    const rows = await page.$$eval("button.frow", (e) => e.map((x) => x.dataset.k.slice(2)));
     await page.screenshot({ path: path.join(OUT, "08_org_fti_focus.png") });
     ok("?org=fti: без «Сводки», только 2.1.6 и 2.2.1", !tabs.includes("Сводка") && rows.sort().join(",") === "2.1.6,2.2.1" && !errs.length, rows.join(","));
     await ctx.close();
@@ -200,7 +200,7 @@ function stressPage() {
     await page.fill('[data-k="f-search"]', "нет такой позиции");
     const empty = await page.textContent(".gwrap");
     await page.screenshot({ path: path.join(OUT, "13_empty_filter.png") });
-    ok("Фильтр без результатов: причина и следующий шаг", empty.includes("Нет позиций, соответствующих фильтру") && !errs.length);
+    ok("Фильтр без результатов: причина и следующий шаг", empty.includes("Нет работ, соответствующих условиям") && !errs.length);
     await ctx.close();
   }
 

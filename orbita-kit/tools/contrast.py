@@ -15,7 +15,7 @@ T={
   'b-action-bg':'#FFF0DD','b-action-fg':'#8A4700','b-overdue-bg':'#FDE8E9','b-overdue-fg':'#AE1C25','b-future-bg':'#EEF0F3','b-future-fg':'#454C57',
  },
  'dark':{
-  'surface':'#111318','surface-2':'#171A21','surface-3':'#1F232C','border':'#2B303B','border-strong':'#6B7482',
+  'surface':'#171A21','surface-2':'#111318','surface-3':'#1F232C','border':'#2B303B','border-strong':'#6B7482',
   'text-1':'#E9ECF1','text-2':'#B7BECA','text-3':'#9AA2AF','accent':'#86A6FF','accent-soft':'#1C2849','on-accent':'#0B1020',
   'bar-closed':'#2E9F60','bar-progress':'#B9CC45','bar-action':'#E8A33A','bar-overdue':'#F0616A','bar-future':'#788190',
   'b-closed-bg':'#12301F','b-closed-fg':'#86DDA9','b-progress-bg':'#1D2B12','b-progress-fg':'#B8DE8F',
@@ -25,7 +25,7 @@ fail=0
 for mode,t in T.items():
     checks=[]
     for s in ('surface','surface-2','surface-3'):
-        for x in ('text-1','text-2','text-3','accent'): checks.append((x,s,4.5))
+        for x in ('text-1','text-2','text-3','accent','b-overdue-fg','b-action-fg','b-closed-fg'): checks.append((x,s,4.5))  # 0.2.0: цветной текст сроков на поверхностях
         for x in ('bar-closed','bar-progress','bar-action','bar-overdue','bar-future','border-strong'): checks.append((x,s,3.0))
     for k in ('closed','progress','action','overdue','future'): checks.append((f'b-{k}-fg',f'b-{k}-bg',4.5))
     checks += [('on-accent','accent',4.5),('accent','accent-soft',4.5),('text-1','accent-soft',4.5)]
