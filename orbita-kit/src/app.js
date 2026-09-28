@@ -396,7 +396,7 @@
     else rows.forEach((i) => {
       const sec = i.kind === "section", canCol = sec || i.kind === "group", exp = !S.collapsed.has(i.num);
       const ctx = orgKey && !sec && !orgMatch(i);
-      body += `<tr class="${sec ? "sec" : ""}${i.kind === "group" ? " grp" : ""}${S.selected === i.num ? " sel" : ""}" data-open="${i.num}" tabindex="0" data-k="row-${i.num}" ${canCol ? `aria-expanded="${exp}"` : ""}>
+      body += `<tr class="${sec ? "sec" : ""}${i.kind === "group" ? " grp" : ""}${S.selected === i.num ? " sel" : ""}" data-open="${i.num}" tabindex="0" data-k="row-${i.num}" ${canCol ? `data-exp="${exp}"` : ""}>
         <td><div class="nm lv${i.level}">${canCol ? `<button class="chev" data-toggle="${i.num}" aria-expanded="${exp}" aria-label="${exp ? "Свернуть" : "Развернуть"}: ${esc(title(i))}" data-k="tg-${i.num}">${ico("chev")}</button>` : `<span class="chev-sp"></span>`}<span class="t" title="${nameAttr(i)}">${esc(title(i))}</span>${i.kind === "group" && !ctx ? `<span class="cnt">${i.progress.closed}/${i.progress.total}</span>` : ""}</div></td>
         ${sec ? `<td colspan="3" class="secsum">${secSum(i.num)}</td>` : `<td class="own">${ownersCell(i)}</td>
         <td class="due"><span class="mono">${fmt(i.due)}</span>${ctx ? "" : dueWords(i, true)}</td>
@@ -404,7 +404,7 @@
         <td class="tlcell"><span class="sr">${esc(ganttSr(i))}</span><div aria-hidden="true" class="tlin">${ctx ? "" : barCell(i)}</div></td></tr>`;
     });
     const strip = VARIANT === "registry" && !orgKey ? `<section class="gstrip" aria-label="Ключевые показатели">${kpiTiles()}</section>` : "";
-    return `${strip}${toolbar(seg)}
+    return `<h1 class="sr">График работ</h1>${strip}${toolbar(seg)}
       <div class="gwrap${strip ? " withstrip" : ""}"><table class="gantt" aria-label="График работ по План-графику этапа 1">
         <colgroup><col class="c-name"><col class="c-own"><col class="c-due"><col class="c-st"><col></colgroup>
         <thead><tr><th scope="col">Работа</th><th scope="col">Исполнитель</th><th scope="col">Срок</th><th scope="col">Статус</th><th scope="col" class="tlcell">${ganttAxis()}</th></tr></thead>
@@ -466,7 +466,7 @@
     h += `<div class="bhead">${pageHead("h-board", "Статусы", esc(lead), dist)}</div><div class="board">`;
     E.STATUSES.forEach((st) => {
       const cards = list.filter((i) => i.status === st).sort((a, b) => (b.overdue - a.overdue) || a.due - b.due || a.idx - b.idx);
-      h += `<section class="col" aria-label="${st}: ${cards.length}"><h3><span class="st st-${E.CLS[st]}"><i aria-hidden="true"></i>${st}</span><span class="cnt">${cards.length}</span></h3><ul>`;
+      h += `<section class="col" aria-label="${st}: ${cards.length}"><h2><span class="st st-${E.CLS[st]}"><i aria-hidden="true"></i>${st}</span><span class="cnt">${cards.length}</span></h2><ul>`;
       if (!cards.length) h += `<li class="muted empty-line">Работ нет.</li>`;
       cards.forEach((i) => {
         h += `<li><button class="bcard${i.overdue ? " late" : ""}" data-open="${i.num}" data-k="b-${i.num}" title="${nameAttr(i)}"><span class="t">${esc(title(i))}</span><span class="o">${esc(ownersText(i))}</span><span class="r"><span class="mono">${fmt(i.due)}</span>${dueWords(i, true)}</span>${i.src === "inherited" ? `<span class="st-note" title="Статус группы «${esc(title(M.by[i.inheritedFrom]))}»">статус по группе</span>` : i.closed && i.noReq ? `<span class="st-note">без подтверждающего документа</span>` : ""}</button></li>`;
@@ -505,7 +505,7 @@
     MS.forEach((m) => { h += `<span class="ms-d${m.n < T ? " past" : ""}" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(m.title)}"></span>`; });
     h += lb.html;
     if (T >= D0 && T <= D1) h += `<div class="ms-today" style="left:${xp(T)}%"><span>сегодня</span></div>`;
-    h += `</div></div><div class="ms-mlist"><ul class="list">${keys.map((d) => { const c = clusters.get(d); return `<li><button class="lrow" data-ms="${d}" data-k="msm-${d}" aria-pressed="${S.msDate === d}"><span class="mono">${fmt(d)}</span><span>${c.length} ${pl(c.length, "работа", "работы", "работ")}</span></button></li>`; }).join("")}</ul></div></section>`;
+    h += `</div></div><label class="ms-pick"><span>Выбрать дату</span><select data-mspick data-k="ms-pick">${keys.map((d) => `<option value="${d}" ${S.msDate === d ? "selected" : ""}>${fmt(d)} — ${clusters.get(d).length} ${pl(clusters.get(d).length, "работа", "работы", "работ")}</option>`).join("")}</select></label><div class="ms-mlist"><ul class="list">${keys.map((d) => { const c = clusters.get(d); return `<li><button class="lrow" data-ms="${d}" data-k="msm-${d}" aria-pressed="${S.msDate === d}"><span class="mono">${fmt(d)}</span><span>${c.length} ${pl(c.length, "работа", "работы", "работ")}</span></button></li>`; }).join("")}</ul></div></section>`;
     // Вехи этапа: готовность к каждой вехе
     const rowsMs = MS.map((m) => {
       const due = M.base.filter((i) => i.due <= m.n && orgMatch(i)), open = due.filter((i) => !i.closed).length, od = due.filter((i) => i.overdue).length;
@@ -525,9 +525,9 @@
     if (!i) return "";
     const ctx = orgKey && i.kind !== "section" && !orgMatch(i);
     const dl = (rows) => `<dl>${rows.filter((r) => r[1] != null && r[1] !== "").map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`;
-    let h = `<aside class="panel" role="dialog" aria-modal="false" aria-labelledby="p-title">
-      <header><div class="ph"><h2 id="p-title" tabindex="-1">${esc(title(i))}</h2><p class="pnum">№ ${i.num} по План-графику</p></div><button class="iconbtn" data-act="close-panel" data-k="p-close" aria-label="Закрыть карточку">${ico("x")}</button></header><div class="body">`;
-    if (i.kind === "section") return h + `<p class="muted">Раздел План-графика «${esc(i.name)}». Период ${fmt(i.start)} – ${fmt(i.due)}; даты вычислены по вложенным работам.</p></div></aside>`;
+    let h = `<div class="panel" role="dialog" aria-modal="false" aria-labelledby="p-title">
+      <div class="phdr"><div class="ph"><h2 id="p-title" tabindex="-1">${esc(title(i))}</h2><p class="pnum">№ ${i.num} по План-графику</p></div><button class="iconbtn" data-act="close-panel" data-k="p-close" aria-label="Закрыть карточку">${ico("x")}</button></div><div class="body">`;
+    if (i.kind === "section") return h + `<p class="muted">Раздел План-графика «${esc(i.name)}». Период ${fmt(i.start)} – ${fmt(i.due)}; даты вычислены по вложенным работам.</p></div></div>`;
     if (!ctx) {
       h += `<section class="pstat"><div class="pline">${status(i)} ${dueWords(i, false)}${i.ctrlPassed ? ` <span class="due-t warn">контрольная дата ${fmt(i.ctrl)} прошла</span>` : ""}</div>`;
       if (i.src === "inherited") h += `<p class="note">Отдельной отметки нет — показан статус группы «${esc(title(M.by[i.inheritedFrom]))}».</p>`;
@@ -579,7 +579,7 @@
     const links = C.LINKS.filter(([a, b]) => a === i.num || b === i.num);
     if (links.length) h += `<section><h3>Связанные работы</h3><ul class="list">${links.map(([a, b]) => { const o = M.by[a === i.num ? b : a]; return `<li><button class="btn link" data-open="${o.num}" data-k="lk-${o.num}">${esc(title(o))}</button></li>`; }).join("")}</ul></section>`;
     h += `<details class="more"><summary>Основание и примечание План-графика</summary>${dl([["Документ, определяющий исполнение", esc(i.s.execution_doc || "—")], ["Основание включения", esc(i.s.basis || "—")], ["Примечание", i.s.plan_note ? esc(i.s.plan_note) : null], ["Начало", `<span class="mono">${fmt(i.start)}</span> — расчётное, только для графика`]])}</details>`;
-    return h + `</div></aside>`;
+    return h + `</div></div>`;
   }
 
   // ── Повестка [Р-62]: «для обсуждения» — наименования без номеров; «для письма Исполнителю» — формат Р-33 с п. N
@@ -613,11 +613,11 @@
     const text = letter ? a.text : agendaTalk(a);
     const seg = `<div class="seg" role="group" aria-label="Формат повестки"><button aria-pressed="${!letter}" data-act="ag-fmt" data-fmt="talk" data-k="ag-talk">Для обсуждения</button><button aria-pressed="${letter}" data-act="ag-fmt" data-fmt="letter" data-k="ag-letter">Для письма Исполнителю</button></div>`;
     return `<div class="modal-back" data-act="close-agenda-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="ag-title">
-      <header><div class="mh"><h2 id="ag-title">Повестка оперативки на ${fmt(T)}</h2><p class="note">Вопросы к Исполнителю — Электроприбору; по работам соисполнителей спрос через него</p></div><button class="iconbtn" data-act="close-agenda" data-k="ag-x" aria-label="Закрыть">${ico("x")}</button></header>
+      <div class="mhdr"><div class="mh"><h2 id="ag-title">Повестка оперативки на ${fmt(T)}</h2><p class="note">Вопросы к Исполнителю — Электроприбору; по работам соисполнителей спрос через него</p></div><button class="iconbtn" data-act="close-agenda" data-k="ag-x" aria-label="Закрыть">${ico("x")}</button></div>
       <div class="agbar"><div class="agc"><span class="agn bad">${a.counts[0]}</span>просрочено</div><div class="agc"><span class="agn warn">${a.counts[1]}</span>контрольная дата прошла</div><div class="agc"><span class="agn">${a.counts[2]}</span>срок в 14 дней</div><span class="spacer"></span>${seg}</div>
       <p class="note mp">${letter ? "Официальные наименования и номера пунктов План-графика — формат писем Исполнителю: «Наименование — комментарий (п. N)»." : "Краткие наименования работ без номеров; причина и комментарий словами, участие соисполнителей и Заказчика — в скобках."} Учитываются обязательства перед Заказчиком; просроченные подпозиции указаны в строке своей группы, поэтому число меньше, чем в «Ближайших сроках».</p>
       <label class="sr" for="ag-text">Текст повестки</label><textarea id="ag-text" readonly data-k="ag-text">${esc(text)}</textarea><div class="ag-print" aria-hidden="true">${esc(text)}</div>
-      <footer><span class="note" id="ag-status" role="status"></span><button class="btn" data-act="print" data-k="ag-print">${ico("printer")} Печать</button><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></footer></div></div>`;
+      <div class="mftr"><span class="note" id="ag-status" role="status"></span><button class="btn" data-act="print" data-k="ag-print">${ico("printer")} Печать</button><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></div></div></div>`;
   }
 
   // ── Отрисовка
@@ -632,7 +632,7 @@
     try { main = { summary: viewSummary, gantt: viewGantt, focus: viewFocus, board: viewBoard, milestones: viewMilestones }[view](); }
     catch (err) { console.error(err); main = `<div class="empty" role="alert"><p>Не удалось построить отображение. Обновите страницу; если ошибка повторится, сообщите руководителю проекта.</p></div>`; }
     root.innerHTML = `<a class="skip" href="#main">Перейти к содержанию</a>${renderHeader()}${renderBanners()}
-      <main id="main" role="tabpanel" aria-labelledby="tab-${view}" tabindex="-1" class="v-${view}">${main}</main>
+      <main id="main" tabindex="-1" class="v-${view}"><div class="tabpanel" role="tabpanel" aria-labelledby="tab-${view}">${main}</div></main>
       <footer class="foot"><span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span>Рабочие дни — по производственному календарю РФ.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="reset-all" data-k="reset-all">Сбросить отметки (${Object.keys(edits).length})</button>` : ""}</footer>
       ${renderPanel()}${renderAgenda()}`;
     scrollers.forEach(([cls, t, l]) => { const e = document.getElementsByClassName(cls)[0]; if (e) { e.scrollTop = t; e.scrollLeft = l; } });
@@ -713,6 +713,7 @@
     else if (t.dataset.cf) { S.closeForm[t.dataset.cf] = t.value; if (t.dataset.cf === "name") render(); }
     else if (t.dataset.comment) setEdit(t.dataset.comment, { comment: t.value || undefined });
   });
+  root.addEventListener("change", (ev) => { if (ev.target.dataset.mspick !== undefined) { S.msDate = Number(ev.target.value); render(); } });
   root.addEventListener("change", (ev) => { if (ev.target.dataset.comment) render(); });
   root.addEventListener("toggle", (ev) => { const d = ev.target; if (d.dataset && d.dataset.lane in S.lanes) S.lanes[d.dataset.lane] = d.open; }, true);
   root.addEventListener("keydown", (ev) => {
@@ -724,7 +725,7 @@
     if (t.tagName === "TR" && t.dataset.open) {
       if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); return openItem(t.dataset.open, t); }
       if (ev.key === "ArrowDown" || ev.key === "ArrowUp") { const s = ev.key === "ArrowDown" ? t.nextElementSibling : t.previousElementSibling; if (s) s.focus(); ev.preventDefault(); return; }
-      if ((ev.key === "ArrowLeft" || ev.key === "ArrowRight") && t.hasAttribute("aria-expanded")) { if (ev.key === "ArrowLeft") S.collapsed.add(t.dataset.open); else S.collapsed.delete(t.dataset.open); ev.preventDefault(); return render(); }
+      if ((ev.key === "ArrowLeft" || ev.key === "ArrowRight") && t.hasAttribute("data-exp")) { if (ev.key === "ArrowLeft") S.collapsed.add(t.dataset.open); else S.collapsed.delete(t.dataset.open); ev.preventDefault(); return render(); }
     }
   });
   document.addEventListener("keydown", (ev) => {

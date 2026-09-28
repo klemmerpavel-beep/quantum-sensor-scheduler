@@ -25,7 +25,7 @@
 | `src/` | исходники страницы: стили, модуль расчёта, интерфейс, шаблон |
 | `tools/build.py` | сборка версий: `python3 tools/build.py [--index v1\|v2\|v3]` |
 | `docs/` | карта данных, свод решений, совет, спецификация, UX, токены, приёмка |
-| `tests/` | проверки в Playwright: `node tests/behaviour.js`, `node tests/shots.js`, `node tests/targets.js`, `node tests/latin.js` |
+| `tests/` | проверки в Playwright: `node tests/behaviour.js`, `node tests/shots.js`, `node tests/targets.js`, `node tests/latin.js`, `AXE=…/axe.min.js node tests/a11y.js` |
 | `screenshots/` | снимки режимов и стресс-сценариев |
 
 ## Публикация
