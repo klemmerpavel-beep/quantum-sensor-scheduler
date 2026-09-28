@@ -182,7 +182,7 @@
   const emptyFiltered = () => `<div class="empty" role="status"><p>Нет работ, соответствующих условиям. Измените поиск или сбросьте фильтр.</p><button class="btn" data-act="reset-filters" data-k="reset-f2">Сбросить фильтр</button></div>`;
 
   /** Заголовок режима: вывод одной фразой и, при необходимости, полоса показателей [Р-60]. */
-  const pageHead = (id, h, lead, extra = "") => `<section class="phead" aria-labelledby="${id}"><div class="pht"><h1 id="${id}">${esc(h)}</h1>${lead ? `<p>${lead}</p>` : ""}</div>${extra}</section>`;
+  const pageHead = (id, h, lead, extra = "") => (extra ? `<section class="phead" aria-labelledby="${id}"><h1 id="${id}" class="sr">${esc(h)}</h1>${extra}</section>` : `<h1 id="${id}" class="sr">${esc(h)}</h1>`);
   /** Подписи вех по дорожкам без наложения; W — ширина полосы в пикселях. */
   function msLabels(W, top) {
     const lanes = []; let h = "";
@@ -216,8 +216,8 @@
     const tile = (id, lbl, val, sub, act, tone) => `<button class="kpi${tone ? " " + tone : ""}" data-act="${act}" data-k="kpi-${id}"><span class="lbl">${lbl}</span><span class="val">${val}</span><span class="sub">${sub}</span></button>`;
     return [
       tile("closed", "Выполнено", `${k.closed}<small> из ${k.base}</small>`, `${k.pct} %${k.noReq ? ` · ${k.noReq} без документа` : ""}`, "go-board"),
-      tile("plan", "План на сегодня", `${k.reachedClosed}<small> из ${k.reached}</small>`, k.reached ? `срок наступил у ${k.reached}${k.early ? `; ещё ${k.early} — досрочно` : ""}` : "сроки ещё не наступили", "go-overdue"),
-      tile("overdue", "Просрочено", `${k.overdue}`, k.overdue ? "по сроку План-графика" : "просроченных обязательств нет", "go-overdue", k.overdue ? "bad" : ""),
+      tile("plan", "План на сегодня", `${k.reachedClosed}<small> из ${k.reached}</small>`, k.early ? `ещё ${k.early} — досрочно` : "", "go-overdue"),
+      tile("overdue", "Просрочено", `${k.overdue}`, "", "go-overdue", k.overdue ? "bad" : ""),
       tile("demo", "До демонстрации образца", k.toDemo >= 0 ? `${k.toDemoWd}<small> ${pl(k.toDemoWd, "рабочий день", "рабочих дня", "рабочих дней")}</small>` : `<small>прошла</small>`, "30.11.2026", "go-chain"),
       tile("end", "До окончания этапа", k.toEnd >= 0 ? `${k.toEnd}<small> ${pl(k.toEnd, "день", "дня", "дней")}</small>` : `<small>этап завершён</small>`, "30.12.2026", "go-ms"),
     ].join("");
@@ -244,7 +244,7 @@
     MS.forEach((m) => { h += `<span class="stl-ms${m.n < T ? " past" : ""}" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(m.title)}"></span>`; });
     h += lb.html;
     if (T >= D0 && T <= D1) h += `<div class="stl-today" style="left:${xp(T)}%"><span>сегодня</span></div>`;
-    h += `</div></div><div class="legend stl-leg" aria-hidden="true"><span><i class="lg closed"></i>выполнено</span><span><i class="lg overdue-s"></i>просрочено</span><span><i class="lg future"></i>предстоит</span><span><i class="lg ms"></i>веха</span><span>столбик — обязательства со сроком на этой неделе</span></div>`;
+    h += `</div></div><div class="legend stl-leg" aria-hidden="true"><span><i class="lg closed"></i>выполнено</span><span><i class="lg overdue-s"></i>просрочено</span><span><i class="lg future"></i>предстоит</span><span><i class="lg ms"></i>веха</span></div>`;
     return `<style>.stl{height:${150 + lb.lanes * 22 + 4}px}</style>` + h;
   }
   /** Исполнитель, соисполнители и Заказчик: кто за что отвечает [Р-61]. */
@@ -260,10 +260,10 @@
         <span class="nx">${nx ? `${nextWord} <span class="mono">${fmt(nx.due)}</span> — ${esc(title(nx))}` : old ? `предстоящих сроков нет; дольше всех просрочено — ${esc(title(old))} (срок <span class="mono">${fmt(old.due)}</span>)` : "открытых обязательств нет"}</span></button></li>`;
     };
     const B = M.base;
-    return `<ul class="olist">${row("ep", "Электроприбор", "Исполнитель · отвечает перед Заказчиком за все обязательства", B.filter((i) => resp(i) === EP), "ближайший срок")}</ul>
-      <p class="osub">Соисполнители — работают по договорам с Электроприбором; требования к ним предъявляются через Исполнителя</p>
+    return `<ul class="olist">${row("ep", "Электроприбор", "Исполнитель", B.filter((i) => resp(i) === EP), "ближайший срок")}</ul>
+      <p class="osub">Соисполнители — через Исполнителя</p>
       <ul class="olist">${row("fti", "ФТИ им. Иоффе", "соисполнитель", B.filter(OWNER_F.fti), "ближайший срок")}${row("ihs", "ИХС им. Гребенщикова", "соисполнитель", B.filter(OWNER_F.ihs), "ближайший срок")}</ul>
-      <p class="osub">Заказчик — работы, где требуется участие СП «Квант»</p>
+      <p class="osub">Участие Заказчика</p>
       <ul class="olist">${row("kv", "СП «Квант»", "Заказчик", B.filter(OWNER_F.kv), "ближайшее")}</ul>`;
   }
   const reason = (t) => {
@@ -310,10 +310,7 @@
     if (br.length > 2) { const w = br.reduce((a, x) => (depth(x) > depth(a) ? x : a)); notes.push(`Срыв на ${br.length} переходах; наибольший — перед этапом «${title(M.by[w.to])}»: ${wdays(depth(w))}.`); }
     else br.forEach((w) => notes.push(`Срыв перед этапом «${title(M.by[w.to])}»: ${wdays(depth(w))}.`));
     all.filter((w) => w.state === "eroding").forEach((w) => notes.push(`Резерв перед этапом «${title(M.by[w.to])}»: осталось ${w.R} из ${wdays(w.P)}${w.breachFrom ? `; если «${title(M.by[w.from])}» не закрыть, срыв с ${fmt(w.breachFrom)}` : ""}.`));
-    const ov = M.chainWindows.filter((w) => w.state === "overlap");
-    if (ov.length) notes.push(`${ov.length} ${pl(ov.length, "этап выполняется", "этапа выполняются", "этапов выполняются")} параллельно с предыдущими — так заложено в План-графике, это не срыв.`);
-    const f = M.by[M.feeder.from];
-    notes.push(`Параллельно: «${title(f)}» — срок ${fmt(f.due)}, ${f.closed ? "выполнено" : f.overdue ? "просрочено" : "в работе"}.`);
+    if (!notes.length) return "";
     return `<ul class="pnotes">${notes.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`;
   }
   /** Состояние пути: просроченные шаги называются отдельно от состояния резерва [Р-47, Р-65]. */
@@ -326,13 +323,13 @@
     if (VARIANT === "path") return viewSummaryPath();
     const hl = headline();
     return `<div class="page">
-      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><p>${esc(hl.t)}</p></section>
+      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><span class="asof">на ${fmt(T)}</span></section>
       <section class="kpis" aria-label="Ключевые показатели">${kpiTiles()}</section>
-      <section class="card" aria-labelledby="h-tl"><h2 id="h-tl">Сроки этапа <span class="note">13.08.2026 – 01.02.2027 · ${M.kpi.base} обязательств перед Заказчиком</span><span class="spacer"></span><button class="btn link" data-act="go-ms" data-k="tl-open">Все вехи ${ico("arrow")}</button></h2>${stageTimeline()}</section>
+      <section class="card" aria-labelledby="h-tl"><h2 id="h-tl">Сроки этапа<span class="spacer"></span><button class="btn link" data-act="go-ms" data-k="tl-open">Все вехи ${ico("arrow")}</button></h2>${stageTimeline()}</section>
       <div class="cols">
         <div class="stack">
           <section class="card" aria-labelledby="h-r"><h2 id="h-r">Требует внимания</h2>${attention()}</section>
-          <section class="card" aria-labelledby="h-o"><h2 id="h-o">Исполнитель и соисполнители <span class="note">по обязательствам перед Заказчиком</span></h2>${ownersBlock()}</section>
+          <section class="card" aria-labelledby="h-o"><h2 id="h-o">Исполнитель и соисполнители</h2>${ownersBlock()}</section>
         </div>
         <section class="card" aria-labelledby="h-ch"><h2 id="h-ch">Путь к демонстрации образца ${chainPill()}<span class="spacer"></span><button class="btn link" data-act="go-chain" data-k="ch-open">На графике ${ico("arrow")}</button></h2>${pathSteps(false, true)}${pathNotes()}</section>
       </div>
@@ -342,7 +339,7 @@
   function viewSummaryPath() {
     const hl = headline();
     return `<div class="page">
-      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><p>${esc(hl.t)}</p></section>
+      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><span class="asof">на ${fmt(T)}</span></section>
       <section class="card" aria-labelledby="h-ch"><h2 id="h-ch">Путь к демонстрации лабораторного образца ${chainPill()}<span class="spacer"></span><button class="btn link" data-act="go-chain" data-k="ch-open">Подробно на графике ${ico("arrow")}</button></h2>${pathSteps(true)}${pathNotes()}</section>
       <section class="kpis" aria-label="Ключевые показатели">${kpiTiles()}</section>
       <div class="cols">
@@ -435,20 +432,20 @@
   const LANES = [["overdue", "Просрочено"], ["h14", "В ближайшие 14 дней"], ["h30", "В течение месяца"], ["h60", "В течение двух месяцев"], ["later", "Позднее"], ["closed", "Выполнено"]];
   function viewFocus() {
     const list = M.work.filter((i) => matchesFilters(i));
-    const range = { overdue: "срок прошёл", h14: `до ${fmt(T + 14)}`, h30: `${fmt(T + 15)} – ${fmt(T + 30)}`, h60: `${fmt(T + 31)} – ${fmt(T + 60)}`, later: `после ${fmt(T + 60)}`, closed: "работы с отметкой «Закрыто»" };
+    const range = { overdue: "", h14: `до ${fmt(T + 14)}`, h30: `${fmt(T + 15)} – ${fmt(T + 30)}`, h60: `${fmt(T + 31)} – ${fmt(T + 60)}`, later: `после ${fmt(T + 60)}`, closed: "" };
     const off = !orgKey && !anyFilter() ? SEED.off_plan_closed : [];
     const rowsOf = (k) => list.filter((i) => i.horizon === k).sort((a, b) => a.due - b.due || a.idx - b.idx);
     const cnt = Object.fromEntries(LANES.map(([k]) => [k, rowsOf(k).length + (k === "closed" ? off.length : 0)]));
     const ctrl = list.filter((i) => i.ctrlPassed).length;
     const lead = `На ${fmt(T)}: просрочено ${cnt.overdue}, в ближайшие 14 дней — ${cnt.h14}, в течение месяца — ${cnt.h30}, в течение двух месяцев — ${cnt.h60}.${ctrl ? ` У ${ctrl} ${pl(ctrl, "работы", "работ", "работ")} прошла контрольная дата оперативки.` : ""}${anyFilter() ? " Показаны работы по условиям отбора." : ""}`;
-    const strip = `<nav class="hstrip" aria-label="Периоды">${LANES.map(([k, t]) => `<button class="hz ${k}${k === "overdue" && cnt[k] ? " bad" : k === "h14" && cnt[k] ? " warn" : ""}" data-act="go-lane" data-lane="${k}" data-k="hz-${k}"><span class="lbl">${t}</span><span class="val">${cnt[k]}</span><span class="sub">${range[k]}</span></button>`).join("")}</nav>`;
+    const strip = `<nav class="hstrip" aria-label="Периоды">${LANES.map(([k, t]) => `<button class="hz ${k}${k === "overdue" && cnt[k] ? " bad" : k === "h14" && cnt[k] ? " warn" : ""}" data-act="go-lane" data-lane="${k}" data-k="hz-${k}"><span class="lbl">${t}</span><span class="val">${cnt[k]}</span>${range[k] ? `<span class="sub">${range[k]}</span>` : ""}</button>`).join("")}</nav>`;
     const agendaBtn = readonly ? "" : `<button class="btn primary" data-act="agenda" data-k="agenda">${ico("file")} Повестка оперативки</button>`;
     let h = toolbar(agendaBtn) + `<div class="page">` + pageHead("h-focus", "Ближайшие сроки", esc(lead), strip);
     if (!list.length) return h + emptyFiltered() + `</div>`;
     LANES.forEach(([k, t]) => {
       const rows = rowsOf(k), offk = k === "closed" ? off : [];
       const open = k === "later" || k === "closed" ? S.lanes[k] : true;
-      h += `<details class="lane ${k}" ${open ? "open" : ""} data-lane="${k}"><summary data-k="lane-${k}"><span class="chev">${ico("chev")}</span>${t}<span class="cnt">${rows.length + offk.length}</span><span class="rng">${range[k]}</span></summary>`;
+      h += `<details class="lane ${k}" ${open ? "open" : ""} data-lane="${k}"><summary data-k="lane-${k}"><span class="chev">${ico("chev")}</span>${t}<span class="cnt">${rows.length + offk.length}</span></summary>`;
       if (!rows.length && !offk.length) h += `<p class="muted empty-line">Работ в этом периоде нет.</p>`;
       else h += `<div class="fhead" aria-hidden="true"><span>Работа</span><span>Исполнитель</span><span>Срок</span><span>${k === "closed" ? "Выполнено" : "Осталось"}</span><span>Статус</span></div>`;
       rows.forEach((i) => {
@@ -501,14 +498,14 @@
     let h = toolbar() + `<div class="page">` + pageHead("h-ms", "Вехи", esc(lead));
     if (!list.length) return h + emptyFiltered() + "</div>";
     const peak = Math.max(...keys.map((d) => clusters.get(d).length));
-    const lb = msLabels(bandW(1060), 212);
-    h += `<section class="card" aria-labelledby="h-msc"><h2 id="h-msc">Вехи и загрузка по датам <span class="note">столбик — работы со сроком в этот день; нажмите, чтобы увидеть список</span></h2><div class="ms-scroll"><div class="ms-canvas" style="height:${212 + lb.lanes * 22 + 4}px">`;
+    const lb = msLabels(bandW(1060), 172);
+    h += `<section class="card" aria-labelledby="h-msc"><h2 id="h-msc">Вехи и загрузка по датам</h2><div class="ms-scroll"><div class="ms-canvas" style="height:${172 + lb.lanes * 22 + 4}px">`;
     monthStarts().forEach((m) => { if (xp(m.n) < 96) h += `<span class="ms-month" style="left:${xp(m.n)}%">${m.label}</span>`; });
     h += `<div class="ms-axis"></div>`;
     keys.forEach((d) => {
       const c = clusters.get(d), cl = c.filter((i) => i.closed).length;
       h += `<button class="ms-cl" style="left:${xp(d)}%" aria-pressed="${S.msDate === d}" data-ms="${d}" data-k="ms-${d}" title="${fmt(d)}: ${c.length}" aria-label="${fmt(d)}: ${c.length} ${pl(c.length, "работа", "работы", "работ")}, выполнено ${cl}">${c.map((i) => `<i class="${i.overdue ? "overdue" : i.cls}"></i>`).join("")}</button>`;
-      if (c.length >= 5 || c.length === peak) h += `<span class="ms-cn" style="left:${xp(d)}%;bottom:calc(100% - 180px + ${c.length * 10 + 8}px)"><span class="mono">${fmt(d).slice(0, 5)}</span> · ${c.length}</span>`;
+      if (c.length >= 5 || c.length === peak) h += `<span class="ms-cn" style="left:${xp(d)}%;bottom:calc(100% - 140px + ${c.length * 10 + 8}px)"><span class="mono">${fmt(d).slice(0, 5)}</span> · ${c.length}</span>`;
     });
     MS.forEach((m) => { h += `<span class="ms-d${m.n < T ? " past" : ""}" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(m.title)}"></span>`; });
     h += lb.html;
@@ -522,7 +519,7 @@
       return `<li><button class="mrow${m.n < T ? " past" : ""}${nx && m.n === nx.n ? " next" : ""}" data-ms="${near ?? ""}" data-k="mr-${m.date}" title="${esc(m.title)}"><span class="md"><span class="dia" aria-hidden="true"></span><span class="mono">${fmt(m.n)}</span></span><span class="mt">${esc(MS_SHORT[m.date] || m.title)}<span class="mw">${when}</span></span><span class="mr">${due.length ? `к вехе выполнено ${due.length - open} из ${due.length}${od ? ` · <span class="bad-t">просрочено ${od}</span>` : ""}` : "обязательств к этой дате нет"}</span></button></li>`;
     }).join("");
     const sel = S.msDate != null ? clusters.get(S.msDate) : null;
-    h += `<div class="cols even"><section class="card" aria-labelledby="h-msl"><h2 id="h-msl">Вехи этапа <span class="note">готовность — по обязательствам перед Заказчиком со сроком до вехи</span></h2><ul class="mlist3">${rowsMs}</ul></section>`;
+    h += `<div class="cols even"><section class="card" aria-labelledby="h-msl"><h2 id="h-msl">Вехи этапа</h2><ul class="mlist3">${rowsMs}</ul></section>`;
     h += sel ? `<section class="card" aria-labelledby="h-mss"><h2 id="h-mss">Срок ${fmt(S.msDate)} <span class="note">${sel.length} ${pl(sel.length, "работа", "работы", "работ")}</span></h2><ul class="list">${sel.map((i) => `<li><button class="lrow" data-open="${i.num}" data-k="msl-${i.num}" title="${nameAttr(i)}"><span class="t">${esc(title(i))}<span class="own">${esc(ownersText(i))}</span></span><span class="stc">${status(i)}${dueWords(i, true)}</span></button></li>`).join("")}</ul></section>` : `<section class="card"><p class="muted">Выберите дату на полосе.</p></section>`;
     return h + `</div></div>`;
   }
@@ -621,9 +618,9 @@
     const text = letter ? a.text : agendaTalk(a);
     const seg = `<div class="seg" role="group" aria-label="Формат повестки"><button aria-pressed="${!letter}" data-act="ag-fmt" data-fmt="talk" data-k="ag-talk">Для обсуждения</button><button aria-pressed="${letter}" data-act="ag-fmt" data-fmt="letter" data-k="ag-letter">Для письма Исполнителю</button></div>`;
     return `<div class="modal-back" data-act="close-agenda-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="ag-title">
-      <div class="mhdr"><div class="mh"><h2 id="ag-title">Повестка оперативки на ${fmt(T)}</h2><p class="note">Вопросы к Исполнителю — Электроприбору; по работам соисполнителей спрос через него</p></div><button class="iconbtn" data-act="close-agenda" data-k="ag-x" aria-label="Закрыть">${ico("x")}</button></div>
+      <div class="mhdr"><div class="mh"><h2 id="ag-title">Повестка оперативки на ${fmt(T)}</h2><p class="note">Вопросы к Исполнителю — Электроприбору</p></div><button class="iconbtn" data-act="close-agenda" data-k="ag-x" aria-label="Закрыть">${ico("x")}</button></div>
       <div class="agbar"><div class="agc"><span class="agn bad">${a.counts[0]}</span>просрочено</div><div class="agc"><span class="agn warn">${a.counts[1]}</span>контрольная дата прошла</div><div class="agc"><span class="agn">${a.counts[2]}</span>срок в 14 дней</div><span class="spacer"></span>${seg}</div>
-      <p class="note mp">${letter ? "Официальные наименования и номера пунктов План-графика — формат писем Исполнителю: «Наименование — комментарий (п. N)»." : "Краткие наименования работ без номеров; причина и комментарий словами, участие соисполнителей и Заказчика — в скобках."} Учитываются обязательства перед Заказчиком; просроченные подпозиции указаны в строке своей группы, поэтому число меньше, чем в «Ближайших сроках».</p>
+      <p class="note mp">Учитываются обязательства перед Заказчиком; просроченные подпозиции — в строке своей группы.</p>
       <label class="sr" for="ag-text">Текст повестки</label><textarea id="ag-text" readonly data-k="ag-text">${esc(text)}</textarea><div class="ag-print" aria-hidden="true">${esc(text)}</div>
       <div class="mftr"><span class="note" id="ag-status" role="status"></span><button class="btn" data-act="print" data-k="ag-print">${ico("printer")} Печать</button><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></div></div></div>`;
   }

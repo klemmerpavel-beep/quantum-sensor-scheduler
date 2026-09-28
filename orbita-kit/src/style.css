@@ -194,6 +194,7 @@ header.top {
 /* Заголовок сводки */
 .hero { display: grid; gap: var(--sp-2); padding: 0 var(--sp-1); }
 .hero h1 { font-size: var(--fs-22); font-weight: 600; line-height: var(--lh-tight); }
+.hero .asof { display: none; font-size: var(--fs-13); color: var(--text-3); }
 .hero p { font-size: var(--fs-16); line-height: var(--lh-body); color: var(--text-2); max-width: 1040px; }
 
 /* Показатели */
@@ -463,18 +464,18 @@ button.lrow:hover { background: var(--surface-2); }
 .lrow[aria-pressed="true"] { background: var(--accent-soft); }
 .ms-scroll { overflow-x: auto; }
 .ms-canvas { position: relative; min-width: 1060px; }
-.ms-axis { position: absolute; left: 0; right: 0; top: 180px; height: 2px; background: var(--border-strong); }
-.ms-d { position: absolute; top: 174px; width: 14px; height: 14px; margin-left: -7px; transform: rotate(45deg); background: var(--surface); border: 2px solid var(--text-1); z-index: 1; }
+.ms-axis { position: absolute; left: 0; right: 0; top: 140px; height: 2px; background: var(--border-strong); }
+.ms-d { position: absolute; top: 134px; width: 14px; height: 14px; margin-left: -7px; transform: rotate(45deg); background: var(--surface); border: 2px solid var(--text-1); z-index: 1; }
 .ms-d.past { background: var(--text-1); }
-.ms-cl { position: absolute; top: 180px; transform: translateY(calc(-100% - 6px)); width: 8px; margin-left: -4px; display: flex; flex-direction: column-reverse; gap: 2px; padding: 0; border: 0; background: transparent; border-radius: 2px; }
+.ms-cl { position: absolute; top: 140px; transform: translateY(calc(-100% - 6px)); width: 8px; margin-left: -4px; display: flex; flex-direction: column-reverse; gap: 2px; padding: 0; border: 0; background: transparent; border-radius: 2px; }
 .ms-cl i { display: block; height: 8px; border-radius: 2px; }
 .ms-cl i.closed { background: var(--st-closed); } .ms-cl i.progress { background: var(--st-progress); } .ms-cl i.action { background: var(--st-action); }
 .ms-cl i.future { background: var(--surface-3); border: 1px solid var(--border-strong); } .ms-cl i.overdue { background: var(--st-overdue); }
 .ms-cl[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 3px; }
 .ms-cn { position: absolute; font-size: var(--fs-12); font-weight: 600; transform: translateX(-50%); white-space: nowrap; color: var(--text-2); }
-.ms-today { position: absolute; top: 0; height: 190px; width: 2px; margin-left: -1px; background: var(--accent); z-index: 2; }
+.ms-today { position: absolute; top: 0; height: 150px; width: 2px; margin-left: -1px; background: var(--accent); z-index: 2; }
 .ms-today span { position: absolute; top: 0; left: 6px; font-size: var(--fs-12); font-weight: 600; color: var(--accent); white-space: nowrap; }
-.ms-month { position: absolute; top: 192px; font-size: var(--fs-12); color: var(--text-2); border-left: 1px solid var(--border); padding-left: 6px; height: 16px; }
+.ms-month { position: absolute; top: 152px; font-size: var(--fs-12); color: var(--text-2); border-left: 1px solid var(--border); padding-left: 6px; height: 16px; }
 .cols.even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .mlist3 { list-style: none; margin: 0 calc(-1 * var(--sp-2)); padding: 0; }
 .mlist3 li + li .mrow { border-top: 1px solid var(--surface-3); }
@@ -561,6 +562,7 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
 @media (max-width: 1100px) {
   header.top { gap: var(--sp-3); padding: 0 var(--sp-3); }
   .today { display: none; }
+  .hero .asof { display: block; }
   .tab { padding: 0 12px; }
   .tab::after { left: 12px; right: 12px; }
   .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
