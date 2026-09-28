@@ -1156,12 +1156,13 @@ if (typeof module !== "undefined") module.exports = Engine;
     if (C.ORGS[q.get("org")]) { orgKey = q.get("org"); orgName = C.ORGS[orgKey]; }
     else notices.push("Параметр org не распознан: открыто полное представление только для просмотра.");
   }
-  const exec = q.get("view") === "exec";
+  // Режим для руководства: ?view=exec (первый экран) или ?exec=1 (сохраняется при смене вкладки) [Р-67]
+  const exec = q.get("view") === "exec" || q.get("exec") === "1";
   const readonly = exec || q.has("org");
   const VIEWS = [["summary", "Сводка"], ["gantt", "График работ"], ["focus", "Ближайшие сроки"], ["board", "Статусы"], ["milestones", "Вехи"]];
   const viewsAvail = orgKey ? VIEWS.filter(([k]) => k !== "summary") : VIEWS;
   const defaultView = orgKey ? "focus" : VARIANT === "registry" ? "gantt" : "summary";
-  let view = exec ? "summary" : q.get("view");
+  let view = q.get("view") === "exec" ? "summary" : q.get("view");
   if (view && !viewsAvail.some(([k]) => k === view)) { notices.push("Параметр view не распознан, открыт режим по умолчанию."); view = null; }
   view = view || defaultView;
 
@@ -1800,6 +1801,7 @@ if (typeof module !== "undefined") module.exports = Engine;
   function syncUrl() {
     const u = new URL(location.href), set = (k, v) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
     u.searchParams.set("view", exec && view === "summary" ? "exec" : view);
+    set("exec", exec && view !== "summary" ? "1" : "");
     set("item", S.selected); set("who", orgKey ? "" : S.filters.owner); set("sec", S.filters.section);
     try { history.replaceState(null, "", u); } catch (e) { /* file:// в некоторых браузерах */ }
   }
