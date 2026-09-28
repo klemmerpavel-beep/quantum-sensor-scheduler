@@ -1,0 +1,214 @@
+// Поведенческие и стресс-тесты (этапы 15–17). Запуск: node tests/behaviour.js
+// Каждый сценарий: проверки + снимок в screenshots/stress/. Консоль страницы должна быть без ошибок.
+const fs = require("fs"), path = require("path");
+const { chromium } = require(path.join(require("child_process").execSync("npm root -g").toString().trim(), "playwright"));
+const useFontCache = require("./fontcache");
+const ROOT = path.resolve(__dirname, "..");
+const OUT = path.join(ROOT, "screenshots/stress");
+fs.mkdirSync(OUT, { recursive: true });
+const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined;
+const results = [];
+const ok = (name, cond, info = "") => { results.push([cond ? "PASS" : "FAIL", name, info]); };
+
+// Стресс-копия страницы: изменённые данные только в тестовом файле (SEED в продукте не меняется).
+function stressPage() {
+  const html = fs.readFileSync(path.join(ROOT, "versions/v1-panel.html"), "utf8");
+  const m = html.match(/window\.SEED = (\{.*?\});\n<\/script>/s);
+  const seed = JSON.parse(m[1]);
+  const long = "Проверка предельной длины наименования позиции План-графика: ".padEnd(500, "длинное наименование работ, мероприятий ");
+  seed.items.find((i) => i.num === "2.1.3").name = long.slice(0, 500);
+  seed.items.find((i) => i.num === "3.5").owners = ["Электроприбор", "ФТИ им. Иоффе", "ИХС им. Гребенщикова"];
+  const f = path.join(OUT, "_stress.html");
+  fs.writeFileSync(f, html.replace(m[1], JSON.stringify(seed)));
+  return f;
+}
+
+(async () => {
+  const b = await chromium.launch({ proxy });
+  async function open(file, query, opts = {}) {
+    const ctx = await b.newContext({ viewport: opts.viewport || { width: 1440, height: 900 }, ignoreHTTPSErrors: true });
+    await useFontCache(ctx);
+    if (opts.init) await ctx.addInitScript(opts.init);
+    const page = await ctx.newPage();
+    const errs = [];
+    page.on("console", (m) => m.type() === "error" && errs.push(m.text()));
+    page.on("pageerror", (e) => errs.push("PAGEERROR " + e.message));
+    await page.goto(`file://${file}?${query}`, { waitUntil: "load" });
+    await page.waitForTimeout(700);
+    return { ctx, page, errs };
+  }
+  const V1 = path.join(ROOT, "versions/v1-panel.html");
+  const kpi = (page, id) => page.$eval(`[data-k="kpi-${id}"] .val`, (e) => e.textContent.trim());
+
+  // 1. Закрытие позиции отражается во всех режимах и KPI (критерий 3)
+  {
+    const { ctx, page, errs } = await open(V1, "today=2026-09-28");
+    const before = await kpi(page, "overdue");
+    await page.click('[data-k="r-2.1.7"]');
+    await page.click('[data-k="st-Закрыто"]');
+    const twoClicks = await page.isVisible('[data-k="cf-do"]');
+    await page.click('[data-k="cf-do"]');
+    await page.click('[data-k="p-close"]');
+    const after = await kpi(page, "overdue");
+    const closed = await kpi(page, "closed");
+    const chain = await page.$eval("#h-ch + .chain + p + p", (e) => e.textContent.trim());
+    await page.screenshot({ path: path.join(OUT, "01_close_2.1.7_summary.png") });
+    ok("Закрытие: форма реквизита на 2-м нажатии", twoClicks);
+    ok("Закрытие 2.1.7: KPI «Просрочено» 2 → 1", before === "2" && after === "1", `${before} → ${after}`);
+    ok("Закрытие 2.1.7: KPI «Закрыто» 11 из 47", closed.startsWith("11"), closed);
+    ok("Закрытие 2.1.7: окно цепочки пересчитано (угроза срыва снята, остаток 2 из 11)", chain.includes("осталось 2 из 11") && !chain.includes("срыв с"), chain);
+    await page.click('[data-k="tab-board"]');
+    const inClosedCol = await page.$$eval('.col[aria-label^="Закрыто"] .bcard', (els) => els.some((e) => e.textContent.includes("2.1.7")));
+    ok("Закрытие 2.1.7: карточка в колонке «Закрыто» доски", inClosedCol);
+    await page.click('[data-k="tab-gantt"]');
+    const badge = await page.$eval('tr[data-open="2.1.7"] .badge', (e) => e.textContent);
+    ok("Закрытие 2.1.7: статус в «Ганте»", badge.includes("Закрыто"), badge);
+    await page.click('[data-k="tab-focus"]');
+    const inOverdue = await page.$$eval('details.lane.overdue .frow', (els) => els.some((e) => e.textContent.includes("2.1.7")));
+    ok("Закрытие 2.1.7: ушла из горизонта «Просрочено»", !inOverdue);
+    // без реквизита
+    await page.click('[data-k="f-2.1.5"]');
+    await page.click('[data-k="st-Закрыто"]');
+    await page.fill('[data-k="cf-name"]', "");
+    const warn = await page.isVisible(".warnbox");
+    const btn = await page.$eval('[data-k="cf-do"]', (e) => e.textContent.trim());
+    await page.click('[data-k="cf-do"]');
+    const mark = await page.$eval(".panel .badge", (e) => e.textContent);
+    ok("Закрытие без реквизита: предупреждение и пометка", warn && btn === "Закрыть без реквизита" && mark.includes("без реквизита"), mark);
+    await page.screenshot({ path: path.join(OUT, "02_close_without_requisite_panel.png") });
+    // повестка
+    await page.keyboard.press("Escape");
+    await page.click('[data-k="agenda"]');
+    const agenda = await page.$eval("#ag-text", (e) => e.value);
+    ok("Повестка: формат «Наименование — комментарий (п. N)»", /— .+ \(п\. 2\.1\.\d\)/.test(agenda) && agenda.startsWith("Повестка оперативки"));
+    await page.screenshot({ path: path.join(OUT, "03_agenda.png") });
+    await page.keyboard.press("Escape");
+    ok("Сценарий 1: консоль без ошибок", !errs.length, errs.join("; "));
+    await ctx.close();
+  }
+
+  // 2. Клавиатура: переключатель режимов, фокус, Esc
+  {
+    const { ctx, page, errs } = await open(V1, "today=2026-09-28");
+    await page.keyboard.press("Tab"); // ссылка «Перейти к содержанию»
+    await page.keyboard.press("Tab");
+    const focusedTab = await page.evaluate(() => document.activeElement.getAttribute("role"));
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("Enter");
+    const view = await page.evaluate(() => new URL(location.href).searchParams.get("view"));
+    const outline = await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle + " " + getComputedStyle(document.activeElement).outlineWidth);
+    ok("Клавиатура: Tab → вкладка, → и Enter переключают режим", focusedTab === "tab" && view === "gantt", `${focusedTab}, ${view}`);
+    ok("Клавиатура: видимый фокус 2 px", outline.includes("solid") && outline.includes("2px"), outline);
+    await page.focus('tr[data-open="1.1"]');
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    const panelOpen = await page.isVisible(".panel:not([hidden])");
+    await page.keyboard.press("Escape");
+    const panelClosed = !(await page.isVisible(".panel:not([hidden])"));
+    ok("Клавиатура: строка «Ганта» — Enter открывает панель, Esc закрывает", panelOpen && panelClosed);
+    ok("Сценарий 2: консоль без ошибок", !errs.length, errs.join("; "));
+    await ctx.close();
+  }
+
+  // 3. Все позиции просрочены: ?today=2027-03-01
+  {
+    const { ctx, page, errs } = await open(V1, "today=2027-03-01");
+    const od = await kpi(page, "overdue");
+    await page.screenshot({ path: path.join(OUT, "04_today_2027-03-01_summary.png") });
+    await page.click('[data-k="tab-gantt"]');
+    await page.screenshot({ path: path.join(OUT, "05_today_2027-03-01_gantt.png") });
+    ok("?today=2027-03-01: просрочено 37 из 47, отрисовка без ошибок", od === "37" && !errs.length, `${od}; ${errs.join("; ")}`);
+    await ctx.close();
+  }
+
+  // 4. Все позиции закрыты (через правки) — пустое состояние «Топ-5»
+  {
+    const seed = JSON.parse(fs.readFileSync(path.join(ROOT, "data/seed_ymg_stage1.json"), "utf8"));
+    const edits = {};
+    seed.items.filter((i) => i.kind !== "section").forEach((i) => { edits[i.num] = { status: "Закрыто", closeDoc: { name: "Документ", letter: "", date: "2026-09-28" } }; });
+    const init = `try{localStorage.setItem("orbita.ymg-iim.s1.edits.v1", ${JSON.stringify(JSON.stringify(edits))});}catch(e){}`;
+    const { ctx, page, errs } = await open(V1, "today=2026-09-28", { init });
+    const txt = await page.textContent("#h-r + *");
+    const closed = await kpi(page, "closed");
+    await page.screenshot({ path: path.join(OUT, "06_all_closed_summary.png") });
+    ok("Все закрыты: «Рисков нет: все позиции закрыты», 47 из 47", txt.includes("Рисков нет: все позиции закрыты") && closed.startsWith("47"), closed);
+    ok("Сценарий 4: консоль без ошибок", !errs.length, errs.join("; "));
+    await ctx.close();
+  }
+
+  // 5. localStorage недоступен
+  {
+    const init = `Object.defineProperty(window, "localStorage", { get() { throw new DOMException("blocked", "SecurityError"); } });`;
+    const { ctx, page, errs } = await open(V1, "today=2026-09-28", { init });
+    const foot = await page.textContent("footer.foot");
+    await page.click('[data-k="r-2.1.7"]');
+    await page.click('[data-k="st-В работе"]');
+    const st = await page.$eval(".panel .badge", (e) => e.textContent);
+    await page.screenshot({ path: path.join(OUT, "07_no_localstorage.png") });
+    ok("Без localStorage: страница работает, правка применяется, есть уведомление", foot.includes("Отметки хранятся только до перезагрузки страницы") && st.includes("В работе") && !errs.length, errs.join("; "));
+    await ctx.close();
+  }
+
+  // 6. Параметры ссылки: exec, org, неверные значения
+  {
+    let { ctx, page, errs } = await open(V1, "view=exec&today=2026-09-28");
+    await page.click('[data-k="r-2.1.7"]');
+    const noEdit = !(await page.$(".stseg")) && !(await page.$("textarea[data-comment]"));
+    ok("?view=exec: сводка без элементов правки", noEdit && !errs.length);
+    await ctx.close();
+    ({ ctx, page, errs } = await open(V1, "org=fti&today=2026-09-28"));
+    const tabs = await page.$$eval('[role="tab"]', (e) => e.map((x) => x.textContent));
+    const rows = await page.$$eval("button.frow", (e) => e.map((x) => x.querySelector(".mono").textContent.trim()));
+    await page.screenshot({ path: path.join(OUT, "08_org_fti_focus.png") });
+    ok("?org=fti: без «Сводки», только 2.1.6 и 2.2.1", !tabs.includes("Сводка") && rows.sort().join(",") === "2.1.6,2.2.1" && !errs.length, rows.join(","));
+    await ctx.close();
+    ({ ctx, page, errs } = await open(V1, "today=2026-13-45&view=abc&org=xyz"));
+    const alerts = await page.$$eval(".banner.warn", (e) => e.length);
+    ok("Неверные параметры: три сообщения, страница работает", alerts === 3 && !errs.length, `${alerts}`);
+    await ctx.close();
+    ({ ctx, page, errs } = await open(V1, "today=2026-09-28&theme=dark&view=milestones"));
+    const th = await page.evaluate(() => document.documentElement.dataset.theme);
+    ok("?theme=dark и ?view=milestones применяются", th === "dark" && (await page.isVisible(".ms-canvas")) && !errs.length);
+    await ctx.close();
+  }
+
+  // 7. Стресс-данные: наименование 500 символов, три исполнителя, 10 позиций на 27.11
+  {
+    const f = stressPage();
+    for (const [w, h] of [[1440, 900], [390, 844]]) {
+      const { ctx, page, errs } = await open(f, "today=2026-09-28&view=board", { viewport: { width: w, height: h } });
+      const hs = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+      await page.screenshot({ path: path.join(OUT, `09_stress_board_${w}.png`) });
+      await page.click('[data-k="tab-gantt"]');
+      await page.screenshot({ path: path.join(OUT, `10_stress_gantt_${w}.png`) });
+      await page.click('[data-k="tab-milestones"]');
+      await page.click('[data-k="ms-' + Math.round(Date.UTC(2026, 10, 27) / 864e5) + '"]').catch(() => {});
+      await page.screenshot({ path: path.join(OUT, `11_stress_milestones_${w}.png`), fullPage: w === 1440 });
+      await page.click('[data-k="tab-focus"]');
+      await page.click('[data-k="f-2.1.3"]');
+      const title = await page.$eval("#p-title", (e) => e.scrollWidth <= e.clientWidth + 1);
+      await page.screenshot({ path: path.join(OUT, `12_stress_panel_500chars_${w}.png`) });
+      ok(`Стресс ${w}px: нет горизонтальной прокрутки страницы, заголовок 500 симв. переносится`, !hs && title && !errs.length, errs.join("; "));
+      await ctx.close();
+    }
+    fs.unlinkSync(f);
+  }
+
+  // 8. Фильтр без результатов
+  {
+    const { ctx, page, errs } = await open(V1, "today=2026-09-28&view=gantt");
+    await page.fill('[data-k="f-search"]', "нет такой позиции");
+    const empty = await page.textContent(".gwrap");
+    await page.screenshot({ path: path.join(OUT, "13_empty_filter.png") });
+    ok("Фильтр без результатов: причина и следующий шаг", empty.includes("Нет позиций, соответствующих фильтру") && !errs.length);
+    await ctx.close();
+  }
+
+  await b.close();
+  const pad = (s, n) => (s + " ".repeat(n)).slice(0, n);
+  results.forEach(([r, n, i]) => console.log(`${r}  ${pad(n, 88)} ${i}`));
+  const fails = results.filter((r) => r[0] === "FAIL").length;
+  console.log(`\nИтого: ${results.length - fails} PASS, ${fails} FAIL`);
+  fs.writeFileSync(path.join(OUT, "RESULTS.txt"), results.map((r) => r.join(" | ")).join("\n") + `\nИтого: ${results.length - fails} PASS, ${fails} FAIL\n`);
+  process.exit(fails ? 1 : 0);
+})();

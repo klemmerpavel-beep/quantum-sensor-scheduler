@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Орбита · выбор версии</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root { color-scheme: light; --surface: #FFFFFF; --surface-2: #F6F7F9; --border: #DDE1E7; --text-1: #14171C; --text-2: #434A55; --accent: #1D4ED8; --accent-soft: #E8EEFD; --on-accent: #FFFFFF; --radius-2: 8px; --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06); }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) { color-scheme: dark; --surface: #111318; --surface-2: #171A21; --border: #2B303B; --text-1: #E9ECF1; --text-2: #B7BECA; --accent: #86A6FF; --accent-soft: #1C2849; --on-accent: #0B1020; } }
+:root[data-theme="dark"] { color-scheme: dark; --surface: #111318; --surface-2: #171A21; --border: #2B303B; --text-1: #E9ECF1; --text-2: #B7BECA; --accent: #86A6FF; --accent-soft: #1C2849; --on-accent: #0B1020; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface-2); color: var(--text-1); font: 400 14px/1.5 "Inter", system-ui, sans-serif; }
+main { max-width: 1280px; margin: 0 auto; padding: 32px 16px 48px; }
+h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.2; font-weight: 600; }
+.lead { margin: 0 0 24px; color: var(--text-2); max-width: 880px; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+article { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2); box-shadow: var(--shadow-1); display: flex; flex-direction: column; overflow: hidden; }
+article img { display: block; width: 100%; aspect-ratio: 1440 / 900; object-fit: cover; object-position: top left; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.body { padding: 16px; display: grid; gap: 8px; flex: 1; align-content: start; }
+h2 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.2; }
+.tag { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--text-2); }
+ul { margin: 0; padding-left: 18px; color: var(--text-2); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 16px; }
+a.btn { display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: var(--radius-2); border: 1px solid var(--border); color: var(--text-1); text-decoration: none; font-weight: 500; }
+a.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+a.btn:hover { border-color: var(--text-2); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.note { margin-top: 24px; color: var(--text-2); font-size: 13px; }
+@media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Орбита · ЯМГ-ИИМ · Этап 1 — выбор версии для демонстрации</h1>
+  <p class="lead">Три версии работают на одних данных План-графика и одном своде правил расчёта. Режимы «Гант», «Фокус», «Доска», «Вехи», боковая панель позиции и повестка оперативки во всех версиях одинаковы. Версии различаются первым экраном, который руководство видит по ссылке. Выбранная версия становится основной страницей <code>index.html</code>.</p>
+  <div class="grid">
+    <article>
+      <img src="../screenshots/v1-panel_summary_1440_light.png" alt="Первый экран версии В1: плитки показателей, полоса сроков этапа, критическая цепочка, топ-5 рисков, прогресс разделов">
+      <div class="body"><span class="tag">В1 · versions/v1-panel.html</span><h2>«Панель»</h2>
+        <ul><li>Ответ «где проект и что горит» за 10 секунд без прокрутки.</li><li>Показатели сравниваются с планом на дату, а не с долей прошедшего времени.</li><li>Цепочка ЛО — нитка звеньев с окнами «план → прогноз».</li><li>Рекомендована советом для руководства (Р-44).</li></ul></div>
+      <div class="actions"><a class="btn primary" href="v1-panel.html?today=2026-09-28">Открыть В1</a><a class="btn" href="v1-panel.html?view=exec&amp;today=2026-09-28">Для руководства</a></div>
+    </article>
+    <article>
+      <img src="../screenshots/v2-registry_gantt_1440_light.png" alt="Первый экран версии В2: полоса из пяти показателей и Гант-реестр позиций План-графика">
+      <div class="body"><span class="tag">В2 · versions/v2-registry.html</span><h2>«Реестр»</h2>
+        <ul><li>Первый экран — Гант-реестр, привычный по MS Project и подписанному План-графику.</li><li>Сверху закреплена полоса из пяти показателей.</li><li>Видна концентрация сроков 30.09 и 27.11.</li><li>Сильна, если аудитория доверяет «своим строкам» больше, чем плиткам.</li></ul></div>
+      <div class="actions"><a class="btn primary" href="v2-registry.html?today=2026-09-28">Открыть В2</a></div>
+    </article>
+    <article>
+      <img src="../screenshots/v3-path_summary_1440_light.png" alt="Первый экран версии В3: отсчёт до демонстрации ЛО и восемь звеньев критической цепочки">
+      <div class="body"><span class="tag">В3 · versions/v3-path.html</span><h2>«Путь к ЛО»</h2>
+        <ul><li>Разговор о главном результате этапа — демонстрации ЛО 30.11.2026.</li><li>Восемь звеньев цепочки карточками: срок, прогноз «не ранее», статус.</li><li>Топ-5 рисков и ключевые показатели — рядом.</li><li>Сильна для обсуждения рисков срыва демонстрации.</li></ul></div>
+      <div class="actions"><a class="btn primary" href="v3-path.html?today=2026-09-28">Открыть В3</a></div>
+    </article>
+  </div>
+  <p class="note">Во всех ссылках дата «сегодня» зафиксирована параметром <code>?today=2026-09-28</code> — картина совпадает с редакцией План-графика. Без параметра признаки считаются от текущей даты. Выборка исполнителя: <code>?org=elektropribor</code>, <code>?org=fti</code>, <code>?org=ihs</code>. Тёмная тема: <code>?theme=dark</code>.</p>
+</main>
+</body>
+</html>

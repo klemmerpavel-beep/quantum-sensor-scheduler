@@ -1,0 +1,2 @@
+shots: 28
+console: no errors
