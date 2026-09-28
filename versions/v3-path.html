@@ -1,0 +1,1485 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Орбита · ЯМГ-ИИМ · Этап 1</title>
+<meta name="description" content="Онлайн-планер статуса реализации ОКР «ЯМГ-ИИМ», этап 1: сводка, Гант, фокус периода, доска статусов, хронология вех.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%231D4ED8' stroke-width='3'/%3E%3Ccircle cx='27' cy='16' r='3' fill='%231D4ED8'/%3E%3C/svg%3E">
+<style>
+/* «Орбита» — стили. Все значения — из docs/TOKENS.md (редакция 0.2.0, Р-56). */
+:root {
+  color-scheme: light;
+  --surface: #FFFFFF; --surface-2: #F6F7F9; --surface-3: #EEF0F3;
+  --border: #DDE1E7; --border-strong: #7A8391;
+  --text-1: #14171C; --text-2: #434A55; --text-3: #59616E;
+  --accent: #1D4ED8; --accent-soft: #E8EEFD; --on-accent: #FFFFFF;
+  --st-closed: #1A7F4B; --st-progress: #7D8C06; --st-action: #A86E00; --st-overdue: #C92A32; --st-future: #78818E;
+  --b-closed-bg: #E3F4EA; --b-closed-fg: #0F6B38; --b-progress-bg: #EDF6E1; --b-progress-fg: #3A6912;
+  --b-action-bg: #FFF0DD; --b-action-fg: #8A4700; --b-overdue-bg: #FDE8E9; --b-overdue-fg: #AE1C25;
+  --b-future-bg: #EEF0F3; --b-future-fg: #454C57;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --fs-12: 12px; --fs-13: 13px; --fs-14: 14px; --fs-16: 16px; --fs-18: 18px; --fs-22: 22px; --fs-28: 28px;
+  --lh-tight: 1.2; --lh-snug: 1.35; --lh-body: 1.5;
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 16px; --sp-4: 24px; --sp-5: 32px; --sp-6: 48px;
+  --row: 40px; --row-gantt: 28px; --header-h: 56px; --axis-h: 40px; --panel-w: 480px; --hit: 40px; --page-w: 1200px;
+  --radius-1: 4px; --radius-2: 8px; --radius-3: 12px;
+  --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-2: 0 8px 24px rgba(16, 24, 40, 0.16);
+  --derived-alpha: 0.35;
+  --dur: 120ms;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface: #171A21; --surface-2: #111318; --surface-3: #1F232C; --border: #2B303B; --border-strong: #6B7482;
+    --text-1: #E9ECF1; --text-2: #B7BECA; --text-3: #9AA2AF; --accent: #86A6FF; --accent-soft: #1C2849; --on-accent: #0B1020;
+    --st-closed: #2E9F60; --st-progress: #B9CC45; --st-action: #E8A33A; --st-overdue: #F0616A; --st-future: #788190;
+    --b-closed-bg: #12301F; --b-closed-fg: #86DDA9; --b-progress-bg: #1D2B12; --b-progress-fg: #B8DE8F;
+    --b-action-bg: #3A2410; --b-action-fg: #FFC27A; --b-overdue-bg: #3D171A; --b-overdue-fg: #FFA0A6;
+    --b-future-bg: #242833; --b-future-fg: #BAC1CC;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4); --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.5);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #171A21; --surface-2: #111318; --surface-3: #1F232C; --border: #2B303B; --border-strong: #6B7482;
+  --text-1: #E9ECF1; --text-2: #B7BECA; --text-3: #9AA2AF; --accent: #86A6FF; --accent-soft: #1C2849; --on-accent: #0B1020;
+  --st-closed: #2E9F60; --st-progress: #B9CC45; --st-action: #E8A33A; --st-overdue: #F0616A; --st-future: #788190;
+  --b-closed-bg: #12301F; --b-closed-fg: #86DDA9; --b-progress-bg: #1D2B12; --b-progress-fg: #B8DE8F;
+  --b-action-bg: #3A2410; --b-action-fg: #FFC27A; --b-overdue-bg: #3D171A; --b-overdue-fg: #FFA0A6;
+  --b-future-bg: #242833; --b-future-fg: #BAC1CC;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4); --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+@media (prefers-reduced-motion: reduce) { :root { --dur: 0ms; } }
+
+/* ── Основа */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--surface-2); color: var(--text-1);
+  font: 400 var(--fs-14)/var(--lh-snug) var(--font-ui);
+  font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+h1, h2, h3, p { margin: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.muted { color: var(--text-2); }
+.note { color: var(--text-3); font-size: var(--fs-13); line-height: var(--lh-body); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ico { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.skip { position: absolute; left: var(--sp-2); top: -64px; z-index: 50; background: var(--accent); color: var(--on-accent); padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-2); }
+.skip:focus { top: var(--sp-2); }
+.spacer { flex: 1; }
+.empty-line { color: var(--text-2); padding: var(--sp-2) 0; }
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+main { flex: 1; min-width: 0; }
+main:focus { outline: none; }
+
+/* ── Шапка */
+header.top {
+  position: sticky; top: 0; z-index: 20; height: var(--header-h);
+  display: flex; align-items: stretch; gap: var(--sp-4); padding: 0 var(--sp-4);
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.logo { width: 24px; height: 24px; border-radius: 50%; border: 3px solid var(--accent); position: relative; flex: none; }
+.logo::after { content: ""; position: absolute; right: -6px; top: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.bt { display: grid; line-height: var(--lh-tight); }
+.bt b { font-size: var(--fs-16); font-weight: 600; }
+.bt .sub { font-size: var(--fs-12); color: var(--text-2); }
+.tabs { display: flex; align-items: stretch; gap: var(--sp-1); }
+.tab {
+  position: relative; padding: 0 var(--sp-3); border: 0; background: transparent;
+  color: var(--text-2); font-weight: 500; white-space: nowrap; transition: color var(--dur);
+}
+.tab::after { content: ""; position: absolute; left: var(--sp-3); right: var(--sp-3); bottom: -1px; height: 2px; border-radius: 2px 2px 0 0; background: transparent; }
+.tab:hover { color: var(--text-1); }
+.tab[aria-selected="true"] { color: var(--accent); font-weight: 600; }
+.tab[aria-selected="true"]::after { background: var(--accent); }
+.tab:focus-visible { outline-offset: -2px; }
+.today { align-self: center; white-space: nowrap; color: var(--text-2); }
+.today b { color: var(--text-1); font-weight: 500; }
+.iconbtn {
+  align-self: center; width: 36px; height: 36px; display: inline-grid; place-items: center; border-radius: var(--radius-2);
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-2); transition: border-color var(--dur), background-color var(--dur);
+}
+.iconbtn:hover { border-color: var(--border-strong); color: var(--text-1); }
+.banner { display: flex; gap: var(--sp-2); align-items: center; padding: var(--sp-2) var(--sp-4); background: var(--accent-soft); color: var(--text-1); border-bottom: 1px solid var(--border); }
+.banner.warn { background: var(--b-action-bg); color: var(--b-action-fg); }
+
+/* ── Панель инструментов */
+.toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3);
+  padding: 10px var(--sp-4); background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.field { display: inline-flex; align-items: center; gap: var(--sp-2); color: var(--text-2); position: relative; }
+.field select, .field input {
+  height: 36px; border: 1px solid var(--border); border-radius: var(--radius-2); background: var(--surface); padding: 0 var(--sp-3);
+  transition: border-color var(--dur);
+}
+.field select:hover, .field input:hover { border-color: var(--border-strong); }
+.field.search .ico { position: absolute; left: 12px; color: var(--text-3); pointer-events: none; }
+.field.search input { width: 240px; padding-left: 36px; }
+.seg { display: inline-flex; gap: 2px; padding: 2px; background: var(--surface-3); border-radius: var(--radius-2); }
+.seg button { height: 32px; padding: 0 var(--sp-3); border: 0; border-radius: 6px; background: transparent; color: var(--text-2); font-weight: 500; transition: background-color var(--dur); }
+.seg button:hover { color: var(--text-1); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text-1); box-shadow: var(--shadow-1); }
+.btn {
+  height: 36px; padding: 0 var(--sp-3); border-radius: var(--radius-2); border: 1px solid var(--border); background: var(--surface);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2); font-weight: 500; white-space: nowrap;
+  transition: border-color var(--dur), background-color var(--dur);
+}
+.btn:hover { border-color: var(--border-strong); }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.btn.primary:hover { border-color: var(--text-1); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
+.btn.ghost:hover { background: var(--surface-3); color: var(--text-1); }
+.btn.link { height: auto; min-height: 28px; border-color: transparent; background: transparent; color: var(--accent); padding: 0; font-weight: 500; }
+.btn.link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── Статус: точка + слово [Р-16, Р-51, Р-56] */
+.st { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; white-space: nowrap; color: var(--text-1); max-width: 100%; }
+.st > i { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--st-future); }
+.st-closed > i { background: var(--st-closed); }
+.st-progress > i { background: var(--st-progress); }
+.st-action > i { background: var(--st-action); }
+.st-future > i { background: transparent; border: 2px solid var(--st-future); }
+.st-future { color: var(--text-2); }
+.st-note { font-weight: 400; color: var(--text-3); font-size: var(--fs-12); margin-left: 2px; white-space: nowrap; }
+.due-t { color: var(--text-2); white-space: nowrap; }
+.due-t.bad, .bad-t { color: var(--b-overdue-fg); font-weight: 500; }
+.due-t.warn { color: var(--b-action-fg); font-weight: 500; }
+.tag { display: inline-flex; align-items: center; height: 22px; padding: 0 var(--sp-2); border-radius: 11px; background: var(--accent-soft); color: var(--accent); font-size: var(--fs-12); font-weight: 500; white-space: nowrap; }
+.pill { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 12px; font-size: var(--fs-12); font-weight: 600; white-space: nowrap; }
+.pill.eroding { background: var(--b-action-bg); color: var(--b-action-fg); }
+.pill.breach { background: var(--b-overdue-bg); color: var(--b-overdue-fg); }
+.pill.ok, .pill.done { background: var(--b-closed-bg); color: var(--b-closed-fg); }
+
+/* ── Страница и карточки */
+.page { width: 100%; max-width: var(--page-w); margin: 0 auto; padding: var(--sp-5) var(--sp-4) var(--sp-6); display: grid; gap: var(--sp-4); align-content: start; }
+.page.narrow { max-width: 1160px; gap: var(--sp-3); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-3); box-shadow: var(--shadow-1); padding: var(--sp-4); min-width: 0; }
+.card > h2 { margin: 0 0 var(--sp-3); font-size: var(--fs-16); font-weight: 600; line-height: var(--lh-tight); display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-3); }
+.card > h2 .note { font-weight: 400; }
+.cols { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-4); align-items: start; }
+.stack { display: grid; gap: var(--sp-4); min-width: 0; }
+
+/* Заголовок сводки */
+.hero { display: grid; gap: var(--sp-2); padding: 0 var(--sp-1); }
+.hero h1 { font-size: var(--fs-22); font-weight: 600; line-height: var(--lh-tight); }
+.hero p { font-size: var(--fs-16); line-height: var(--lh-body); color: var(--text-2); max-width: 880px; }
+
+/* Показатели */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); }
+.kpis.col { grid-template-columns: minmax(0, 1fr); align-content: start; }
+.kpi {
+  text-align: left; display: grid; gap: var(--sp-1); align-content: start; padding: 20px var(--sp-4);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-3); box-shadow: var(--shadow-1);
+  transition: border-color var(--dur);
+}
+.kpi:hover { border-color: var(--border-strong); }
+.kpi .lbl { color: var(--text-2); font-size: var(--fs-13); font-weight: 500; }
+.kpi .val { font-size: var(--fs-28); font-weight: 600; line-height: var(--lh-tight); margin-top: var(--sp-1); }
+.kpi .val small { font-size: var(--fs-14); font-weight: 500; color: var(--text-2); }
+.kpi .sub { font-size: var(--fs-13); color: var(--text-3); }
+.kpi.bad .val { color: var(--b-overdue-fg); }
+
+/* Требует внимания */
+.alist { list-style: none; margin: 0 calc(-1 * var(--sp-3)); padding: 0; }
+.alist li + li { border-top: 1px solid var(--border); }
+.aitem {
+  width: 100%; display: grid; gap: 6px; text-align: left; padding: 14px var(--sp-3); border: 0; background: transparent; border-radius: var(--radius-2);
+  transition: background-color var(--dur);
+}
+.aitem:hover { background: var(--surface-2); }
+.a-t { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-2); font-size: var(--fs-14); font-weight: 500; line-height: var(--lh-snug); }
+.a-m { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--sp-2); font-size: var(--fs-13); color: var(--text-2); }
+.sep { color: var(--border-strong); }
+
+/* Ближайшие вехи */
+.mlist2 { list-style: none; margin: 0; padding: 0; }
+.mlist2 li { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: var(--sp-3); align-items: baseline; padding: 10px 0; }
+.mlist2 li + li { border-top: 1px solid var(--border); }
+.mlist2 .d { color: var(--text-2); }
+.mlist2 .t { font-weight: 500; }
+.mlist2 .r { color: var(--text-3); font-size: var(--fs-13); white-space: nowrap; }
+
+/* Ход работ по разделам */
+.slist { list-style: none; margin: 0 calc(-1 * var(--sp-2)); padding: 0; }
+.srow {
+  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-2) var(--sp-3); align-items: baseline;
+  padding: 10px var(--sp-2); text-align: left; border: 0; background: transparent; border-radius: var(--radius-2); transition: background-color var(--dur);
+}
+.srow:hover { background: var(--surface-2); }
+.srow .t { font-weight: 500; }
+.srow .n { color: var(--text-2); font-size: var(--fs-13); white-space: nowrap; }
+.srow .prog { grid-column: 1 / -1; }
+.prog { display: block; height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; }
+.prog i { display: block; height: 100%; background: var(--st-closed); border-radius: 3px; }
+
+/* Путь к демонстрации */
+.path { list-style: none; margin: var(--sp-2) 0 0; padding: 0; display: flex; }
+.step { position: relative; flex: 1 1 0; min-width: 0; display: grid; justify-items: center; align-content: start; gap: 6px; text-align: center; padding: 0 var(--sp-1); }
+.step .dot {
+  position: relative; z-index: 1; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; padding: 0;
+  border: 2px solid var(--border-strong); background: var(--surface); color: var(--text-2); font-weight: 600; font-size: var(--fs-13);
+  transition: border-color var(--dur);
+}
+.step .dot:hover { border-color: var(--accent); }
+.step.done .dot { background: var(--st-closed); border-color: var(--st-closed); color: var(--surface); }
+.step.late .dot { background: var(--st-overdue); border-color: var(--st-overdue); color: var(--surface); }
+.step.soon .dot { border-color: var(--st-action); color: var(--b-action-fg); }
+.step .lbl { margin-top: var(--sp-1); font-size: var(--fs-13); font-weight: 500; line-height: var(--lh-snug); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.step .d { font-size: var(--fs-12); color: var(--text-2); }
+.step.late .d { color: var(--b-overdue-fg); font-weight: 500; }
+.step.soon .d { color: var(--b-action-fg); }
+.step .link { position: absolute; top: 15px; right: calc(50% + 20px); left: calc(-50% + 20px); height: 2px; background: var(--border-strong); border-radius: 1px; }
+.link.done { background: var(--st-closed); }
+.link.eroding { background: var(--st-action); height: 4px; top: 14px; }
+.link.breach { background: var(--st-overdue); height: 4px; top: 14px; }
+.link.overlap { background: repeating-linear-gradient(90deg, var(--border-strong) 0 4px, transparent 4px 8px); }
+.path.big .step .lbl { font-size: var(--fs-14); }
+.path.big .step .dot { width: 40px; height: 40px; font-size: var(--fs-14); }
+.path.big .step .link { top: 19px; right: calc(50% + 24px); left: calc(-50% + 24px); }
+.path.big .link.eroding, .path.big .link.breach { top: 18px; }
+.pnotes { list-style: none; margin: var(--sp-4) 0 0; padding: var(--sp-3) 0 0; border-top: 1px solid var(--border); display: grid; gap: 6px; color: var(--text-2); font-size: var(--fs-13); line-height: var(--lh-body); }
+.pnotes li { position: relative; padding-left: var(--sp-3); }
+.pnotes li::before { content: ""; position: absolute; left: 2px; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: var(--border-strong); }
+
+/* ── График работ (Гант) */
+.app > main.v-gantt, .app > main.v-board { flex: none; display: flex; flex-direction: column; height: calc(100vh - var(--header-h)); }
+.gwrap { flex: 1; min-height: 0; overflow: auto; position: relative; background: var(--surface); }
+table.gantt { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: 100%; min-width: 1180px; font-size: var(--fs-13); }
+.gantt th, .gantt td { height: var(--row-gantt); padding: 0 var(--sp-2); border-bottom: 1px solid var(--surface-3); text-align: left; vertical-align: middle; font-weight: 400; line-height: var(--lh-tight); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gantt th:first-child, .gantt td:first-child { padding-left: var(--sp-4); }
+.gantt thead th { position: sticky; top: 0; z-index: 3; height: var(--axis-h); background: var(--surface); color: var(--text-3); font-size: var(--fs-12); font-weight: 500; border-bottom: 1px solid var(--border); }
+.gantt col.c-name { width: 300px; } .gantt col.c-own { width: 128px; } .gantt col.c-due { width: 180px; } .gantt col.c-st { width: 156px; }
+.gantt tbody tr { cursor: pointer; }
+.gantt tbody tr:hover td { background: var(--surface-2); }
+.gantt tr.sec td { background: var(--surface-2); font-weight: 600; border-bottom-color: var(--border); }
+.gantt tr.grp td:first-child { font-weight: 500; }
+.gantt tr.sel td { background: var(--accent-soft); }
+.gantt tr:focus-visible { outline-offset: -2px; }
+.gantt td.own { color: var(--text-2); }
+.gantt td.due .due-t { margin-left: var(--sp-2); font-size: var(--fs-12); }
+.gantt .nm { display: flex; align-items: center; gap: var(--sp-1); min-width: 0; }
+.gantt .nm .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gantt .nm.lv2 { padding-left: 0; } .gantt .nm.lv3 { padding-left: 20px; } .gantt .nm.lv4 { padding-left: 40px; } .gantt .nm.lv5 { padding-left: 60px; }
+.gantt .cnt { margin-left: auto; padding-left: var(--sp-2); color: var(--text-3); font-size: var(--fs-12); font-weight: 400; }
+.chev { width: 20px; height: 20px; flex: none; display: inline-grid; place-items: center; border: 0; background: transparent; color: var(--text-3); padding: 0; border-radius: var(--radius-1); }
+.chev:hover { color: var(--text-1); background: var(--surface-3); }
+.chev .ico { transition: transform var(--dur); }
+.chev[aria-expanded="false"] .ico { transform: rotate(-90deg); }
+.chev-sp { width: 20px; flex: none; }
+.tlcell { position: relative; padding: 0 !important; }
+.tlin { position: absolute; inset: 0; }
+.axis { position: relative; height: 100%; }
+.axis .m { position: absolute; top: 4px; font-size: var(--fs-12); color: var(--text-2); white-space: nowrap; padding-left: 6px; border-left: 1px solid var(--border); height: 16px; line-height: 16px; }
+.grid-bg { position: absolute; inset: 0; pointer-events: none; }
+.grid-bg .gm { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--surface-3); }
+.todayline { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--accent); z-index: 2; pointer-events: none; }
+.axis .todaylbl { position: absolute; top: 20px; transform: translateX(calc(-100% - 4px)); font-size: var(--fs-12); font-weight: 600; color: var(--accent); white-space: nowrap; line-height: 16px; background: var(--surface); padding: 0 2px; }
+.axis .msd { position: absolute; bottom: 5px; width: 9px; height: 9px; margin-left: -4px; transform: rotate(45deg); background: var(--surface); border: 2px solid var(--text-2); }
+.bar { position: absolute; top: 50%; height: 12px; margin-top: -6px; border-radius: 3px; min-width: 4px; }
+.bar.closed { background: var(--st-closed); }
+.bar.progress { background: var(--st-progress); }
+.bar.action { background: var(--st-action); }
+.bar.future { background: var(--surface-3); border: 1px solid var(--border-strong); }
+.bar .der { position: absolute; left: 0; top: 0; bottom: 0; background: var(--surface); opacity: calc(1 - var(--derived-alpha)); border-radius: 3px 0 0 3px; }
+.bar.future .der { display: none; }
+.bar.chain { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+.bar .ok { position: absolute; right: -18px; top: -2px; color: var(--st-closed); }
+.bar .ok .ico { width: 14px; height: 14px; }
+.bar.group { height: 6px; margin-top: -3px; background: var(--border-strong); opacity: 1; }
+.bar.group.closed { background: var(--st-closed); }
+.bar.group .gp { position: absolute; left: 0; top: 0; bottom: 0; background: var(--st-closed); border-radius: 3px; }
+.secspan { position: absolute; top: 50%; height: 2px; margin-top: -1px; background: var(--border-strong); }
+.od { position: absolute; top: 50%; height: 12px; margin-top: -6px; background: repeating-linear-gradient(45deg, var(--st-overdue) 0 2px, transparent 2px 6px); border: 1px solid var(--st-overdue); border-radius: 0 3px 3px 0; }
+.ctl { position: absolute; top: 50%; width: 2px; height: 20px; margin-top: -10px; background: var(--text-1); }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-4); font-size: var(--fs-12); color: var(--text-2); }
+.gleg { flex: none; min-height: 40px; padding: var(--sp-2) var(--sp-4); background: var(--surface); border-top: 1px solid var(--border); }
+.lg { display: inline-block; width: 16px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+.lg.closed { background: var(--st-closed); } .lg.progress { background: var(--st-progress); } .lg.action { background: var(--st-action); }
+.lg.future { background: var(--surface-3); border: 1px solid var(--border-strong); }
+.lg.overdue { background: repeating-linear-gradient(45deg, var(--st-overdue) 0 2px, transparent 2px 6px); border: 1px solid var(--st-overdue); }
+.lg.der { background: var(--st-progress); opacity: var(--derived-alpha); }
+.lg.ctl { position: static; margin: 0 6px 0 0; width: 2px; height: 14px; background: var(--text-1); vertical-align: -3px; }
+.lg.chain { background: var(--surface-3); box-shadow: 0 0 0 2px var(--accent); }
+.gstrip { flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.gstrip .kpi { padding: 10px var(--sp-3); box-shadow: none; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: var(--sp-3); row-gap: 0; }
+.gstrip .kpi .lbl { grid-column: 1 / -1; }
+.gstrip .kpi .val { font-size: var(--fs-18); margin: 0; }
+.gstrip .kpi .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.empty { padding: var(--sp-5) var(--sp-4); color: var(--text-2); display: grid; gap: var(--sp-3); justify-items: start; }
+
+/* Мобильный список «Графика работ» */
+.mlist { display: none; }
+.mcard {
+  display: grid; gap: 6px; width: 100%; text-align: left; padding: 12px var(--sp-3); min-height: var(--hit);
+  border: 0; border-bottom: 1px solid var(--border); background: var(--surface);
+}
+.mcard .t { font-weight: 500; }
+.mcard .r { display: flex; gap: var(--sp-1) var(--sp-3); flex-wrap: wrap; align-items: center; font-size: var(--fs-13); color: var(--text-2); }
+.mhead { position: sticky; top: 0; background: var(--surface-2); padding: 10px var(--sp-3); font-weight: 600; border-bottom: 1px solid var(--border); z-index: 1; }
+
+/* ── Ближайшие сроки */
+.lane { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-3); box-shadow: var(--shadow-1); overflow: hidden; }
+.lane > summary {
+  display: flex; align-items: center; gap: var(--sp-2); padding: 0 var(--sp-4); min-height: 52px; list-style: none; cursor: pointer;
+  font-size: var(--fs-16); font-weight: 600;
+}
+.lane > summary::-webkit-details-marker { display: none; }
+.lane > summary .chev { color: var(--text-3); }
+.lane[open] > summary { border-bottom: 1px solid var(--border); }
+.lane:not([open]) > summary .chev .ico { transform: rotate(-90deg); }
+.lane .cnt { display: inline-grid; place-items: center; min-width: 24px; height: 22px; padding: 0 var(--sp-2); border-radius: 11px; background: var(--surface-3); color: var(--text-2); font-size: var(--fs-12); font-weight: 600; }
+.lane.overdue .cnt { background: var(--b-overdue-bg); color: var(--b-overdue-fg); }
+.lane.h14 .cnt { background: var(--b-action-bg); color: var(--b-action-fg); }
+.lane .empty-line { padding: var(--sp-3) var(--sp-4); }
+.frow {
+  display: grid; grid-template-columns: minmax(0, 1fr) 144px 88px 156px 196px; gap: var(--sp-3); align-items: center;
+  min-height: 52px; padding: var(--sp-2) var(--sp-4); width: 100%; text-align: left; border: 0; background: transparent;
+  transition: background-color var(--dur);
+}
+.frow + .frow { border-top: 1px solid var(--surface-3); }
+button.frow:hover { background: var(--surface-2); }
+.frow .t { display: grid; gap: 2px; font-weight: 500; }
+.frow .t .st-note { margin: 0; white-space: normal; }
+.frow .own { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); font-size: var(--fs-13); }
+.frow .d { color: var(--text-2); }
+.frow .dw { font-size: var(--fs-13); }
+.frow .stc { display: flex; flex-wrap: wrap; gap: 2px var(--sp-2); align-items: center; font-size: var(--fs-13); }
+.frow .stc .due-t { white-space: normal; font-size: var(--fs-12); }
+
+/* ── Статусы (доска) */
+.board { flex: 1; min-height: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(176px, 1fr); gap: 12px; padding: var(--sp-4); overflow-x: auto; }
+.board .col { display: flex; flex-direction: column; min-height: 0; background: var(--surface-3); border-radius: var(--radius-3); }
+.board .col > h3 { margin: 0; padding: 14px var(--sp-3) var(--sp-2); display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-13); font-weight: 600; }
+.board .col > h3 .st { min-width: 0; white-space: normal; }
+.board .col > h3 .cnt { margin-left: auto; color: var(--text-2); font-weight: 500; }
+.board .col ul { list-style: none; margin: 0; padding: var(--sp-1) var(--sp-2) var(--sp-2); display: grid; gap: var(--sp-2); overflow-y: auto; align-content: start; }
+.board .col .empty-line { padding: var(--sp-1) var(--sp-2); font-size: var(--fs-13); }
+.bcard {
+  display: grid; gap: 6px; width: 100%; text-align: left; padding: 12px; border-radius: var(--radius-2);
+  border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow-1); transition: border-color var(--dur);
+}
+.bcard:hover { border-color: var(--border-strong); }
+.bcard .t { font-weight: 500; font-size: var(--fs-13); line-height: var(--lh-snug); }
+.bcard .o { font-size: var(--fs-12); color: var(--text-2); }
+.bcard .r { display: flex; gap: var(--sp-1) var(--sp-2); flex-wrap: wrap; align-items: center; font-size: var(--fs-12); color: var(--text-2); }
+.bcard .st-note { margin: 0; white-space: normal; }
+.bcard.late { box-shadow: inset 3px 0 0 var(--st-overdue), var(--shadow-1); }
+
+/* ── Вехи */
+.list { list-style: none; margin: 0; padding: 0; }
+.lrow {
+  display: grid; grid-template-columns: minmax(0, 1fr) 200px 260px; align-items: center; gap: var(--sp-3);
+  min-height: var(--row); padding: var(--sp-2) var(--sp-2); width: 100%; text-align: left; background: transparent; border: 0; border-radius: var(--radius-2);
+  transition: background-color var(--dur);
+}
+.list li + li .lrow { border-top: 1px solid var(--surface-3); }
+button.lrow:hover { background: var(--surface-2); }
+.lrow .t { font-weight: 500; }
+.lrow .own { color: var(--text-2); font-size: var(--fs-13); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lrow .stc { display: flex; gap: var(--sp-2); align-items: center; font-size: var(--fs-13); }
+.lrow[aria-pressed="true"] { background: var(--accent-soft); }
+.ms-scroll { overflow-x: auto; }
+.ms-canvas { position: relative; height: 240px; min-width: 1060px; }
+.ms-axis { position: absolute; left: 0; right: 0; top: 180px; height: 2px; background: var(--border-strong); }
+.ms-d { position: absolute; top: 174px; width: 14px; height: 14px; margin-left: -7px; transform: rotate(45deg); background: var(--surface); border: 2px solid var(--text-1); z-index: 1; }
+.ms-d.past { background: var(--text-1); }
+.ms-dn { position: absolute; font-size: var(--fs-12); font-weight: 500; transform: translateX(-50%); }
+.ms-cl { position: absolute; bottom: 60px; width: 8px; margin-left: -4px; display: flex; flex-direction: column-reverse; gap: 2px; padding: 0; border: 0; background: transparent; border-radius: 2px; }
+.ms-cl i { display: block; height: 8px; border-radius: 2px; }
+.ms-cl i.closed { background: var(--st-closed); } .ms-cl i.progress { background: var(--st-progress); } .ms-cl i.action { background: var(--st-action); }
+.ms-cl i.future { background: var(--surface-3); border: 1px solid var(--border-strong); } .ms-cl i.overdue { background: var(--st-overdue); }
+.ms-cl[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 3px; }
+.ms-cn { position: absolute; font-size: var(--fs-12); font-weight: 600; transform: translateX(-50%); white-space: nowrap; color: var(--text-2); }
+.ms-today { position: absolute; top: 0; bottom: 40px; width: 2px; background: var(--accent); }
+.ms-today span { position: absolute; top: 0; left: 6px; font-size: var(--fs-12); font-weight: 600; color: var(--accent); white-space: nowrap; }
+.ms-month { position: absolute; top: 192px; font-size: var(--fs-12); color: var(--text-2); border-left: 1px solid var(--border); padding-left: 6px; height: 16px; }
+.ms-legend { list-style: none; margin: var(--sp-4) 0 0; padding: var(--sp-3) 0 0; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px var(--sp-5); }
+.ms-legend li { display: grid; grid-template-columns: 24px 96px minmax(0, 1fr); gap: var(--sp-2); align-items: baseline; }
+.ms-legend li.past { color: var(--text-2); }
+.ms-num { display: inline-grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--border-strong); border-radius: 50%; font-size: var(--fs-12); }
+.ms-mlist { display: none; }
+
+/* ── Карточка работы */
+.panel {
+  position: fixed; top: var(--header-h); right: 0; bottom: 0; width: var(--panel-w); z-index: 30; display: flex; flex-direction: column;
+  background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--shadow-2);
+}
+.panel > header { display: flex; align-items: flex-start; gap: var(--sp-3); padding: var(--sp-4) var(--sp-4) var(--sp-3); }
+.ph { flex: 1; min-width: 0; display: grid; gap: var(--sp-1); }
+.panel h2 { font-size: var(--fs-18); font-weight: 600; line-height: var(--lh-tight); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.panel h2:focus { outline: none; }
+.pnum { font-size: var(--fs-12); color: var(--text-3); }
+.panel .body { overflow-y: auto; padding: 0 var(--sp-4) var(--sp-5); display: grid; gap: var(--sp-4); font-size: var(--fs-14); line-height: var(--lh-body); align-content: start; }
+.panel section h3 { margin: 0 0 6px; font-size: var(--fs-12); font-weight: 600; color: var(--text-3); letter-spacing: 0.02em; }
+.pstat { display: grid; gap: var(--sp-2); padding: var(--sp-3); background: var(--surface-2); border-radius: var(--radius-2); }
+.pline { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-3); font-size: var(--fs-14); }
+.pstat .note { font-size: var(--fs-13); }
+.panel dl { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 6px var(--sp-3); margin: 0; }
+.panel dt { color: var(--text-2); font-size: var(--fs-13); }
+.panel dd { margin: 0; }
+.stseg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-1); }
+.stseg button { height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); font-size: var(--fs-13); transition: border-color var(--dur); }
+.stseg button:hover { border-color: var(--border-strong); }
+.stseg button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.form { display: grid; gap: 12px; padding: var(--sp-3); border: 1px solid var(--border); border-radius: var(--radius-2); background: var(--surface); }
+.form label { display: grid; gap: var(--sp-1); font-size: var(--fs-13); color: var(--text-2); }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.form input, .panel textarea { height: 36px; border: 1px solid var(--border-strong); border-radius: var(--radius-2); background: var(--surface); padding: 0 12px; color: var(--text-1); min-width: 0; }
+.panel textarea { height: auto; min-height: 88px; padding: 10px 12px; resize: vertical; width: 100%; line-height: var(--lh-body); }
+.form input[aria-invalid="true"] { border-color: var(--st-overdue); }
+.warnbox { display: flex; gap: var(--sp-2); align-items: flex-start; padding: 10px 12px; border-radius: var(--radius-2); background: var(--b-action-bg); color: var(--b-action-fg); font-size: var(--fs-13); }
+.actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.more { border-top: 1px solid var(--border); padding-top: var(--sp-3); }
+.more > summary { cursor: pointer; color: var(--accent); font-weight: 500; font-size: var(--fs-13); min-height: 28px; display: flex; align-items: center; }
+.more[open] > summary { margin-bottom: var(--sp-3); }
+.panel .list li + li { margin-top: 2px; }
+
+/* ── Повестка */
+.modal-back { position: fixed; inset: 0; z-index: 40; background: rgba(16, 24, 40, 0.4); display: grid; place-items: center; padding: var(--sp-3); }
+.modal { width: min(880px, 100%); max-height: 90vh; display: flex; flex-direction: column; background: var(--surface); border-radius: var(--radius-3); box-shadow: var(--shadow-2); border: 1px solid var(--border); }
+.modal header { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-4) var(--sp-4) var(--sp-2); }
+.modal h2 { flex: 1; font-size: var(--fs-18); font-weight: 600; }
+.modal .mp { padding: 0 var(--sp-4); }
+.modal textarea { flex: 1; margin: var(--sp-3) var(--sp-4); min-height: 360px; border: 1px solid var(--border); border-radius: var(--radius-2); padding: var(--sp-3); font-size: var(--fs-14); line-height: var(--lh-body); background: var(--surface-2); color: var(--text-1); resize: vertical; }
+.modal footer { display: flex; gap: var(--sp-2); justify-content: flex-end; padding: 0 var(--sp-4) var(--sp-4); align-items: center; }
+.modal footer .note { margin-right: auto; }
+
+footer.foot { padding: var(--sp-3) var(--sp-4); color: var(--text-3); font-size: var(--fs-12); display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-4); max-width: var(--page-w); width: 100%; margin: 0 auto; }
+.v-gantt ~ footer.foot, .v-board ~ footer.foot { max-width: none; border-top: 1px solid var(--border); }
+
+/* ── Ширина ≤ 1100 */
+@media (max-width: 1100px) {
+  header.top { gap: var(--sp-3); padding: 0 var(--sp-3); }
+  .bt .sub { display: none; }
+  .tab { padding: 0 12px; }
+  .tab::after { left: 12px; right: 12px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .frow { grid-template-columns: minmax(0, 1fr) 88px 156px 196px; }
+  .frow .own { display: none; }
+}
+/* ── Ширина ≤ 720: мобильная раскладка */
+@media (max-width: 720px) {
+  body { font-size: var(--fs-14); }
+  header.top { height: auto; flex-wrap: wrap; padding: var(--sp-2) var(--sp-3) 0; gap: 0 var(--sp-2); position: static; }
+  .brand { order: 1; flex: 1; min-height: var(--hit); }
+  .today { order: 2; font-size: var(--fs-13); margin-right: var(--sp-2); }
+  .top .theme { order: 3; width: var(--hit); height: var(--hit); }
+  .top > .spacer { display: none; }
+  .tabs { order: 4; width: calc(100% + 2 * var(--sp-3)); margin: var(--sp-1) calc(-1 * var(--sp-3)) 0; padding: 0 var(--sp-1); overflow-x: auto; scrollbar-width: none; }
+  .tab { height: 44px; padding: 0 12px; flex: 0 0 auto; }
+  .toolbar { padding: 12px var(--sp-3); }
+  .toolbar .field { flex: 1 1 100%; }
+  .toolbar .field:not(.search) { flex: 1 1 40%; min-width: 0; }
+  .toolbar .field select, .toolbar .field.search input { width: 100%; }
+  .toolbar > .spacer { display: none; }
+  .field select, .field input, .btn, .seg button, .stseg button, .form input, .skip, .iconbtn, .chev, .lane > summary, .more > summary { min-height: var(--hit); }
+  .btn.link { min-height: var(--hit); }
+  .seg { flex: 1 1 100%; }
+  .seg button { flex: 1 1 auto; padding: 0 var(--sp-2); font-size: var(--fs-13); }
+  .skip { display: inline-flex; align-items: center; }
+  .page { padding: var(--sp-4) var(--sp-3) var(--sp-5); gap: var(--sp-3); }
+  .card { padding: 20px var(--sp-3); }
+  .hero h1 { font-size: var(--fs-18); }
+  .hero p { font-size: var(--fs-14); }
+  .kpis { gap: 12px; }
+  .kpi { padding: var(--sp-3); }
+  .kpi .val { font-size: var(--fs-22); }
+  .kpi .lbl, .kpi .sub { font-size: var(--fs-12); }
+  .alist { margin: 0 calc(-1 * var(--sp-2)); }
+  .aitem { padding: 12px var(--sp-2); }
+  .mlist2 li { grid-template-columns: 88px minmax(0, 1fr); gap: 2px var(--sp-3); }
+  .mlist2 .r { grid-column: 2; }
+  .srow, .aitem, .mcard, .frow, .lrow { min-height: var(--hit); }
+  /* путь — вертикально */
+  .path { flex-direction: column; margin-top: 0; }
+  .step { flex: none; display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: 20px 20px; justify-items: start; align-items: center; text-align: left; gap: 0 12px; height: 60px; padding: 0; align-content: start; }
+  .step .dot, .path.big .step .dot { grid-row: 1 / span 2; width: 40px; height: 40px; }
+  .step .lbl { margin: 0; -webkit-line-clamp: 1; font-size: var(--fs-14); align-self: end; }
+  .step .d { align-self: start; }
+  .path.big .step .lbl { font-size: var(--fs-14); }
+  .step .link, .path.big .step .link { left: 19px; right: auto; top: -20px; width: 2px; height: 20px; }
+  .link.eroding, .link.breach, .path.big .link.eroding, .path.big .link.breach { width: 4px; left: 18px; top: -20px; height: 20px; }
+  .link.overlap { background: repeating-linear-gradient(180deg, var(--border-strong) 0 4px, transparent 4px 8px); }
+  .card > h2 .spacer { display: none; }
+  /* график работ — список */
+  .app > main.v-gantt, .app > main.v-board { height: auto; display: block; }
+  .gwrap, .gleg { display: none; }
+  .mlist { display: block; }
+  .gstrip { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px var(--sp-3); gap: var(--sp-2); }
+  .frow { grid-template-columns: minmax(0, 1fr) auto; gap: var(--sp-1) var(--sp-3); padding: 12px var(--sp-3); }
+  .frow .t { grid-column: 1 / -1; }
+  .frow .own { display: none; }
+  .frow .dw { justify-self: end; }
+  .frow .stc { grid-column: 1 / -1; }
+  .lane > summary { padding: 0 var(--sp-3); }
+  .board { grid-auto-columns: 85%; scroll-snap-type: x mandatory; padding: var(--sp-3); }
+  .board .col { scroll-snap-align: start; max-height: 70vh; }
+  .ms-scroll { display: none; }
+  .ms-mlist { display: block; }
+  .ms-legend { grid-template-columns: minmax(0, 1fr); margin-top: 0; border-top: 0; padding-top: 0; }
+  .ms-mlist { margin-top: var(--sp-3); }
+  .lrow { grid-template-columns: minmax(0, 1fr) auto; }
+  .lrow .own { display: none; }
+  .panel { width: 100%; top: 0; }
+  .panel > header { padding: var(--sp-3); }
+  .panel .body { padding: 0 var(--sp-3) var(--sp-5); }
+  .panel dl { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .panel dt { margin-top: var(--sp-2); }
+  .row2 { grid-template-columns: minmax(0, 1fr); }
+  .stseg { flex-wrap: nowrap; overflow-x: auto; margin: var(--sp-1) calc(-1 * var(--sp-3)) 0; padding: 2px var(--sp-3); scrollbar-width: none; }
+  .stseg button { flex: none; }
+  footer.foot { padding: var(--sp-3); }
+}
+@media print {
+  header.top, .toolbar, .panel, footer.foot, .skip { display: none !important; }
+  .v-gantt { height: auto; }
+  .gwrap { overflow: visible; }
+  .gantt thead { display: table-header-group; }
+  .gantt tr { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { size: A3 landscape; margin: 10mm; }
+}
+
+</style>
+</head>
+<body>
+<div id="app" class="app"><noscript>Для работы планера необходимо включить JavaScript в браузере.</noscript></div>
+<script>
+/* Версия: В3 «Путь к демонстрации». Сборка: tools/build.py из src/. Данные: data/seed_ymg_stage1.json без изменений. */
+window.VARIANT = "path";
+window.SEED = {"project": {"code": "ЯМГ-ИИМ", "title": "Разработка и испытания опытного образца малогабаритного инерциального измерительного модуля на ядерном магнитном гироскопе для высокодинамичных объектов", "contract": "Договор на выполнение ОКР № 868/2666-Д от 13.08.2026", "stage": "Этап 1 «Разработка технического проекта ИИМ и создание лабораторного образца ЯМГ»", "stage_start": "2026-08-13", "stage_end": "2026-12-30", "customer": "ООО «СП «Квант»", "contractor": "АО «Концерн «ЦНИИ «Электроприбор»", "co_contractors": [{"name": "ФТИ им. А.Ф. Иоффе", "subject": "Исследования характеристик лазерных модулей VCSEL (СЧ ОКР «ЯМГ-ИИМ-ФТИ»)", "price_rub": 4000000}, {"name": "ИХС им. И.В. Гребенщикова", "subject": "Разработка отдельных технологических операций изготовления ячеек ЯМГ", "price_rub": 1000000}], "signatories": {"contractor": ["Г.В. Безмен — главный конструктор ОКР, начальник лаборатории 080", "А.Н. Шевченко — заместитель главного конструктора"], "customer": ["Ю.В. Костюнина — куратор по договору", "А.Г. Пересадько — технический куратор", "П.С. Клеммер — руководитель проекта"]}, "demo_today": "2026-09-28"}, "source": "План-график мероприятий по выполнению этапа 1 ОКР «ЯМГ-ИИМ», вкладки «План-график (На подписание)» и «Важное» (редакция на 28.09.2026)", "notes": ["Наименования, исполнители, сроки, документы и примечания перенесены из План-графика без изменений.", "Статусы и контрольные даты — из вкладки «Важное» (колонки «Дата передачи» и «Отметка о выполнении»); исходный текст отметки сохранён в status_mark.", "Позиции без отметки во вкладке «Важное»: status = «Не начато» при сроке позже 28.09.2026, «Нет отметки» — при наступившем сроке.", "Даты начала (start) в План-графике отсутствуют и вычислены для отображения на Ганте (start_derived = true): для подпозиций — день после срока предыдущей подпозиции, для прочих — начало этапа / квартала.", "Состав критической цепочки лабораторного образца (critical_chain) — аналитическое предложение для прототипа; подлежит подтверждению руководителем проекта."], "statuses": ["Не начато", "Нет отметки", "В работе", "Подготовка материалов", "Ожидаем документ", "На согласовании", "Закрыто"], "horizons": ["Срочно", "1 месяц", "2 месяца", "Справочно", "Закрыто"], "critical_chain": ["2.1.7", "2.1.6", "2.2.2", "2.2.4.1", "2.2.5.1", "2.2.5.2", "2.2.5.3", "2.2.5.5"], "milestones": [{"date": "2026-09-30", "title": "Закрытие 3 квартала: 9 позиций со сроком 30.09"}, {"date": "2026-11-16", "title": "Передача отчётных материалов соисполнителями"}, {"date": "2026-11-24", "title": "Приглашение на демонстрацию ЛО ЯМГ"}, {"date": "2026-11-30", "title": "Демонстрация (испытания) ЛО ЯМГ"}, {"date": "2026-12-01", "title": "Передача комплекта технического проекта"}, {"date": "2026-12-30", "title": "Приёмка ТП комиссией Заказчика; окончание этапа 1"}, {"date": "2027-01-01", "title": "Начало этапа 2"}, {"date": "2027-02-01", "title": "Подписание Акта сдачи-приёмки этапа 1"}], "off_plan_closed": [{"name": "Пояснительная Записка (Обоснование переноса сроков закупки по Соисполнителю для укомплектации стенда, уменьшение рисков срыва сроков работ)", "owner": "АО «Концерн «ЦНИИ «Электроприбор»", "transfer": "2026-09-07", "mark": "Принято"}], "items": [{"num": "1", "level": 1, "parent": null, "kind": "section", "name": "Запуск", "owners": [], "owner_raw": null, "start": "2026-08-13", "start_derived": true, "due": "2026-09-30", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": null, "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": null, "plan_note": null, "critical_chain": false, "comment": null}, {"num": "1.1", "level": 2, "parent": "1", "kind": "task", "name": "Уведомление Заказчика о наличии у Исполнителя исключительных прав на РИД, созданные до заключения Договора", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-03", "due_qualifier": null, "due_to_customer": "2026-09-03", "due_to_customer_qualifier": null, "control_date": null, "closed_date": "2026-09-04", "status": "Закрыто", "status_mark": "Получен документ", "horizon": "Закрыто", "output_doc": "Письмо Исполнителя об исключительных правах на РИД, созданные до заключения Договора", "execution_doc": "Письмо Исполнителя", "basis": "Шаблон Плана-графика, п. 6.6 Договора", "plan_note": "Срок приведён к конкретной календарной дате (отсчёт от даты заключения Договора — 13.08.2026): 10 рабочих дней", "critical_chain": false, "comment": null}, {"num": "1.2", "level": 2, "parent": "1", "kind": "task", "name": "Назначение ответственных представителей Сторон для координации взаимодействия при выполнении Договора", "owners": ["Электроприбор", "СП «Квант»"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор» ООО «СП «Квант»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-03", "due_qualifier": null, "due_to_customer": "2026-09-03", "due_to_customer_qualifier": null, "control_date": null, "closed_date": "2026-08-27", "status": "Закрыто", "status_mark": "Письмо отправлено", "horizon": "Закрыто", "output_doc": "Письменные уведомления Сторон с приложением распорядительных документов", "execution_doc": "Письма Исполнителя и Заказчика", "basis": "Шаблон Плана-графика, п. 2.20 Договора", "plan_note": "Срок приведён к конкретной календарной дате (отсчёт от даты заключения Договора — 13.08.2026): 15 рабочих дней", "critical_chain": false, "comment": null}, {"num": "1.3", "level": 2, "parent": "1", "kind": "task", "name": "Приказ о создании рабочей группы Исполнителя", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-03", "due_qualifier": null, "due_to_customer": "2026-09-03", "due_to_customer_qualifier": null, "control_date": null, "closed_date": "2026-09-04", "status": "Закрыто", "status_mark": "Получен документ", "horizon": "Закрыто", "output_doc": "Приказ о создании РГ со стороны Исполнителя", "execution_doc": "Письмо Исполнителя", "basis": null, "plan_note": null, "critical_chain": false, "comment": null}, {"num": "1.4", "level": 2, "parent": "1", "kind": "task", "name": "Размещение сведений о проведении ОКР (этапа ОКР) в ЕГИСУ НИОКТР", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-30", "due_qualifier": null, "due_to_customer": "2026-09-30", "due_to_customer_qualifier": null, "control_date": "2026-09-16", "closed_date": null, "status": "Ожидаем документ", "status_mark": "Решить проблему с размещением, ждем пакет документов на согласование", "horizon": "Срочно", "output_doc": "Сведения для ЕГИСУ НИОКТР с подписанным РИО Исполнителя; документы, подтверждающие размещение сведений", "execution_doc": "Письмо Исполнителя", "basis": "Шаблон Плана-графика, п. 2.7.2 Договора", "plan_note": "Конкретная дата установлена по замечанию Заказчика (письмо от 18.08.2026): размещение сведений в ЕГИСУ НИОКТР — не позднее 30.09.2026", "critical_chain": false, "comment": null}, {"num": "1.5", "level": 2, "parent": "1", "kind": "task", "name": "Подтверждение значения УГТ проекта на начало работ по ОКР", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-30", "due_qualifier": null, "due_to_customer": "2026-09-30", "due_to_customer_qualifier": null, "control_date": null, "closed_date": "2026-09-14", "status": "Закрыто", "status_mark": "Принято", "horizon": "Закрыто", "output_doc": "Справка Исполнителя об уровне готовности технологии (УГТ)", "execution_doc": "Письмо Заказчику с приложением документов", "basis": "Шаблон Плана-графика", "plan_note": "Рекомендуемая Заказчиком дата закрытия работ — 30.09.2026 (письмо от 18.08.2026). Ссылка на форму Приложения № 6 исключена как некорректная (указанное приложение не содержит соответствующих положений); справка оформляется по форме Исполнителя", "critical_chain": false, "comment": null}, {"num": "1.6", "level": 2, "parent": "1", "kind": "task", "name": "Предоставление обеспечения исполнения Договора (банковская гарантия)", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-02", "due_qualifier": null, "due_to_customer": "2026-09-02", "due_to_customer_qualifier": null, "control_date": null, "closed_date": "2026-09-28", "status": "Закрыто", "status_mark": "Аванс ушел 31.08.2026", "horizon": "Закрыто", "output_doc": "Банковская (независимая) гарантия по формам п. 6 Приложения № 6 к Договору", "execution_doc": "Письмо Заказчику с приложением документов", "basis": "п. 3.8 б) Договора", "plan_note": "Срок приведён к конкретной календарной дате (отсчёт от даты заключения Договора — 13.08.2026): 20 календарных дней", "critical_chain": false, "comment": null}, {"num": "1.7", "level": 2, "parent": "1", "kind": "task", "name": "Предоставление обеспечения возврата аванса (банковская гарантия)", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-02", "due_qualifier": null, "due_to_customer": "2026-09-02", "due_to_customer_qualifier": null, "control_date": null, "closed_date": "2026-09-01", "status": "Закрыто", "status_mark": "Получен документ", "horizon": "Закрыто", "output_doc": "Банковская (независимая) гарантия по формам п. 6 Приложения № 6 к Договору", "execution_doc": "Письмо Заказчику с приложением документов", "basis": "п. 3.8 а) Договора", "plan_note": "Срок запланирован на 24.08.2026 (п. 3.8 а) Договора: обеспечение возврата аванса предоставляется не позднее, чем за 5 рабочих дней до даты выплаты аванса)", "critical_chain": false, "comment": null}, {"num": "1.8", "level": 2, "parent": "1", "kind": "task", "name": "Согласование с Заказчиком плана-графика мероприятий по выполнению этапа 1", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-02", "due_qualifier": null, "due_to_customer": "2026-09-02", "due_to_customer_qualifier": null, "control_date": null, "closed_date": "2026-09-02", "status": "Закрыто", "status_mark": "Подписание", "horizon": "Закрыто", "output_doc": "Согласованный Заказчиком план-график мероприятий по выполнению этапа 1", "execution_doc": "План-график с отметкой Заказчика о согласовании (письмо Заказчика)", "basis": "ТЗ (п. 13.1.4)", "plan_note": "Срок приведён к конкретной календарной дате (отсчёт от даты заключения Договора — 13.08.2026): 14 календарных дней от даты начала этапа", "critical_chain": false, "comment": null}, {"num": "2", "level": 1, "parent": null, "kind": "section", "name": "Реализация этапа 1 (13.08.2026 - 30.12.2026)", "owners": [], "owner_raw": null, "start": "2026-08-13", "start_derived": true, "due": "2026-11-30", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": null, "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": null, "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1", "level": 2, "parent": "2", "kind": "section", "name": "3 квартал 2026 года", "owners": [], "owner_raw": null, "start": "2026-08-13", "start_derived": true, "due": "2026-10-14", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": null, "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": null, "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.1", "level": 3, "parent": "2.1", "kind": "group", "name": "Патентные исследования по направлению работ", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-30", "due_qualifier": null, "due_to_customer": "2026-09-30", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "В работе", "status_mark": "Идет процесс, срок 30.09.2026", "horizon": "Срочно", "output_doc": "Отчет по патентным исследованиям (по ГОСТ Р 15.011-2024)", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "ТЗ (п. 12.1, пп. 9.1, 9.2); Ведомость исполнения", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.1.1", "level": 4, "parent": "2.1.1", "kind": "task", "name": "Формирование и согласование с Заказчиком задания на проведение патентных исследований и регламента поиска (объект и предмет поиска, источники информации, ретроспективность поиска)", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-04", "due_qualifier": null, "due_to_customer": "2026-09-04", "due_to_customer_qualifier": null, "control_date": null, "closed_date": "2026-09-02", "status": "Закрыто", "status_mark": "Получен документ", "horizon": "Закрыто", "output_doc": null, "execution_doc": null, "basis": "Договор (п. 6.18); М", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.1.2", "level": 4, "parent": "2.1.1", "kind": "task", "name": "Патентные исследования на уровень техники и определение тенденций развития: патентный и информационный поиск, анализ уровня техники по техническому решению и главной функции объекта исследований, выявление типичных и наиболее актуальных технических решений", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-09-05", "start_derived": true, "due": "2026-09-11", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Нет отметки", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "Задание на ПИ (задачи патентных исследований)", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.1.3", "level": 4, "parent": "2.1.1", "kind": "task", "name": "Патентные исследования на патентоспособность: выявление аналогов и прототипа объекта исследований и его составных частей, анализ и обобщение выявленной информации, подготовка предложений по выбору предпочтительного способа правовой охраны РИД", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-09-12", "start_derived": true, "due": "2026-09-25", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Нет отметки", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "Задание на ПИ (задачи патентных исследований)", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.1.4", "level": 4, "parent": "2.1.1", "kind": "task", "name": "Исследование патентной чистоты в отношении Российской Федерации: анализ патентной ситуации, выявление охранных документов третьих лиц, под действие которых может подпадать Изделие (методы изготовления и конструктивные решения)", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-09-26", "start_derived": true, "due": "2026-09-29", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "ТЗ (п. 9.1)", "plan_note": "Позиция добавлена: исследование патентной чистоты в отношении Российской Федерации — обязательный вид патентных исследований по п. 9.1 ТЗ (ГОСТ Р 15.011-2024, п. 5.7); включается в задание на проведение ПИ", "critical_chain": false, "comment": null}, {"num": "2.1.1.5", "level": 4, "parent": "2.1.1", "kind": "task", "name": "Оформление отчета по патентным исследованиям в соответствии с ГОСТ Р 15.011-2024", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-09-30", "start_derived": true, "due": "2026-09-30", "due_qualifier": null, "due_to_customer": "2026-09-30", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "М", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.2", "level": 3, "parent": "2.1", "kind": "group", "name": "Выбор и обоснование принципиальной схемы квантового сенсора", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-30", "due_qualifier": null, "due_to_customer": "2026-09-30", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "В работе", "status_mark": "Идет процесс, срок 30.09.2026", "horizon": "Срочно", "output_doc": "Пояснительная записка обоснования принципиальной схемы квантового сенсора", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "ТЗ (п. 12.1, п. 13.3.1); Ведомость исполнения", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.2.1", "level": 4, "parent": "2.1.2", "kind": "task", "name": "Обоснование выбора рабочих веществ квантового сенсора", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-04", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Нет отметки", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "ст. «Гироскоп на ЯМР: предельные характеристики» (2018); гл. «Spin-Exchange-Pumped NMR Gyros»; ст. «Метод подавления изотопического сдвига в балансном квантовом датчике вращения на эффекте ЯМР»", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.2.2", "level": 4, "parent": "2.1.2", "kind": "task", "name": "Обоснование выбора лазерных излучателей VCSEL на длине волны поглощения цезия и схемы оптической накачки с детектированием", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-09-05", "start_derived": true, "due": "2026-09-11", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Нет отметки", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "ст. Appl. Sci. 2020, 10, 7099 (синхронный ЯМР-гироскоп со спин-обменной накачкой); М", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.2.3", "level": 4, "parent": "2.1.2", "kind": "task", "name": "Обоснование состава рабочей смеси газовой ячейки", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-09-12", "start_derived": true, "due": "2026-09-18", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Нет отметки", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "ст. IEEE Sensors J. (2019) по изотопному сдвигу ЯМР 129Xe/131Xe при спин-обменной накачке; ст. «Моделирование размерных зависимостей изотопического сдвига ЯМР в ксеноне» (2020)", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.2.4", "level": 4, "parent": "2.1.2", "kind": "task", "name": "Обоснование схемы магнитной системы", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-09-19", "start_derived": true, "due": "2026-09-25", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Нет отметки", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "ст. «Метод подавления изотопического сдвига в балансном квантовом датчике вращения на эффекте ЯМР»; М", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.2.5", "level": 4, "parent": "2.1.2", "kind": "task", "name": "Сравнительный анализ вариантов контура обратной связи", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-09-26", "start_derived": true, "due": "2026-09-29", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "ст. J. Magn. Reson. 278 (2017) 134–140; ст. J. Magn. Reson. 326 (2021) 106959", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.2.6", "level": 4, "parent": "2.1.2", "kind": "task", "name": "Оформление пояснительной записки обоснования принципиальной схемы квантового сенсора", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-09-30", "start_derived": true, "due": "2026-09-30", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "М", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.3", "level": 3, "parent": "2.1", "kind": "task", "name": "Разработка и согласование Заказчиком Перечня-комплектности документации на ИИМ", "owners": ["Электроприбор", "СП «Квант»"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор» ООО «СП «Квант»", "start": "2026-10-01", "start_derived": true, "due": "2026-10-14", "due_qualifier": null, "due_to_customer": "2026-10-14", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "1 месяц", "output_doc": "Перечень-комплектность документации на ИИМ", "execution_doc": "Согласованный (утверждённый) Заказчиком Перечень-комплектность документации на ИИМ", "basis": "ТЗ (п. 10.1)", "plan_note": "Позиции объединены в одну работу по решению Заказчика (письмо от 18.08.2026) с сохранением срока согласования Заказчиком — 14.10.2026", "critical_chain": false, "comment": null}, {"num": "2.1.4", "level": 3, "parent": "2.1", "kind": "task", "name": "Разработка и согласование с Заказчиком отдельного технического задания на СЧ ОКР «ЯМГ-ИИМ-ФТИ» (исследование лазерных модулей VCSEL)", "owners": ["Электроприбор", "СП «Квант»"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор», ООО «СП «Квант»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-04", "due_qualifier": null, "due_to_customer": "2026-09-04", "due_to_customer_qualifier": null, "control_date": null, "closed_date": "2026-09-07", "status": "Закрыто", "status_mark": "Согласовано", "horizon": "Срочно", "output_doc": "Проект технического задания на СЧ ОКР «ЯМГ-ИИМ-ФТИ» (исследование лазерных модулей VCSEL)", "execution_doc": "Письмо Исполнителя Заказчику, Согласованное Заказчиком отдельное ТЗ на СЧ ОКР", "basis": "ТЗ (п. 5.1.2)", "plan_note": "Разработка отдельного ТЗ на СЧ ОКР — до 04.09.2026, согласование с Заказчиком — 11.09.2026 (поз. 2.1.5). Сроки установлены по решению Заказчика (письмо от 18.08.2026): обеспечивают последовательность «согласованное ТЗ на СЧ ОКР → заключение договора с соисполнителем (поз. 2.1.7)»", "critical_chain": false, "comment": null}, {"num": "2.1.5", "level": 3, "parent": "2.1", "kind": "task", "name": "Разработка и согласование с Заказчиком отдельного технического задания на работу Соисполнителя (Институт химии силикатов им. И.В. Гребенщикова)", "owners": ["Электроприбор", "СП «Квант»"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор», ООО «СП «Квант»", "start": "2026-08-13", "start_derived": true, "due": "2026-09-04", "due_qualifier": null, "due_to_customer": "2026-09-04", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Ожидаем документ", "status_mark": "Документ не получили", "horizon": "Срочно", "output_doc": "Проект технического задания на СЧ ОКР «ЯМГ-ИИМ» (Разработка отдельных технологических операций изготовления ячеек ядерного магнитного гироскопа.)", "execution_doc": "Письмо Исполнителя Заказчику, Согласованное Заказчиком отдельное ТЗ на СЧ ОКР", "basis": null, "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.1.6", "level": 3, "parent": "2.1", "kind": "task", "name": "Формирование и выдача технических заданий соисполнителям на выполнение работ по этапу 1 (ФТИ им. А.Ф. Иоффе, Институт химии силикатов им. И.В. Гребенщикова) — приложения к договорам с соисполнителями; заключение договоров с соисполнителями и поставщиками; направление Заказчику скан-копий заключенных договоров (в течение 5 рабочих дней с даты заключения договора)", "owners": ["Электроприбор", "ФТИ им. Иоффе", "ИХС им. Гребенщикова"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор», ИХС им. И.В. Гребенщикова, ФТИ им. А.Ф. Иоффе", "start": "2026-09-16", "start_derived": true, "due": "2026-09-30", "due_qualifier": null, "due_to_customer": "2026-09-30", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "На согласовании", "status_mark": "Ждем, финальная проработка документов", "horizon": "Срочно", "output_doc": "Технические задания соисполнителям (приложения к договорам с соисполнителями); скан-копии заключенных договоров с соисполнителями и поставщиками", "execution_doc": "Договоры с соисполнителями (технические задания — приложения к договорам); письмо Исполнителя Заказчику с приложением скан-копий заключенных договоров", "basis": "Договор (п. 2.6.1, п. 2.6.2)", "plan_note": "Позиции 2.1.7 и 2.1.8 объединены в одну по замечанию Заказчика (письмо от 18.08.2026) с сохранением срока — 30.09.2026. Заключение договоров — без дополнительных конкурсных процедур (п. 2.6.1 Договора); на внутренние процедуры Исполнителя закладывается 2 недели. Отдельное письмо соисполнителю не направляется: ТЗ — приложение к договору с соисполнителем", "critical_chain": true, "comment": null}, {"num": "2.1.7", "level": 3, "parent": "2.1", "kind": "task", "name": "Формирование плана закупок и закупка материально-технических ресурсов (МТР) для выполнения работ по этапу 1", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-09-05", "start_derived": true, "due": "2026-09-15", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": "2026-09-20", "closed_date": null, "status": "Подготовка материалов", "status_mark": "Подготовка материалов", "horizon": "Срочно", "output_doc": "План закупок МТР; документы, подтверждающие проведение закупки МТР", "execution_doc": "План закупок МТР; документы, подтверждающие проведение закупки МТР", "basis": "М", "plan_note": "Срок установлен по замечанию Заказчика (письмо от 18.08.2026): с учётом ограниченной продолжительности этапа 1 закупка МТР проводится не позднее 15.09.2026", "critical_chain": true, "comment": null}, {"num": "2.1.8", "level": 3, "parent": "2.1", "kind": "task", "name": "Разработка технических требований на составные части ИИМ и выдача частных технических заданий подразделениям Исполнителя", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-09-16", "start_derived": true, "due": "2026-09-30", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Закрыто", "status_mark": "Закрывается исполнителем (без нашего участия)", "horizon": "Закрыто", "output_doc": "Технические требования на составные части ИИМ; частные технические задания подразделениям Исполнителя", "execution_doc": "Частные технические задания подразделениям Исполнителя (внутренние документы Исполнителя)", "basis": "ТЗ (п. 12.1)", "plan_note": "Подразделения Исполнителя (конструкторский отдел, отдел разработки электроники, отдел разработки инерциальных навигационных систем) получают частные технические задания от головного подразделения Исполнителя; документы являются внутренними, Заказчику не представляются", "critical_chain": false, "comment": null}, {"num": "2.1.9", "level": 3, "parent": "2.1", "kind": "task", "name": "Согласование с Заказчиком программы и методики испытаний лабораторного образца ЯМГ", "owners": ["Электроприбор", "СП «Квант»"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор» ООО «СП «Квант»", "start": "2026-09-16", "start_derived": true, "due": "2026-09-30", "due_qualifier": null, "due_to_customer": "2026-09-30", "due_to_customer_qualifier": null, "control_date": "2026-09-21", "closed_date": null, "status": "Подготовка материалов", "status_mark": "Подготовка материалов, ждем финальную версию", "horizon": "Срочно", "output_doc": "Программа и методика испытаний лабораторного образца ЯМГ", "execution_doc": "Согласованные Заказчиком программа и методика испытаний (письмо Заказчика)", "basis": "ТЗ (пп. 13.2, 13.3.2); Ведомость исполнения", "plan_note": "Программа и методика испытаний согласуются одновременно с передачей пояснительной записки обоснования принципиальной схемы квантового сенсора (поз. 2.1.2, 30.09.2026); исследования лабораторного образца ЯМГ планируются на ноябрь–декабрь 2026 г.", "critical_chain": true, "comment": null}, {"num": "2.2", "level": 2, "parent": "2", "kind": "section", "name": "4 квартал 2026 года", "owners": [], "owner_raw": null, "start": "2026-10-01", "start_derived": true, "due": "2026-11-30", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": null, "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": null, "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.1", "level": 3, "parent": "2.2", "kind": "task", "name": "Выполнение соисполнителем (ФТИ им. А.Ф. Иоффе) работ по этапу 1 СЧ ОКР «ЯМГ-ИИМ-ФТИ»: разработка программы и методик испытаний лазерных модулей для определения базовых характеристик в рабочей точке", "owners": ["ФТИ им. Иоффе"], "owner_raw": "ФТИ им. А.Ф. Иоффе", "start": "2026-10-01", "start_derived": true, "due": "2026-11-16", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "2 месяца", "output_doc": "Программа и методики испытаний лазерных модулей (проекты)", "execution_doc": "Отчётные материалы соисполнителя (приёмка — поз. 2.2.6)", "basis": "Краткое ТЗ на СЧ ОКР «ЯМГ-ИИМ-ФТИ»; Договор (п. 2.6.2)", "plan_note": "Позиция переформулирована по краткому ТЗ на СЧ ОКР «ЯМГ-ИИМ-ФТИ»: на этапе 1 соисполнитель разрабатывает программу и методики испытаний лазерных модулей и доукомплектовывает собственные исследовательские стенды; разработка лазеров в объём работ не входит. Передача лазерных модулей соисполнителю на этапе 1 не производится; на последующих этапах лазерные модули передаются соисполнителю во временное безвозмездное пользование с возвратом по завершении соответствующих этапов работ. Договор с соисполнителем заключается в сентябре 2026 г. (поз. 2.1.5). Завершение работ и передача отчётных материалов — 16.11.2026, приёмка — 30.11.2026, поз. 2.2.6 (решение Заказчика от 18.08.2026)", "critical_chain": false, "comment": null}, {"num": "2.2.2", "level": 3, "parent": "2.2", "kind": "task", "name": "Выполнение соисполнителем (Институт химии силикатов им. И.В. Гребенщикова) работ по этапу 1: разработка отдельных технологических операций изготовления ячеек ядерного магнитного гироскопа", "owners": ["ИХС им. Гребенщикова"], "owner_raw": "ИХС им. И.В. Гребенщикова", "start": "2026-10-01", "start_derived": true, "due": "2026-11-16", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "2 месяца", "output_doc": "Отчётные материалы соисполнителя по разработке технологических операций изготовления ячеек ЯМГ", "execution_doc": "Отчётные материалы соисполнителя (приёмка — поз. 2.2.7)", "basis": null, "plan_note": "Передача отчётных материалов — не позднее 16.11.2026, приёмка — поз. 2.2.7 (27.11.2026).", "critical_chain": true, "comment": null}, {"num": "2.2.3", "level": 3, "parent": "2.2", "kind": "group", "name": "Выполнение технического проектирования ИИМ: создание математической модели квантовых процессов в миниатюрной газовой ячейке с учетом влияния внешних дестабилизирующих факторов", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-10-01", "start_derived": true, "due": "2026-11-27", "due_qualifier": null, "due_to_customer": "2026-11-27", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": null, "status_mark": null, "horizon": "2 месяца", "output_doc": "Математическая модель квантовых процессов в миниатюрной газовой ячейке: пояснительная записка с описанием модели (в составе комплекта документов технического проекта, ГОСТ 2.106)", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "ТЗ (п. 12.1, п. 13.3.1); Ведомость исполнения", "plan_note": "Комплект отчётности по математической модели сведён к минимально необходимому (пояснительная записка с описанием модели). Передача Заказчику программной реализации математической модели (программы для ЭВМ) в настоящем плане-графике не прописывается: вопрос будет решён после появления самой программы (позиция согласована с Заказчиком)", "critical_chain": false, "comment": null}, {"num": "2.2.3.1", "level": 4, "parent": "2.2.3", "kind": "task", "name": "Моделирование динамики спинов цезия и спин-обменной накачки изотопов ксенона в миниатюрной газовой ячейке", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-10-01", "start_derived": true, "due": "2026-10-30", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "гл. «Spin-Exchange-Pumped NMR Gyros»; ст. «Гироскоп на ЯМР: предельные характеристики» (2018)", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.3.2", "level": 4, "parent": "2.2.3", "kind": "task", "name": "Моделирование изотопного сдвига частот ЯМР 129Xe/131Xe и его зависимости от температуры, давления и размеров ячейки", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-10-31", "start_derived": true, "due": "2026-11-06", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "ст. IEEE Sensors J. (2019) по изотопному сдвигу ЯМР 129Xe/131Xe при спин-обменной накачке; ст. «Моделирование размерных зависимостей изотопического сдвига ЯМР в ксеноне» (2020)", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.3.3", "level": 4, "parent": "2.2.3", "kind": "task", "name": "Расчет оптимального изотопного состава ксенона и требуемых градиентов магнитного поля для подавления изотопного сдвига", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-07", "start_derived": true, "due": "2026-11-13", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "ст. «Метод подавления изотопического сдвига в балансном квантовом датчике вращения на эффекте ЯМР»; М", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.3.4", "level": 4, "parent": "2.2.3", "kind": "task", "name": "Моделирование контура обратной связи ЯМГ", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-14", "start_derived": true, "due": "2026-11-20", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "ст. J. Magn. Reson. 278 (2017) 134–140; ст. J. Magn. Reson. 326 (2021) 106959", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.3.5", "level": 4, "parent": "2.2.3", "kind": "task", "name": "Модель ухода нуля и оценка чувствительности ЯМГ", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-21", "start_derived": true, "due": "2026-11-26", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "ст. «Гироскоп на ЯМР: предельные характеристики» (2018); ст. J. Magn. Reson. 278 (2017) 134–140", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.3.6", "level": 4, "parent": "2.2.3", "kind": "task", "name": "Программная реализация модели, оформление пояснительной записки с описанием модели и описания программы", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-27", "start_derived": true, "due": "2026-11-27", "due_qualifier": null, "due_to_customer": "2026-11-27", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "М", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.4", "level": 3, "parent": "2.2", "kind": "group", "name": "Выполнение технического проектирования ИИМ: разработка КД технического проекта на составные части и модуль (ИИМ) в целом", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-10-01", "start_derived": true, "due": "2026-11-27", "due_qualifier": null, "due_to_customer": "2026-12-01", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": null, "status_mark": null, "horizon": "2 месяца", "output_doc": "Комплект конструкторской документации технического проекта на составные части и модуль (ИИМ) в целом", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "ТЗ (п. 12.1); Ведомость исполнения", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.4.1", "level": 4, "parent": "2.2.4", "kind": "task", "name": "Разработка КД на миниатюрную сферическую газовую ячейку диаметром до 7 мм (стеклодувная технология); выбор варианта обработки внутренней поверхности стенок по результатам экспериментов", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-10-01", "start_derived": true, "due": "2026-11-06", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "М; ст. «Моделирование размерных зависимостей изотопического сдвига ЯМР в ксеноне» (2020)", "plan_note": null, "critical_chain": true, "comment": null}, {"num": "2.2.4.2", "level": 4, "parent": "2.2.4", "kind": "task", "name": "Разработка КД на магнитную систему: четырехсегментная катушка по оси чувствительности, седлообразные катушки по ортогональным осям, магнитные экраны", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-07", "start_derived": true, "due": "2026-11-13", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "М", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.4.3", "level": 4, "parent": "2.2.4", "kind": "task", "name": "Разработка КД на оптический блок: лазерные излучатели VCSEL, оптическая схема накачки и детектирования", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-14", "start_derived": true, "due": "2026-11-20", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "М", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.4.4", "level": 4, "parent": "2.2.4", "kind": "task", "name": "Проработка принципиальной схемы и технического облика электронных блоков", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-21", "start_derived": true, "due": "2026-11-27", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "М", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.4.5", "level": 4, "parent": "2.2.4", "kind": "task", "name": "Проработка вариантов компоновки ИИМ в целом", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-21", "start_derived": true, "due": "2026-11-27", "due_qualifier": null, "due_to_customer": "2026-12-01", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "М", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.5", "level": 3, "parent": "2.2", "kind": "group", "name": "Создание лабораторной базы для подтверждения принципов функционирования ЯМГ", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-10-01", "start_derived": true, "due": "2026-11-27", "due_qualifier": null, "due_to_customer": "2026-12-01", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": null, "status_mark": null, "horizon": "2 месяца", "output_doc": "Пояснительная записка с обоснованием лабораторного образца ЯМГ; акт изготовления лабораторного образца ЯМГ; протокол испытаний лабораторного образца ЯМГ", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "ТЗ (п. 12.1, п. 13.3.2); Ведомость исполнения", "plan_note": "Подпозиция 2.2.5.4 (оформление пояснительной записки с обоснованием ЛО ЯМГ) укрупнена в настоящую позицию (решение Заказчика от 18.08.2026); состав передаваемых документов сохранён", "critical_chain": false, "comment": null}, {"num": "2.2.5.1", "level": 4, "parent": "2.2.5", "kind": "task", "name": "Изготовление макетов газовых ячеек и проведение экспериментов по выбору варианта обработки внутренней поверхности стенок", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-10-01", "start_derived": true, "due": "2026-11-13", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "М", "plan_note": null, "critical_chain": true, "comment": null}, {"num": "2.2.5.2", "level": 4, "parent": "2.2.5", "kind": "task", "name": "Сборка лабораторного образца ЯМГ с оформлением акта изготовления", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-14", "start_derived": true, "due": "2026-11-20", "due_qualifier": null, "due_to_customer": "2026-12-01", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "М", "plan_note": "Сборка лабораторного образца перенесена на ноябрь 2026 г.: исследования лабораторного образца — 27.11.2026", "critical_chain": true, "comment": null}, {"num": "2.2.5.3", "level": 4, "parent": "2.2.5", "kind": "task", "name": "Исследования (испытания) лабораторного образца ЯМГ по согласованной с Заказчиком программе и методике испытаний (регистрация сигналов ЯМР 129Xe/131Xe, проверка работы контуров обратной связи, регистрация отклика на угловую скорость)", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-25", "start_derived": true, "due": "2026-11-27", "due_qualifier": null, "due_to_customer": "2026-11-27", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": "ТЗ (п. 13.3.2); М", "plan_note": null, "critical_chain": true, "comment": null}, {"num": "2.2.5.4", "level": 4, "parent": "2.2.5", "kind": "task", "name": "Направление Заказчику приглашения на демонстрацию работы лабораторного образца ЯМГ представителям (комиссии) Заказчика", "owners": ["Электроприбор", "СП «Квант»"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор» ООО «СП «Квант»", "start": "2026-11-21", "start_derived": true, "due": "2026-11-24", "due_qualifier": null, "due_to_customer": "2026-11-24", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": "Письмо-приглашение Исполнителя", "execution_doc": "Письмо Исполнителя Заказчику; протокол демонстрации", "basis": "Договор (п. 2.8); ТЗ (п. 13.3.2, п. 13.3.3)", "plan_note": "Демонстрация проводится после завершения сборки ЛО ЯМГ (поз. 2.2.5.2, 20.11.2026) в рамках экспериментальных исследований по согласованной программе и методике (поз. 2.2.5.3). Приглашение направляется заблаговременно — не позднее 13.11.2026.", "critical_chain": false, "comment": null}, {"num": "2.2.5.5", "level": 4, "parent": "2.2.5", "kind": "task", "name": "Проведение демонстрации (испытаний) работы лабораторного образца ЯМГ", "owners": ["Электроприбор", "СП «Квант»"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор» ООО «СП «Квант»", "start": "2026-11-28", "start_derived": true, "due": "2026-11-30", "due_qualifier": null, "due_to_customer": "2026-11-30", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": "Протокол испытаний лабораторного образца ЯМГ, подтверждающий работоспособность заложенных физических принципов.", "execution_doc": "Акт приемки испытаний лабораторного образца ЯМГ", "basis": null, "plan_note": null, "critical_chain": true, "comment": null}, {"num": "2.2.6", "level": 3, "parent": "2.2", "kind": "task", "name": "Приемка отчетных материалов соисполнителя (ФТИ им. А.Ф. Иоффе) по результатам работ по этапу 1", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-17", "start_derived": true, "due": "2026-11-27", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "2 месяца", "output_doc": "Заключение о приемке отчетных материалов соисполнителя", "execution_doc": "Заключение о приемке отчетных материалов соисполнителя", "basis": "Договор (п. 2.6.2); М", "plan_note": "Завершение работ соисполнителя и передача отчётных материалов — не позднее 16.11.2026; приёмка — до 30.11.2026, не менее 2 (двух) недель (решение Заказчика от 18.08.2026)", "critical_chain": false, "comment": null}, {"num": "2.2.7", "level": 3, "parent": "2.2", "kind": "task", "name": "Приемка отчетных материалов соисполнителя (Институт химии силикатов им. И.В. Гребенщикова)", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-17", "start_derived": true, "due": "2026-11-27", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "2 месяца", "output_doc": "Заключение о приемке отчетных материалов соисполнителя", "execution_doc": "Заключение о приемке отчетных материалов соисполнителя", "basis": "М", "plan_note": "Завершение работ соисполнителя (ИХС им. И.В. Гребенщикова) и передача отчётных материалов — не позднее 16.11.2026; приёмка — до 30.11.2026, не менее 2 (двух) недель (решение Заказчика от 18.08.2026)", "critical_chain": false, "comment": null}, {"num": "2.2.8", "level": 3, "parent": "2.2", "kind": "task", "name": "Подготовка отчетной документации по этапу (в том числе: технико-экономическое обоснование по этапу; оценка достижения характеристик изделия расчетным методом по результатам технического проектирования; выпуск комплекта документов технического проекта в соответствии с ГОСТ 2.120, нормоконтроль)", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-28", "start_derived": true, "due": "2026-11-30", "due_qualifier": null, "due_to_customer": "2026-12-01", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "2 месяца", "output_doc": "Комплект документов технического проекта в соответствии с ГОСТ 2.120; пояснительная записка к техническому проекту (ГОСТ 2.106); технико-экономическое обоснование по этапу", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "ТЗ (п. 12.1, п. 4.4); Ведомость исполнения; М", "plan_note": "Подпозиции 2.2.8.1–2.2.8.3 укрупнены в одну позицию (решение Заказчика от 18.08.2026); контрольные сроки: ТЭО по этапу — 20.11.2026, оценка характеристик расчетным методом — 25.11.2026, выпуск комплекта документов ТП — 30.11.2026; полнота состава передаваемых документов сохранена. Оценка прогнозируемой стоимости единицы ИИМ в серийном производстве исключена из позиции по замечанию Заказчика; требование к серийной стоимости (п. 4.4 ТЗ) учитывается в ходе технического проектирования", "critical_chain": false, "comment": null}, {"num": "2.2.9", "level": 3, "parent": "2.2", "kind": "task", "name": "Уточнение на этапе технического проектирования параметров, допускаемых ТЗ (характеристики магнитной системы, оптического блока, газовой ячейки)", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-17", "start_derived": true, "due": "2026-11-27", "due_qualifier": null, "due_to_customer": "2026-11-30", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "2 месяца", "output_doc": "Уточненные параметры в составе пояснительной записки к техническому проекту", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "ТЗ (пп. 3.2.11, 3.3.3, 3.6.12)", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "2.2.10", "level": 3, "parent": "2.2", "kind": "task", "name": "Направление Заказчику уведомления о готовности этапа 1 к сдаче (за 30 календарных дней до окончания этапа)", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-11-28", "start_derived": true, "due": "2026-11-30", "due_qualifier": null, "due_to_customer": "2026-12-01", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "2 месяца", "output_doc": "Уведомление о готовности этапа 1 к сдаче", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "ТЗ (п. 13.1.3)", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "3", "level": 1, "parent": null, "kind": "section", "name": "Сдача этапа 1", "owners": [], "owner_raw": null, "start": "2026-10-01", "start_derived": true, "due": "2027-02-01", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": null, "status_mark": null, "horizon": null, "output_doc": null, "execution_doc": null, "basis": null, "plan_note": null, "critical_chain": false, "comment": null}, {"num": "3.1", "level": 2, "parent": "3", "kind": "task", "name": "Формирование и передача Заказчику научно-технических отчетных материалов этапа 1", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-12-01", "start_derived": true, "due": "2026-12-01", "due_qualifier": null, "due_to_customer": "2026-12-03", "due_to_customer_qualifier": "не позднее", "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "Справочно", "output_doc": "Комплект ТП по результатам ОКР Этапа №1 в соответствии ТЗ.", "execution_doc": "Письмо Исполнителя Заказчику.", "basis": "Договор (п. 5.3); ТЗ (п. 13.1.1)", "plan_note": "Научно-технические отчетные материалы выделены отдельно от финансовой отчётности (поз. 3.2) по замечанию Заказчика. Пояснительная записка о МРиО (п. 5.3, п. 10 Договора) не включается: передача МРиО (имущества Заказчика) Договором не предусмотрена — не применимо", "critical_chain": false, "comment": null}, {"num": "3.2", "level": 2, "parent": "3", "kind": "task", "name": "Формирование и передача Заказчику сопроводительного комплекта документов (финансовая отчетность по этапу 1) (не более 10 рабочих дней с даты завершения работ по этапу)", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-12-01", "start_derived": true, "due": "2026-12-30", "due_qualifier": null, "due_to_customer": "2027-01-11", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": "Отчетные материалы этапа 1 (ТЗ); РИО Исполнителя; заключение ПДНТК Исполнителя; письмо о наличии/отсутствии сведений из Перечня конфиденциальной информации (Приложение № 5); ФОД; отчет о расходах по форме п. 4 Приложения № 6 с приложением подтверждающих первичных бухгалтерских документов; акт инвентаризации овеществленного результата ОКР по этапу 1 (форма п. 2 Приложения № 6) проект Акта сдачи-приемки Этапа ОКР; сохранная расписка (форма п. 5 Приложения № 6); документы, подтверждающие внесение сведений в ЕГИСУ НИОКТР.", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "Договор (п. 5.3, п. 5.2, п. 2.14)", "plan_note": "Сопроводительный комплект (финансовая отчётность) выделен в отдельную позицию по замечанию Заказчика. Акт инвентаризации овеществленного результата передаётся в составе ФОД (п. 5.2 Договора)", "critical_chain": false, "comment": null}, {"num": "3.3", "level": 2, "parent": "3", "kind": "task", "name": "Представление Заказчику отчета о расходах за 3 квартал 2026 года", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-10-01", "start_derived": true, "due": "2026-10-28", "due_qualifier": null, "due_to_customer": "2026-10-28", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "1 месяц", "output_doc": "Отчет о расходах за 3 квартал 2026 года (форма п. 4 Приложения № 6)", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "Договор (п. 2.14)", "plan_note": "Срок приведён в соответствие с подписанной редакцией Договора: не позднее 20-го рабочего дня месяца, следующего за отчётным кварталом (п. 2.14); просрочка влечёт штраф (п. 8.3.7 Договора)", "critical_chain": false, "comment": null}, {"num": "3.4", "level": 2, "parent": "3", "kind": "task", "name": "Представление Заказчику отчета о расходах за 4 квартал 2026 года", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-12-01", "start_derived": true, "due": "2027-01-15", "due_qualifier": null, "due_to_customer": "2027-01-15", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": "Отчет о расходах за 4 квартал 2026 года (форма п. 4 Приложения № 6)", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "Договор (п. 2.14)", "plan_note": "Срок установлен с запасом относительно п. 2.14 Договора (в январе 2027 г. — 15 рабочих дней)", "critical_chain": false, "comment": null}, {"num": "3.5", "level": 2, "parent": "3", "kind": "task", "name": "Оформление акта сверки расчетов за 3 квартал 2026 года", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-10-01", "start_derived": true, "due": "2026-10-15", "due_qualifier": null, "due_to_customer": "2026-10-15", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "1 месяц", "output_doc": "Акт сверки расчетов за 3 квартал 2026 года", "execution_doc": "Акт сверки расчетов, подписанный Сторонами", "basis": "Договор (п. 3.7)", "plan_note": "Срок строго по п. 3.7 Договора: ежеквартально, до 15-го числа месяца, следующего за отчётным кварталом", "critical_chain": false, "comment": null}, {"num": "3.6", "level": 2, "parent": "3", "kind": "task", "name": "Оформление акта сверки расчетов за 4 квартал 2026 года", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-12-01", "start_derived": true, "due": "2027-01-15", "due_qualifier": null, "due_to_customer": "2027-01-15", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": "Акт сверки расчетов за 4 квартал 2026 года", "execution_doc": "Акт сверки расчетов, подписанный Сторонами", "basis": "Договор (п. 3.7)", "plan_note": "Срок строго по п. 3.7 Договора: ежеквартально, до 15-го числа месяца, следующего за отчётным кварталом", "critical_chain": false, "comment": null}, {"num": "3.7", "level": 2, "parent": "3", "kind": "task", "name": "Формирование и передача Заказчику перечня результатов интеллектуальной деятельности (РИД), созданных при выполнении этапа 1", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-12-01", "start_derived": true, "due": "2026-12-01", "due_qualifier": null, "due_to_customer": "2026-12-01", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "Справочно", "output_doc": "Перечень РИД", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "Договор (п. 6.2)", "plan_note": null, "critical_chain": false, "comment": null}, {"num": "3.8", "level": 2, "parent": "3", "kind": "task", "name": "Проведение инвентаризации овеществленного результата ОКР по этапу 1", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-12-01", "start_derived": true, "due": "2026-12-01", "due_qualifier": null, "due_to_customer": "2026-12-01", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "Справочно", "output_doc": "Акт инвентаризации овеществленного результата ОКР по этапу 1 (форма п. 2 Приложения № 6)", "execution_doc": "Акт инвентаризации", "basis": "Договор (п. 5.2)", "plan_note": "Акт инвентаризации оформляется по форме п. 2 Приложения № 6 (п. 5.2 Договора); передача Заказчику — в составе ФОД (поз. 3.2)", "critical_chain": false, "comment": null}, {"num": "3.9", "level": 2, "parent": "3", "kind": "task", "name": "Приемка научно-технических отчетных материалов этапа 1 комиссией Заказчика (защита технического проекта)", "owners": ["Электроприбор", "СП «Квант»"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор» ООО «СП «Квант»", "start": "2026-12-01", "start_derived": true, "due": "2026-12-30", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": "Справочно", "output_doc": "Замечания Заказчика (при наличии) либо решение комиссии о приемке", "execution_doc": "Акт приемки результатов Этапа ОКР №1", "basis": "ТЗ (пп. 13.1.2, 13.3.3); Договор (п. 5.4)", "plan_note": "Приёмка технического проекта комиссией Заказчика — до 30 календарных дней с даты подписания Акта передачи отчётных материалов (п. 5.4 Договора); решение о приёмке технического проекта является основанием перехода к этапу 2 (начало — 01.01.2027). Контрольная дата 30.12.2026 соответствует Ведомости исполнения", "critical_chain": false, "comment": null}, {"num": "3.10", "level": 2, "parent": "3", "kind": "task", "name": "Приемка сопроводительных документов (финансовой отчетности по этапу 1)", "owners": ["СП «Квант»"], "owner_raw": "ООО «СП «Квант»", "start": "2026-12-01", "start_derived": true, "due": "2027-02-01", "due_qualifier": null, "due_to_customer": null, "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": "Замечания Заказчика (при наличии) либо подтверждение приемки финансовой отчетности", "execution_doc": "Акт сдачи-приемки Этапа ОКР", "basis": "Договор (п. 5.4)", "plan_note": "Приёмка финансовой отчётности по этапу 1 — второй этап приёмки (решение Заказчика от 18.08.2026)", "critical_chain": false, "comment": null}, {"num": "3.11", "level": 2, "parent": "3", "kind": "task", "name": "Устранение замечаний Заказчика (условный цикл — выполняется при наличии замечаний; не более 10 рабочих дней с даты получения мотивированного отказа)", "owners": ["Электроприбор"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор»", "start": "2026-12-01", "start_derived": true, "due": "2027-01-21", "due_qualifier": "условно", "due_to_customer": "2027-01-21", "due_to_customer_qualifier": "условно", "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": "Скорректированный комплект отчетных материалов с описью произведенных изменений", "execution_doc": "Письмо Исполнителя Заказчику", "basis": "Договор (п. 5.5)", "plan_note": "Условный цикл: выполняется при наличии замечаний; срок — не более 10 рабочих дней (п. 5.5 Договора)", "critical_chain": false, "comment": null}, {"num": "3.12", "level": 2, "parent": "3", "kind": "task", "name": "Подписание Акта сдачи-приемки Этапа ОКР (форма п. 3 Приложения № 6 к Договору)", "owners": ["Электроприбор", "СП «Квант»"], "owner_raw": "АО «Концерн «ЦНИИ «Электроприбор» ООО «СП «Квант»", "start": "2026-12-01", "start_derived": true, "due": "2027-02-01", "due_qualifier": null, "due_to_customer": "2027-02-01", "due_to_customer_qualifier": null, "control_date": null, "closed_date": null, "status": "Не начато", "status_mark": null, "horizon": null, "output_doc": "Акт сдачи-приемки Этапа ОКР", "execution_doc": "Акт сдачи-приемки Этапа ОКР, подписанный Сторонами", "basis": "ТЗ (п. 13.3.3); Договор (п. 5.4)", "plan_note": "Форма акта — п. 3 Приложения № 6 к Договору", "critical_chain": false, "comment": null}]};
+</script>
+<script>
+/* Константы из свода решений. */
+const CONFIG = {
+  CHAIN: ["2.1.7", "2.1.6", "2.2.2", "2.2.5.1", "2.2.4.1", "2.2.5.2", "2.2.5.3", "2.2.5.5"], // Р-23, Р-24
+  FEEDER: { from: "2.1.9", to: "2.2.5.3" },                                                 // Р-23
+  HOLIDAYS: ["2026-11-04", "2026-12-31", "2027-01-01", "2027-01-02", "2027-01-03", "2027-01-04",
+             "2027-01-05", "2027-01-06", "2027-01-07", "2027-01-08"],                       // Р-04
+  HOLIDAYS_NOTE: "Нерабочие дни: ст. 112 ТК РФ; перенос выходного с 04.01.2026 на 31.12.2026 (постановление Правительства РФ о переносе выходных дней в 2026 году).",
+  ORGS: { elektropribor: "Электроприбор", fti: "ФТИ им. Иоффе", ihs: "ИХС им. Гребенщикова" }, // Р-28
+  LINKS: [                                                                                   // DATA_MAP §8, Р-46
+    ["2.2.1", "2.2.6", "Приёмка отчётных материалов — поз. 2.2.6"],
+    ["2.2.2", "2.2.7", "Приёмка отчётных материалов — поз. 2.2.7"],
+    ["2.2.5.2", "2.2.5.3", "Исследования ЛО — после сборки (поз. 2.2.5.3)"],
+    ["2.2.5.2", "2.2.5.4", "Приглашение на демонстрацию — после сборки (поз. 2.2.5.4)"],
+    ["3.8", "3.2", "Акт инвентаризации передаётся в составе ФОД (поз. 3.2)"],
+    ["2.1.2", "2.1.9", "ПМИ согласуются одновременно с пояснительной запиской (поз. 2.1.2)"],
+  ],
+  // Краткие наименования для отображения (Р-55). Официальное наименование — в карточке позиции и подсказке.
+  SHORT: {
+    "1": "Запуск",
+    "2": "Реализация этапа 1",
+    "2.1": "3 квартал 2026 года",
+    "2.2": "4 квартал 2026 года",
+    "3": "Сдача этапа 1",
+    "1.1": "Уведомление о правах на РИД",
+    "1.2": "Назначение представителей Сторон",
+    "1.3": "Приказ о рабочей группе",
+    "1.4": "Сведения в ЕГИСУ НИОКТР",
+    "1.5": "Подтверждение уровня готовности технологии",
+    "1.6": "Гарантия исполнения Договора",
+    "1.7": "Гарантия возврата аванса",
+    "1.8": "Согласование План-графика",
+    "2.1.1": "Патентные исследования",
+    "2.1.1.1": "Задание на патентные исследования",
+    "2.1.1.2": "Исследование уровня техники",
+    "2.1.1.3": "Исследование патентоспособности",
+    "2.1.1.4": "Исследование патентной чистоты",
+    "2.1.1.5": "Отчёт о патентных исследованиях",
+    "2.1.2": "Обоснование схемы квантового сенсора",
+    "2.1.2.1": "Выбор рабочих веществ",
+    "2.1.2.2": "Выбор лазерных излучателей",
+    "2.1.2.3": "Состав рабочей смеси ячейки",
+    "2.1.2.4": "Схема магнитной системы",
+    "2.1.2.5": "Анализ контура обратной связи",
+    "2.1.2.6": "Пояснительная записка по схеме",
+    "2.1.3": "Перечень-комплектность документации",
+    "2.1.4": "Техзадание для ФТИ им. Иоффе",
+    "2.1.5": "Техзадание для ИХС им. Гребенщикова",
+    "2.1.6": "Договоры с соисполнителями",
+    "2.1.7": "Закупка материалов и оборудования",
+    "2.1.8": "Требования к составным частям модуля",
+    "2.1.9": "Программа испытаний лабораторного образца",
+    "2.2.1": "Работы ФТИ им. Иоффе",
+    "2.2.2": "Работы ИХС по технологии ячеек",
+    "2.2.3": "Математическая модель",
+    "2.2.3.1": "Модель динамики спинов",
+    "2.2.3.2": "Модель изотопного сдвига",
+    "2.2.3.3": "Расчёт изотопного состава ксенона",
+    "2.2.3.4": "Модель контура обратной связи",
+    "2.2.3.5": "Модель ухода нуля",
+    "2.2.3.6": "Программа и описание модели",
+    "2.2.4": "Конструкторская документация",
+    "2.2.4.1": "КД газовой ячейки",
+    "2.2.4.2": "КД магнитной системы",
+    "2.2.4.3": "КД оптического блока",
+    "2.2.4.4": "Электронные блоки",
+    "2.2.4.5": "Компоновка модуля",
+    "2.2.5": "Лабораторная база гироскопа",
+    "2.2.5.1": "Макеты ячеек и эксперименты",
+    "2.2.5.2": "Сборка лабораторного образца",
+    "2.2.5.3": "Испытания лабораторного образца",
+    "2.2.5.4": "Приглашение на демонстрацию",
+    "2.2.5.5": "Демонстрация лабораторного образца",
+    "2.2.6": "Приёмка работ ФТИ",
+    "2.2.7": "Приёмка работ ИХС",
+    "2.2.8": "Отчётная документация этапа",
+    "2.2.9": "Уточнение параметров по ТЗ",
+    "2.2.10": "Уведомление о готовности этапа",
+    "3.1": "Передача научно-технических материалов",
+    "3.2": "Финансовая отчётность этапа",
+    "3.3": "Отчёт о расходах за 3 квартал",
+    "3.4": "Отчёт о расходах за 4 квартал",
+    "3.5": "Акт сверки за 3 квартал",
+    "3.6": "Акт сверки за 4 квартал",
+    "3.7": "Перечень результатов интеллектуальной деятельности",
+    "3.8": "Инвентаризация результата этапа",
+    "3.9": "Приёмка технического проекта комиссией",
+    "3.10": "Приёмка финансовой отчётности",
+    "3.11": "Устранение замечаний Заказчика",
+    "3.12": "Акт сдачи-приёмки этапа",
+  },
+  DEMO: "2026-11-30",
+  STORAGE_KEY: "orbita.ymg-iim.s1.edits.v1",
+  THEME_KEY: "orbita.theme",
+};
+if (typeof module !== "undefined") module.exports = CONFIG;
+
+</script>
+<script>
+/* Модуль расчёта «Орбиты». Чистые функции: исходные данные + правки + дата → производные признаки.
+   Правила — docs/SPEC.md §4–6; ссылки [Р-NN] — docs/DECISIONS.md. */
+const Engine = (() => {
+  const DAY = 86400000;
+  const STATUSES = ["Не начато", "Нет отметки", "В работе", "Подготовка материалов", "Ожидаем документ", "На согласовании", "Закрыто"];
+  const ACTIVE = new Set(["В работе", "Подготовка материалов", "Ожидаем документ", "На согласовании"]);
+  const CLS = {
+    "Закрыто": "closed", "В работе": "progress", "Подготовка материалов": "progress",
+    "Ожидаем документ": "action", "На согласовании": "action", "Нет отметки": "action", "Не начато": "future",
+  };
+
+  const dn = (s) => { if (!s) return null; const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d) / DAY; };
+  const pad = (x) => String(x).padStart(2, "0");
+  const fmt = (n) => { if (n == null) return "—"; const d = new Date(n * DAY); return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`; };
+  const iso = (n) => new Date(n * DAY).toISOString().slice(0, 10);
+  const todayLocal = () => { const d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY; };
+  const parseISO = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(s || "") && !isNaN(dn(s)) && iso(dn(s)) === s ? dn(s) : null);
+
+  function calendar(holidays) {
+    const H = new Set(holidays.map(dn));
+    const isWork = (n) => { const w = new Date(n * DAY).getUTCDay(); return w !== 0 && w !== 6 && !H.has(n); };
+    /** Рабочие дни в интервале (a; b] со знаком [Р-47]. */
+    const wd = (a, b) => {
+      if (a === b) return 0;
+      const lo = Math.min(a, b), hi = Math.max(a, b);
+      let c = 0;
+      for (let x = lo + 1; x <= hi; x++) if (isWork(x)) c++;
+      return a < b ? c : -c;
+    };
+    /** Сдвиг на k рабочих дней (k может быть ≤ 0). */
+    const shift = (n, k) => {
+      let x = n, left = Math.abs(k);
+      const s = k > 0 ? 1 : -1;
+      while (left > 0) { x += s; if (isWork(x)) left--; }
+      return x;
+    };
+    const nextWork = (n) => { let x = n + 1; while (!isWork(x)) x++; return x; };
+    return { wd, shift, nextWork, isWork };
+  }
+
+  const plural = (n, one, few, many) => {
+    const a = Math.abs(n) % 100, b = a % 10;
+    if (a > 10 && a < 20) return many;
+    if (b > 1 && b < 5) return few;
+    if (b === 1) return one;
+    return many;
+  };
+  const remainText = (d) => (d == null ? "" : d > 0 ? `через ${d} дн.` : d === 0 ? "сегодня" : `просрочено ${-d} дн.`);
+
+  /**
+   * Построение модели.
+   * @param seed   — SEED (data/seed_ymg_stage1.json)
+   * @param cfg    — CONFIG (CHAIN, FEEDER, HOLIDAYS, LINKS)
+   * @param edits  — правки пользователя { num: {status, closeDoc:{name,letter,date}, comment} }
+   * @param T      — «сегодня», номер дня
+   */
+  function build(seed, cfg, edits, T) {
+    const cal = calendar(cfg.HOLIDAYS);
+    const items = seed.items.map((s, idx) => ({
+      s, idx, num: s.num, kind: s.kind, level: s.level, parent: s.parent, name: s.name,
+      owners: s.owners, start: dn(s.start), due: dn(s.due), dueCust: dn(s.due_to_customer),
+      ctrl: dn(s.control_date), closedDate: dn(s.closed_date), children: [],
+      edit: edits[s.num] || null,
+    }));
+    const by = Object.fromEntries(items.map((i) => [i.num, i]));
+    items.forEach((i) => { if (i.parent) by[i.parent].children.push(i); });
+    const isSub = (i) => i.parent && by[i.parent].kind === "group";
+
+    // Отображаемый статус [Р-15]: сначала группы (хранимое/правка), затем работы, затем расчётные группы.
+    const own = (i) => {
+      if (i.edit && i.edit.status) return { status: i.edit.status, src: "edit" };
+      if (i.s.status_mark) return { status: i.s.status, src: "mark" };
+      return null;
+    };
+    items.forEach((i) => {
+      if (i.kind === "section") return;
+      const o = own(i);
+      if (o) { i.status = o.status; i.src = o.src; }
+    });
+    items.forEach((i) => {
+      if (i.kind !== "task" || i.status) return;
+      const g = isSub(i) ? by[i.parent] : null;
+      if (g && i.due < T && g.status && (g.src === "mark" || g.src === "edit")) {
+        i.status = g.status; i.src = "inherited"; i.inheritedFrom = g.num;
+      } else if (i.due < T) { i.status = "Нет отметки"; i.src = "rule"; }
+      else { i.status = "Не начато"; i.src = "rule"; }
+    });
+    items.forEach((g) => {
+      if (g.kind !== "group" || g.status) return;
+      const st = g.children.map((c) => c.status);
+      let r = "Не начато";
+      if (st.every((x) => x === "Закрыто")) r = "Закрыто";
+      else if (st.some((x) => x === "Закрыто" || ACTIVE.has(x))) r = "В работе";
+      else if (st.some((x) => x === "Нет отметки")) r = "Нет отметки";
+      g.status = r; g.src = "derived";
+    });
+
+    // Признаки срока [SPEC 4.3]
+    items.forEach((i) => {
+      if (i.kind === "section") return;
+      i.cls = CLS[i.status];
+      i.closed = i.status === "Закрыто";
+      i.remain = i.due - T;
+      i.overdue = !i.closed && i.due < T;
+      i.overdueDays = i.overdue ? T - i.due : 0;
+      i.soon = !i.closed && i.remain >= 0 && i.remain <= 7;
+      i.ctrlPassed = !i.closed && i.ctrl != null && i.ctrl < T;
+      i.ctrlDays = i.ctrlPassed ? T - i.ctrl : 0;
+      if (i.closed) {
+        const cd = i.edit && i.edit.closeDoc;
+        i.closeDate = cd ? dn(cd.date) : i.closedDate;
+        i.noReq = cd ? !(cd.name && cd.name.trim()) : (i.src === "mark" && i.closedDate == null);
+      }
+      i.horizon = i.closed ? "closed" : i.remain < 0 ? "overdue" : i.remain <= 14 ? "h14" : i.remain <= 30 ? "h30" : i.remain <= 60 ? "h60" : "later";
+      i.inBase = !isSub(i) || (i.kind === "task" && i.dueCust != null);
+      i.comment = (i.edit && i.edit.comment) || "";
+    });
+    items.forEach((g) => {
+      if (g.kind !== "group") return;
+      g.progress = { closed: g.children.filter((c) => c.closed).length, total: g.children.length };
+      g.overdueSubs = g.children.filter((c) => c.overdue && !c.inBase).map((c) => c.num);
+    });
+
+    const work = items.filter((i) => i.kind !== "section");
+    const base = work.filter((i) => i.inBase);
+
+    // KPI [SPEC 4.5, Р-44]
+    const reached = base.filter((i) => i.due < T);
+    const kpi = {
+      base: base.length,
+      closed: base.filter((i) => i.closed).length,
+      noReq: base.filter((i) => i.closed && i.noReq).length,
+      reached: reached.length,
+      reachedClosed: reached.filter((i) => i.closed).length,
+      overdue: base.filter((i) => i.overdue).length,
+      early: base.filter((i) => i.closed && i.due >= T).length,
+      ctrlPassed: base.filter((i) => i.ctrlPassed).length,
+      active: base.filter((i) => ACTIVE.has(i.status)).length,
+      toDemoWd: cal.wd(T, dn("2026-11-30")),
+      toDemo: dn("2026-11-30") - T,
+      toEnd: dn(seed.project.stage_end) - T,
+    };
+    kpi.pct = Math.round((kpi.closed / kpi.base) * 100);
+
+    // Прогресс разделов [SPEC 4.6]
+    const sectionOf = (i) => { const p = i.num.split("."); return p[0] === "2" ? p.slice(0, 2).join(".") : p[0]; };
+    const sections = ["1", "2.1", "2.2", "3"].map((sn) => {
+      const list = base.filter((i) => sectionOf(i) === sn);
+      return { num: sn, name: by[sn].name, total: list.length, closed: list.filter((i) => i.closed).length, overdue: list.filter((i) => i.overdue).length };
+    });
+
+    // Окна цепочки [Р-47, SPEC 4.7]
+    const chainNums = cfg.CHAIN;
+    const F = {};
+    const forecast = (i, prevF, prevP) => {
+      if (i.closed) return i.closeDate != null ? i.closeDate : i.due;
+      let f = Math.max(i.due, T);
+      if (prevF != null) f = Math.max(f, cal.shift(prevF, Math.min(prevP, 0)));
+      return f;
+    };
+    const windows = [];
+    let prevF = null, prevP = null;
+    chainNums.forEach((n, k) => {
+      const i = by[n];
+      F[n] = forecast(i, prevF, prevP);
+      if (k < chainNums.length - 1) {
+        const j = by[chainNums[k + 1]];
+        const P = cal.wd(i.due, j.due);
+        windows.push({ from: n, to: j.num, P });
+        prevP = P;
+      }
+      prevF = F[n];
+    });
+    const feederI = by[cfg.FEEDER.from];
+    F[cfg.FEEDER.from] = forecast(feederI, null, null);
+    const winState = (w) => {
+      const a = by[w.from], b = by[w.to];
+      const R = cal.wd(F[w.from], b.due);
+      const E = w.P - R;
+      let state;
+      if (a.closed && b.closed) state = "done";
+      else if (R < Math.min(w.P, 0)) state = "breach";
+      else if (E > 0) state = "eroding";
+      else if (w.P < 0) state = "overlap";
+      else if (w.P <= 1) state = "thin";
+      else state = "ok";
+      const breachFrom = state === "eroding" && !a.closed ? cal.nextWork(b.due) : null;
+      return { ...w, R, E, state, breachFrom };
+    };
+    const chainWindows = windows.map(winState);
+    const feeder = winState({ from: cfg.FEEDER.from, to: cfg.FEEDER.to, P: cal.wd(feederI.due, by[cfg.FEEDER.to].due), feeder: true });
+    const rank = { breach: 3, eroding: 2, overlap: 1, thin: 1, ok: 1, done: 0 };
+    const worst = [...chainWindows, feeder].reduce((a, w) => (rank[w.state] > rank[a] ? w.state : a), "done");
+    const chainState = worst === "breach" ? "breach" : worst === "eroding" ? "eroding" : chainNums.every((n) => by[n].closed) ? "done" : "ok";
+    const chainSet = new Set([...chainNums, cfg.FEEDER.from]);
+
+    // «Топ-5 рисков» [Р-26, Р-50]
+    const ord = (a, b) => a.idx - b.idx;
+    const open = work.filter((i) => !i.closed);
+    const inChain = (i) => chainSet.has(i.num);
+    const cats = [
+      open.filter((i) => inChain(i) && i.overdue).sort((a, b) => b.overdueDays - a.overdueDays || ord(a, b)).map((i) => [i, "chain-overdue"]),
+      open.filter((i) => inChain(i) && i.soon).sort((a, b) => a.remain - b.remain || ord(a, b)).map((i) => [i, "chain-soon"]),
+      open.filter((i) => !inChain(i) && i.inBase && i.overdue).sort((a, b) => b.overdueDays - a.overdueDays || ord(a, b)).map((i) => [i, "overdue"]),
+      open.filter((i) => !inChain(i) && i.inBase && i.ctrlPassed).sort((a, b) => b.ctrlDays - a.ctrlDays || ord(a, b)).map((i) => [i, "ctrl"]),
+      open.filter((i) => !inChain(i) && i.inBase && i.soon).sort((a, b) => a.remain - b.remain || ord(a, b)).map((i) => [i, "soon"]),
+    ];
+    const seen = new Set(), top5 = [];
+    cats.flat().forEach(([i, why]) => { if (top5.length < 5 && !seen.has(i.num)) { seen.add(i.num); top5.push({ item: i, why }); } });
+
+    return { items, by, work, base, kpi, sections, chainNums, chainSet, chainWindows, feeder, chainState, F, cal, T, top5 };
+  }
+
+  /** Текст повестки [SPEC 6, Р-33, Р-50]. */
+  function agenda(M) {
+    const line = (i) => {
+      let c = i.comment || i.s.status_mark || "";
+      if (i.kind === "group" && i.overdueSubs && i.overdueSubs.length) {
+        c = (c ? c + "; " : "") + `просрочены подпозиции ${i.overdueSubs.join(", ")}`;
+      }
+      return `${i.name}${c ? " — " + c : ""} (п. ${i.num})`;
+    };
+    const base = M.base.filter((i) => !i.closed);
+    const groupWithSubs = (i) => i.kind === "group" && i.overdueSubs.length;
+    const s1 = base.filter((i) => i.overdue || groupWithSubs(i));
+    const s2 = base.filter((i) => !s1.includes(i) && i.ctrlPassed);
+    const s3 = base.filter((i) => !s1.includes(i) && !s2.includes(i) && i.remain >= 0 && i.remain <= 14);
+    const out = [`Повестка оперативки по этапу 1 ОКР «ЯМГ-ИИМ» на ${fmt(M.T)}`, ""];
+    const sec = (title, list) => {
+      out.push(title);
+      if (!list.length) out.push("— позиций нет");
+      list.forEach((i, k) => out.push(`${k + 1}. ${line(i)}`));
+      out.push("");
+    };
+    sec("1. Просрочено", s1);
+    sec("2. Контрольная дата прошла", s2);
+    sec("3. Срок в ближайшие 14 дней", s3);
+    return { text: out.join("\n").trim(), counts: [s1.length, s2.length, s3.length] };
+  }
+
+  return { build, agenda, dn, fmt, iso, parseISO, todayLocal, remainText, plural, STATUSES, CLS, ACTIVE, calendar };
+})();
+if (typeof module !== "undefined") module.exports = Engine;
+
+</script>
+<script>
+/* «Орбита» — интерфейс. Пять режимов, карточка позиции, повестка. SPEC.md §2–9; наименования — Р-55. */
+(function () {
+  "use strict";
+  const E = Engine, C = CONFIG, SEED = window.SEED;
+  const VARIANT = window.VARIANT || "panel";
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // ── Иконки Lucide (ISC), штриховые
+  const ICONS = {
+    chev: '<path d="m6 9 6 6 6-6"/>', x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+    moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+    search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+    copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+    reset: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+    arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  };
+  const ico = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
+
+  // ── Хранилище: только удобство, страница работает без него
+  const store = {
+    ok: true,
+    get(k) { try { return window.localStorage.getItem(k); } catch (e) { this.ok = false; return null; } },
+    set(k, v) { try { window.localStorage.setItem(k, v); } catch (e) { this.ok = false; } },
+  };
+  try { const t = "__orbita_probe__"; window.localStorage.setItem(t, "1"); window.localStorage.removeItem(t); } catch (e) { store.ok = false; }
+
+  // ── Параметры ссылки [SPEC §3]
+  const q = new URLSearchParams(location.search);
+  const notices = [];
+  let T = E.todayLocal(), todayFromLink = false;
+  if (q.has("today")) {
+    const t = E.parseISO(q.get("today"));
+    if (t != null) { T = t; todayFromLink = true; } else notices.push("Параметр today не распознан, использована текущая дата.");
+  }
+  let orgKey = null, orgName = null;
+  if (q.has("org")) {
+    if (C.ORGS[q.get("org")]) { orgKey = q.get("org"); orgName = C.ORGS[orgKey]; }
+    else notices.push("Параметр org не распознан: открыто полное представление только для просмотра.");
+  }
+  const exec = q.get("view") === "exec";
+  const readonly = exec || q.has("org");
+  const VIEWS = [["summary", "Сводка"], ["gantt", "График работ"], ["focus", "Ближайшие сроки"], ["board", "Статусы"], ["milestones", "Вехи"]];
+  const viewsAvail = orgKey ? VIEWS.filter(([k]) => k !== "summary") : VIEWS;
+  const defaultView = orgKey ? "focus" : VARIANT === "registry" ? "gantt" : "summary";
+  let view = exec ? "summary" : q.get("view");
+  if (view && !viewsAvail.some(([k]) => k === view)) { notices.push("Параметр view не распознан, открыт режим по умолчанию."); view = null; }
+  view = view || defaultView;
+
+  let theme = q.get("theme");
+  if (theme !== "light" && theme !== "dark") theme = store.get(C.THEME_KEY) === "dark" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", theme);
+
+  // ── Состояние
+  let edits = {};
+  if (!readonly) { try { edits = JSON.parse(store.get(C.STORAGE_KEY) || "{}") || {}; } catch (e) { edits = {}; } }
+  const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, returnFocus: null };
+  let M;
+  const saveEdits = () => { if (!readonly) store.set(C.STORAGE_KEY, JSON.stringify(edits)); };
+  const recompute = () => { M = E.build(SEED, C, edits, T); };
+
+  // ── Слова и форматы
+  const fmt = E.fmt;
+  const pl = (n, a, b, c) => E.plural(n, a, b, c);
+  const days = (n) => `${n} ${pl(n, "день", "дня", "дней")}`;
+  const wdays = (n) => `${n} ${pl(n, "рабочий день", "рабочих дня", "рабочих дней")}`;
+  const title = (i) => C.SHORT[i.num] || i.name;
+  const nameAttr = (i) => esc(`${i.name} (№ ${i.num} по План-графику)`);
+  const orgMatch = (i) => !orgKey || i.owners.includes(orgName);
+  const showChain = !orgKey;
+  const ownersText = (i) => i.owners.join(", ");
+
+  /** Статус: цветная точка + слово; пометки — вторичным текстом [Р-16, Р-51]. */
+  const status = (i, withNote = true) => {
+    if (!i.status) return "";
+    let note = "";
+    if (withNote && i.src === "inherited") note = "по группе";
+    else if (withNote && i.src === "derived") note = "расчётный";
+    if (withNote && i.closed && i.noReq) note = "без документа";
+    return `<span class="st st-${i.cls}"><i aria-hidden="true"></i>${esc(i.status)}${note ? `<span class="st-note">· ${note}</span>` : ""}</span>`;
+  };
+  /** Срок словами: «просрочено на 13 дней», «через 2 дня», «выполнено 04.09.2026». */
+  const dueWords = (i, compact) => {
+    if (i.closed) return compact ? "" : i.closeDate != null ? `<span class="due-t">выполнено ${fmt(i.closeDate)}</span>` : `<span class="due-t">выполнено, дата не указана</span>`;
+    if (i.overdue) return `<span class="due-t bad">${compact ? `−${i.overdueDays} дн.` : `просрочено на ${days(i.overdueDays)}`}</span>`;
+    if (i.remain === 0) return `<span class="due-t warn">срок сегодня</span>`;
+    if (i.soon) return `<span class="due-t warn">${compact ? `через ${i.remain} дн.` : `через ${days(i.remain)}`}</span>`;
+    return compact ? "" : `<span class="due-t">через ${days(i.remain)}</span>`;
+  };
+  const sectionOf = (num) => { const p = num.split("."); return p[0] === "2" ? p.slice(0, 2).join(".") : p[0]; };
+  const matchesFilters = (i) => {
+    const f = S.filters;
+    if (f.owner && !i.owners.includes(f.owner)) return false;
+    if (f.section && sectionOf(i.num) !== f.section) return false;
+    if (f.search) {
+      const s = f.search.toLowerCase().trim();
+      if (!(i.num.startsWith(s) || i.name.toLowerCase().includes(s) || title(i).toLowerCase().includes(s))) return false;
+    }
+    return orgMatch(i);
+  };
+  const anyFilter = () => S.filters.owner || S.filters.section || S.filters.search;
+
+  // ── Шкала этапа
+  const D0 = E.dn("2026-08-13"), D1 = E.dn("2027-02-02");
+  const xp = (n) => ((Math.min(Math.max(n, D0), D1) - D0) / (D1 - D0)) * 100;
+  const MONTHS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
+  const monthStarts = () => {
+    const out = [];
+    for (let y = 2026, m = 8; !(y === 2027 && m > 1); m++) {
+      if (m > 11) { m = 0; y++; }
+      const n = Date.UTC(y, m, 1) / 86400000;
+      if (n > D0 && n < D1) out.push({ n, label: MONTHS[m] });
+    }
+    return out;
+  };
+  const MS = SEED.milestones.map((m) => ({ n: E.dn(m.date), title: m.title, date: m.date }));
+  const MS_SHORT = {
+    "2026-09-30": "Закрытие 3 квартала", "2026-11-16": "Отчёты соисполнителей", "2026-11-24": "Приглашение на демонстрацию",
+    "2026-11-30": "Демонстрация лабораторного образца", "2026-12-01": "Передача технического проекта", "2026-12-30": "Окончание этапа 1",
+    "2027-01-01": "Начало этапа 2", "2027-02-01": "Акт сдачи-приёмки этапа 1",
+  };
+
+  // ── Шапка и уведомления
+  function renderHeader() {
+    const tabs = viewsAvail.map(([k, t]) => `<button class="tab" role="tab" id="tab-${k}" aria-selected="${k === view}" aria-controls="main" tabindex="${k === view ? 0 : -1}" data-view="${k}" data-k="tab-${k}">${t}</button>`).join("");
+    return `<header class="top">
+      <div class="brand"><span class="logo" aria-hidden="true"></span><span class="bt"><b>Орбита</b><span class="sub">ОКР «ЯМГ-ИИМ» · этап 1</span></span></div>
+      <nav class="tabs" role="tablist" aria-label="Режимы отображения">${tabs}</nav>
+      <div class="spacer"></div>
+      <div class="today" title="${todayFromLink ? "Дата задана параметром ссылки" : "Текущая дата"}">на <b class="mono">${fmt(T)}</b></div>
+      <button class="iconbtn theme" data-act="theme" data-k="theme" aria-label="${theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}" title="${theme === "dark" ? "Светлая тема" : "Тёмная тема"}">${ico(theme === "dark" ? "sun" : "moon")}</button>
+    </header>`;
+  }
+  function renderBanners() {
+    let h = "";
+    if (orgKey) h += `<div class="banner" role="status">Представление для исполнителя: <b>${esc(orgName)}</b>. Только просмотр.</div>`;
+    else if (exec) h += `<div class="banner" role="status">Режим для руководства: только просмотр.</div>`;
+    notices.forEach((n) => { h += `<div class="banner warn" role="alert">${ico("alert")} ${esc(n)}</div>`; });
+    return h;
+  }
+  function toolbar(extra = "") {
+    const ownerOpts = ["Электроприбор", "СП «Квант»", "ФТИ им. Иоффе", "ИХС им. Гребенщикова"].filter((o) => !orgKey || o === orgName);
+    const secOpts = [["1", "Запуск"], ["2.1", "3 квартал 2026 года"], ["2.2", "4 квартал 2026 года"], ["3", "Сдача этапа 1"]];
+    return `<div class="toolbar" role="search">
+      <label class="field search">${ico("search")}<span class="sr">Поиск по наименованию или номеру</span><input type="search" data-f="search" data-k="f-search" placeholder="Поиск работы" value="${esc(S.filters.search)}"></label>
+      ${orgKey ? "" : `<label class="field"><span class="sr">Исполнитель</span><select data-f="owner" data-k="f-owner"><option value="">Все исполнители</option>${ownerOpts.map((o) => `<option ${S.filters.owner === o ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></label>`}
+      <label class="field"><span class="sr">Раздел</span><select data-f="section" data-k="f-section"><option value="">Все разделы</option>${secOpts.map(([v, t]) => `<option value="${v}" ${S.filters.section === v ? "selected" : ""}>${t}</option>`).join("")}</select></label>
+      ${anyFilter() ? `<button class="btn link" data-act="reset-filters" data-k="reset-f">Сбросить</button>` : ""}
+      <div class="spacer"></div>${extra}
+    </div>`;
+  }
+  const emptyFiltered = () => `<div class="empty" role="status"><p>Нет работ, соответствующих условиям. Измените поиск или сбросьте фильтр.</p><button class="btn" data-act="reset-filters" data-k="reset-f2">Сбросить фильтр</button></div>`;
+
+  // ── СВОДКА
+  function headline() {
+    const k = M.kpi;
+    if (M.work.every((i) => i.closed)) return { h: "Все обязательства этапа 1 выполнены", t: "Просроченных и предстоящих работ нет." };
+    const h = k.overdue ? `Этап 1 идёт с отставанием: ${k.overdue} ${pl(k.overdue, "обязательство просрочено", "обязательства просрочены", "обязательств просрочено")}` : "Этап 1 идёт по графику: просроченных обязательств нет";
+    let t = `Выполнено ${k.closed} из ${k.base} обязательств перед Заказчиком.`;
+    if (k.toDemo > 0) t += ` До демонстрации лабораторного образца — ${wdays(k.toDemoWd)}.`;
+    const w = M.chainWindows.find((x) => x.state === "breach") || M.chainWindows.find((x) => x.state === "eroding");
+    if (w && w.state === "eroding") t += ` Резерв перед этапом «${title(M.by[w.to])}» почти исчерпан.`;
+    if (w && w.state === "breach") t += " Путь к демонстрации под угрозой срыва.";
+    return { h, t };
+  }
+  function kpiTiles() {
+    const k = M.kpi;
+    const tile = (id, lbl, val, sub, act, tone) => `<button class="kpi${tone ? " " + tone : ""}" data-act="${act}" data-k="kpi-${id}"><span class="lbl">${lbl}</span><span class="val">${val}</span><span class="sub">${sub}</span></button>`;
+    return [
+      tile("closed", "Выполнено", `${k.closed}<small> из ${k.base}</small>`, `${k.pct} %${k.noReq ? ` · ${k.noReq} без документа` : ""}`, "go-board"),
+      tile("overdue", "Просрочено", `${k.overdue}`, k.reached ? `из ${k.reached}, срок которых наступил` : "сроки ещё не наступили", "go-overdue", k.overdue ? "bad" : ""),
+      tile("demo", "До демонстрации образца", k.toDemo >= 0 ? `${k.toDemoWd}<small> ${pl(k.toDemoWd, "рабочий день", "рабочих дня", "рабочих дней")}</small>` : `<small>прошла</small>`, "30.11.2026", "go-chain"),
+      tile("end", "До окончания этапа", k.toEnd >= 0 ? `${k.toEnd}<small> ${pl(k.toEnd, "день", "дня", "дней")}</small>` : `<small>этап завершён</small>`, "30.12.2026", "go-ms"),
+    ].join("");
+  }
+  const reason = (t) => {
+    const i = t.item;
+    if (t.why === "chain-overdue" || t.why === "overdue") return `<span class="due-t bad">Просрочено на ${days(i.overdueDays)}</span>`;
+    if (t.why === "ctrl") return `<span class="due-t warn">Контрольная дата прошла ${days(i.ctrlDays)} назад</span>`;
+    return `<span class="due-t warn">Срок ${i.remain === 0 ? "сегодня" : `через ${days(i.remain)}`}</span>`;
+  };
+  function attention() {
+    if (!M.top5.length) return `<p class="muted empty-line">${M.work.every((i) => i.closed) ? "Рисков нет: все работы выполнены." : "Просроченных работ и работ со сроком до 7 дней нет."}</p>`;
+    return `<ol class="alist">${M.top5.map((t) => { const i = t.item; return `<li><button class="aitem" data-open="${i.num}" data-k="r-${i.num}" title="${nameAttr(i)}">
+      <span class="a-t">${esc(title(i))}${M.chainSet.has(i.num) ? `<span class="tag">путь к демонстрации</span>` : ""}</span>
+      <span class="a-m">${reason(t)}<span class="sep">·</span><span>${esc(ownersText(i))}</span><span class="sep">·</span><span>срок <span class="mono">${fmt(i.due)}</span></span></span></button></li>`; }).join("")}</ol>`;
+  }
+  function nextMilestones() {
+    const up = MS.filter((m) => m.n >= T).slice(0, 4);
+    if (!up.length) return `<p class="muted empty-line">Все вехи этапа пройдены.</p>`;
+    return `<ul class="mlist2">${up.map((m) => `<li><span class="mono d">${fmt(m.n)}</span><span class="t">${esc(MS_SHORT[m.date] || m.title)}</span><span class="r">${m.n === T ? "сегодня" : `через ${days(m.n - T)}`}</span></li>`).join("")}</ul>`;
+  }
+  function sectionsBlock() {
+    return `<ul class="slist">${M.sections.map((s) => `<li><button class="srow" data-act="go-section" data-sec="${s.num}" data-k="sec-${s.num}">
+      <span class="t">${esc(C.SHORT[s.num] || s.name)}</span><span class="n">${s.closed} из ${s.total}${s.overdue ? ` · <span class="bad-t">просрочено ${s.overdue}</span>` : ""}</span>
+      <span class="prog" role="img" aria-label="Выполнено ${s.closed} из ${s.total}"><i style="width:${(s.closed / s.total) * 100}%"></i></span></button></li>`).join("")}</ul>`;
+  }
+  const stepState = (i) => (i.closed ? "done" : i.overdue ? "late" : i.soon ? "soon" : "plan");
+  const stepWord = { done: "выполнено", late: "просрочено", soon: "срок близко", plan: "по плану" };
+  function pathSteps(big) {
+    const steps = M.chainNums.map((n, k) => {
+      const i = M.by[n], st = stepState(i), w = M.chainWindows[k - 1];
+      const link = w ? `<span class="link ${w.state}" aria-hidden="true"></span>` : "";
+      return `<li class="step ${st}">${link}<button class="dot" data-open="${n}" data-k="cn-${n}" aria-label="${esc(title(i))}: ${stepWord[st]}, срок ${fmt(i.due)}">${st === "done" ? ico("check") : st === "late" ? "!" : k + 1}</button>
+        <span class="lbl" title="${nameAttr(i)}">${esc(title(i))}</span>
+        <span class="d"><span class="mono">${fmt(i.due).slice(0, 5)}</span>${big || st !== "plan" ? ` · ${stepWord[st]}` : ""}</span></li>`;
+    }).join("");
+    return `<ol class="path${big ? " big" : ""}" aria-label="Путь к демонстрации лабораторного образца">${steps}</ol>`;
+  }
+  function pathNotes() {
+    const notes = [];
+    const all = M.chainWindows.concat([M.feeder]);
+    const br = all.filter((w) => w.state === "breach");
+    const depth = (w) => Math.min(w.P, 0) - w.R;
+    if (br.length > 2) { const w = br.reduce((a, x) => (depth(x) > depth(a) ? x : a)); notes.push(`Срыв на ${br.length} переходах; наибольший — перед этапом «${title(M.by[w.to])}»: ${wdays(depth(w))}.`); }
+    else br.forEach((w) => notes.push(`Срыв перед этапом «${title(M.by[w.to])}»: ${wdays(depth(w))}.`));
+    all.filter((w) => w.state === "eroding").forEach((w) => notes.push(`Резерв перед этапом «${title(M.by[w.to])}»: осталось ${w.R} из ${wdays(w.P)}${w.breachFrom ? `; если «${title(M.by[w.from])}» не закрыть, срыв с ${fmt(w.breachFrom)}` : ""}.`));
+    const ov = M.chainWindows.filter((w) => w.state === "overlap");
+    if (ov.length) notes.push(`${ov.length} ${pl(ov.length, "этап выполняется", "этапа выполняются", "этапов выполняются")} параллельно с предыдущими — так заложено в План-графике, это не срыв.`);
+    const f = M.by[M.feeder.from];
+    notes.push(`Параллельно: «${title(f)}» — срок ${fmt(f.due)}, ${f.closed ? "выполнено" : f.overdue ? "просрочено" : "в работе"}.`);
+    return `<ul class="pnotes">${notes.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`;
+  }
+  const chainPill = () => { const s = M.chainState; const w = { eroding: "резерв расходуется", breach: "угроза срыва", done: "выполнен", ok: "по плану" }[s]; return `<span class="pill ${s}">${w}</span>`; };
+  function viewSummary() {
+    if (VARIANT === "path") return viewSummaryPath();
+    const hl = headline();
+    return `<div class="page">
+      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><p>${esc(hl.t)}</p></section>
+      <section class="kpis" aria-label="Ключевые показатели">${kpiTiles()}</section>
+      <div class="cols">
+        <section class="card" aria-labelledby="h-r"><h2 id="h-r">Требует внимания</h2>${attention()}</section>
+        <div class="stack">
+          <section class="card" aria-labelledby="h-m"><h2 id="h-m">Ближайшие вехи</h2>${nextMilestones()}</section>
+          <section class="card" aria-labelledby="h-s"><h2 id="h-s">Ход работ по разделам</h2>${sectionsBlock()}</section>
+        </div>
+      </div>
+      <section class="card" aria-labelledby="h-ch"><h2 id="h-ch">Путь к демонстрации лабораторного образца ${chainPill()}<span class="spacer"></span><button class="btn link" data-act="go-chain" data-k="ch-open">Подробно на графике ${ico("arrow")}</button></h2>${pathSteps(false)}${pathNotes()}</section>
+    </div>`;
+  }
+  function viewSummaryPath() {
+    const hl = headline();
+    return `<div class="page">
+      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><p>${esc(hl.t)}</p></section>
+      <section class="card" aria-labelledby="h-ch"><h2 id="h-ch">Путь к демонстрации лабораторного образца ${chainPill()}<span class="spacer"></span><button class="btn link" data-act="go-chain" data-k="ch-open">Подробно на графике ${ico("arrow")}</button></h2>${pathSteps(true)}${pathNotes()}</section>
+      <div class="cols">
+        <section class="card" aria-labelledby="h-r"><h2 id="h-r">Требует внимания</h2>${attention()}</section>
+        <section class="kpis col" aria-label="Ключевые показатели">${kpiTiles()}</section>
+      </div>
+    </div>`;
+  }
+
+  // ── ГРАФИК РАБОТ (Гант)
+  function ganttRows() {
+    const vis = new Set();
+    const pass = (i) => i.kind !== "section" && matchesFilters(i) && (S.slice === "all" || (S.slice === "overdue" && i.overdue) || (S.slice === "chain" && M.chainSet.has(i.num)));
+    const filtering = anyFilter() || S.slice !== "all" || orgKey;
+    M.items.forEach((i) => { if (filtering ? pass(i) : true) { vis.add(i.num); let p = i.parent; while (p) { vis.add(p); p = M.by[p].parent; } } });
+    const hidden = (i) => { let p = i.parent; while (p) { if (S.collapsed.has(p)) return true; p = M.by[p].parent; } return false; };
+    return M.items.filter((i) => vis.has(i.num) && !hidden(i));
+  }
+  function ganttAxis() {
+    let h = `<div class="axis">`;
+    monthStarts().forEach((m) => { h += `<span class="m" style="left:${xp(m.n)}%">${m.label}</span>`; });
+    MS.forEach((m) => { h += `<span class="msd" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(MS_SHORT[m.date] || m.title)}"></span>`; });
+    if (T >= D0 && T <= D1) h += `<span class="todaylbl" style="left:${xp(T)}%">сегодня</span>`;
+    return h + `</div>`;
+  }
+  const monthLines = () => monthStarts().map((m) => `<span class="gm" style="left:${xp(m.n)}%"></span>`).join("");
+  function barCell(i) {
+    let h = `<div class="grid-bg">${monthLines()}</div>` + (T >= D0 && T <= D1 ? `<span class="todayline" style="left:${xp(T)}%"></span>` : "");
+    if (i.kind === "section") return h + `<span class="secspan" style="left:${xp(i.start)}%;width:${xp(i.due + 1) - xp(i.start)}%"></span>`;
+    const l = xp(i.start), r = xp(i.due + 1), w = Math.max(r - l, 0.3);
+    const derW = i.s.start_derived ? Math.min(w * 0.4, (14 / (D1 - D0)) * 100) : 0;
+    const chain = showChain && M.chainSet.has(i.num);
+    const g = i.kind === "group";
+    h += `<span class="bar ${i.cls}${g ? " group" : ""}${chain ? " chain" : ""}" style="left:${l}%;width:${w}%">`;
+    if (derW && !g) h += `<span class="der" style="width:${(derW / w) * 100}%"></span>`;
+    if (g) h += `<span class="gp" style="width:${(i.progress.closed / i.progress.total) * 100}%"></span>`;
+    if (i.closed) h += `<span class="ok">${ico("check")}</span>`;
+    h += `</span>`;
+    if (i.overdue) h += `<span class="od" style="left:${r}%;width:${Math.max(xp(T) - r, 0.3)}%"></span>`;
+    if (i.ctrl != null && !i.closed) h += `<span class="ctl" style="left:${xp(i.ctrl)}%"></span>`;
+    return h;
+  }
+  const ganttSr = (i) => (i.kind === "section" ? `Раздел, до ${fmt(i.due)}` : `Срок ${fmt(i.due)}; ${i.closed ? "выполнено" : i.overdue ? `просрочено на ${days(i.overdueDays)}` : `через ${days(i.remain)}`}${showChain && M.chainSet.has(i.num) ? "; на пути к демонстрации образца" : ""}`);
+  function viewGantt() {
+    const rows = ganttRows();
+    const seg = `<div class="seg" role="group" aria-label="Показать">${[["all", "Все работы"], ["overdue", "Просроченные"]].concat(showChain ? [["chain", "Путь к демонстрации"]] : []).map(([k, t]) => `<button aria-pressed="${S.slice === k}" data-slice="${k}" data-k="sl-${k}">${t}</button>`).join("")}</div>
+      ${S.collapsed.size ? `<button class="btn ghost" data-act="expand-all" data-k="exp-all">Развернуть всё</button>` : `<button class="btn ghost" data-act="collapse-all" data-k="col-all">Свернуть до разделов</button>`}`;
+    const has = rows.some((i) => i.kind !== "section");
+    let body = "";
+    if (!has) body = `<tr><td colspan="5">${emptyFiltered()}</td></tr>`;
+    else rows.forEach((i) => {
+      const sec = i.kind === "section", canCol = sec || i.kind === "group", exp = !S.collapsed.has(i.num);
+      const ctx = orgKey && !sec && !i.owners.includes(orgName);
+      body += `<tr class="${sec ? "sec" : ""}${i.kind === "group" ? " grp" : ""}${S.selected === i.num ? " sel" : ""}" data-open="${i.num}" tabindex="0" data-k="row-${i.num}" ${canCol ? `aria-expanded="${exp}"` : ""}>
+        <td><div class="nm lv${i.level}">${canCol ? `<button class="chev" data-toggle="${i.num}" aria-expanded="${exp}" aria-label="${exp ? "Свернуть" : "Развернуть"}: ${esc(title(i))}" data-k="tg-${i.num}">${ico("chev")}</button>` : `<span class="chev-sp"></span>`}<span class="t" title="${nameAttr(i)}">${esc(title(i))}</span>${i.kind === "group" && !ctx ? `<span class="cnt">${i.progress.closed}/${i.progress.total}</span>` : ""}</div></td>
+        <td class="own">${sec ? "" : esc(ownersText(i))}</td>
+        <td class="due">${sec ? "" : `<span class="mono">${fmt(i.due)}</span>${ctx ? "" : dueWords(i, true)}`}</td>
+        <td>${sec || ctx ? "" : status(i)}</td>
+        <td class="tlcell"><span class="sr">${esc(ganttSr(i))}</span><div aria-hidden="true" class="tlin">${ctx ? "" : barCell(i)}</div></td></tr>`;
+    });
+    const strip = VARIANT === "registry" && !orgKey ? `<section class="gstrip" aria-label="Ключевые показатели">${kpiTiles()}</section>` : "";
+    return `${strip}${toolbar(seg)}
+      <div class="gwrap${strip ? " withstrip" : ""}"><table class="gantt" aria-label="График работ по План-графику этапа 1">
+        <colgroup><col class="c-name"><col class="c-own"><col class="c-due"><col class="c-st"><col></colgroup>
+        <thead><tr><th scope="col">Работа</th><th scope="col">Исполнитель</th><th scope="col">Срок</th><th scope="col">Статус</th><th scope="col" class="tlcell">${ganttAxis()}</th></tr></thead>
+        <tbody>${body}</tbody></table></div>${mobileList(rows)}
+      <div class="legend gleg" aria-hidden="true"><span><i class="lg closed"></i>выполнено</span><span><i class="lg progress"></i>в работе</span><span><i class="lg action"></i>требует действия</span><span><i class="lg future"></i>не начато</span><span><i class="lg overdue"></i>просрочено</span><span><i class="lg der"></i>начало — расчётное</span><span><i class="lg ctl"></i>контрольная дата</span>${showChain ? '<span><i class="lg chain"></i>путь к демонстрации</span>' : ""}</div>`;
+  }
+  function mobileList(rows) {
+    const items = rows.filter((i) => i.kind !== "section");
+    let h = `<div class="mlist" aria-label="Список работ">`;
+    if (!items.length) return h + emptyFiltered() + "</div>";
+    rows.forEach((i) => {
+      if (i.kind === "section") { if (i.level <= 2) h += `<div class="mhead">${esc(title(i))}</div>`; return; }
+      const ctx = orgKey && !i.owners.includes(orgName);
+      h += `<button class="mcard" data-open="${i.num}" data-k="m-${i.num}"><span class="t">${esc(title(i))}</span><span class="r"><span class="mono">${fmt(i.due)}</span>${ctx ? "" : dueWords(i, true) + status(i)}</span></button>`;
+    });
+    return h + "</div>";
+  }
+
+  // ── БЛИЖАЙШИЕ СРОКИ (Фокус)
+  function viewFocus() {
+    const list = M.work.filter((i) => matchesFilters(i));
+    const lanes = [["overdue", "Просрочено"], ["h14", "В ближайшие 14 дней"], ["h30", "В течение месяца"], ["h60", "В течение двух месяцев"], ["later", "Позднее"], ["closed", "Выполнено"]];
+    const agendaBtn = readonly ? "" : `<button class="btn primary" data-act="agenda" data-k="agenda">${ico("file")} Повестка оперативки</button>`;
+    let h = toolbar(agendaBtn) + `<div class="page narrow"><h1 class="sr">Ближайшие сроки</h1>`;
+    if (!list.length) h += emptyFiltered();
+    lanes.forEach(([k, t]) => {
+      const rows = list.filter((i) => i.horizon === k).sort((a, b) => a.due - b.due || a.idx - b.idx);
+      const off = k === "closed" && !orgKey && !anyFilter() ? SEED.off_plan_closed : [];
+      const open = k === "later" || k === "closed" ? S.lanes[k] : true;
+      h += `<details class="lane ${k}" ${open ? "open" : ""} data-lane="${k}"><summary data-k="lane-${k}"><span class="chev">${ico("chev")}</span>${t}<span class="cnt">${rows.length + off.length}</span></summary>`;
+      if (!rows.length && !off.length) h += `<p class="muted empty-line">Работ в этом периоде нет.</p>`;
+      rows.forEach((i) => {
+        h += `<button class="frow" data-open="${i.num}" data-k="f-${i.num}" title="${nameAttr(i)}"><span class="t">${esc(title(i))}${i.src === "inherited" ? `<span class="st-note">в составе «${esc(title(M.by[i.inheritedFrom]))}»</span>` : ""}</span><span class="own">${esc(ownersText(i))}</span><span class="mono d">${fmt(i.due)}</span><span class="dw">${dueWords(i, false)}</span><span class="stc">${status(i, false)}${i.ctrlPassed ? `<span class="due-t warn">контрольная дата ${fmt(i.ctrl).slice(0, 5)} прошла</span>` : ""}</span></button>`;
+      });
+      off.forEach((o) => { h += `<div class="frow" role="note"><span class="t">${esc(o.name)}<span class="st-note">вне План-графика</span></span><span class="own">Электроприбор</span><span class="mono d">${fmt(E.dn(o.transfer))}</span><span class="dw"><span class="due-t">передано</span></span><span class="stc"><span class="st st-closed"><i aria-hidden="true"></i>${esc(o.mark)}</span></span></div>`; });
+      h += `</details>`;
+    });
+    return h + `</div>`;
+  }
+
+  // ── СТАТУСЫ (Доска)
+  function viewBoard() {
+    const list = M.work.filter((i) => matchesFilters(i));
+    let h = toolbar() + `<h1 class="sr">Работы по статусам</h1>`;
+    if (!list.length) return h + emptyFiltered();
+    h += `<div class="board">`;
+    E.STATUSES.forEach((st) => {
+      const cards = list.filter((i) => i.status === st).sort((a, b) => (b.overdue - a.overdue) || a.due - b.due || a.idx - b.idx);
+      h += `<section class="col" aria-label="${st}: ${cards.length}"><h3><span class="st st-${E.CLS[st]}"><i aria-hidden="true"></i>${st}</span><span class="cnt">${cards.length}</span></h3><ul>`;
+      if (!cards.length) h += `<li class="muted empty-line">Работ нет.</li>`;
+      cards.forEach((i) => {
+        h += `<li><button class="bcard${i.overdue ? " late" : ""}" data-open="${i.num}" data-k="b-${i.num}" title="${nameAttr(i)}"><span class="t">${esc(title(i))}</span><span class="o">${esc(ownersText(i))}</span><span class="r"><span class="mono">${fmt(i.due)}</span>${dueWords(i, true)}</span>${i.src === "inherited" ? `<span class="st-note" title="Статус группы «${esc(title(M.by[i.inheritedFrom]))}»">статус по группе</span>` : i.closed && i.noReq ? `<span class="st-note">без подтверждающего документа</span>` : ""}</button></li>`;
+      });
+      h += `</ul></section>`;
+    });
+    return h + `</div>`;
+  }
+
+  // ── ВЕХИ
+  function viewMilestones() {
+    const list = M.work.filter((i) => matchesFilters(i));
+    const clusters = new Map();
+    list.forEach((i) => { const c = clusters.get(i.due) || []; c.push(i); clusters.set(i.due, c); });
+    const keys = [...clusters.keys()].sort((a, b) => a - b);
+    if (S.msDate == null || !clusters.has(S.msDate)) {
+      const near = keys.filter((d) => d >= T && d - T <= 14);
+      S.msDate = near.length ? near.reduce((a, d) => (clusters.get(d).length > clusters.get(a).length ? d : a), near[0]) : keys.find((d) => d >= T) ?? keys[keys.length - 1] ?? null;
+    }
+    let h = toolbar() + `<div class="page"><h1 class="sr">Вехи этапа</h1>`;
+    if (!list.length) return h + emptyFiltered() + "</div>";
+    const peak = Math.max(...keys.map((d) => clusters.get(d).length));
+    h += `<section class="card"><h2>Вехи и загрузка по датам <span class="note">столбик — работы со сроком в этот день; нажмите, чтобы увидеть список</span></h2><div class="ms-scroll"><div class="ms-canvas">`;
+    monthStarts().forEach((m) => { if (xp(m.n) < 96) h += `<span class="ms-month" style="left:${xp(m.n)}%">${m.label}</span>`; });
+    h += `<div class="ms-axis"></div>`;
+    keys.forEach((d) => {
+      const c = clusters.get(d), cl = c.filter((i) => i.closed).length;
+      h += `<button class="ms-cl" style="left:${xp(d)}%" aria-pressed="${S.msDate === d}" data-ms="${d}" data-k="ms-${d}" title="${fmt(d)}: ${c.length}" aria-label="${fmt(d)}: ${c.length} ${pl(c.length, "работа", "работы", "работ")}, выполнено ${cl}">${c.map((i) => `<i class="${i.overdue ? "overdue" : i.cls}"></i>`).join("")}</button>`;
+      if (c.length >= 5 || c.length === peak) h += `<span class="ms-cn" style="left:${xp(d)}%;bottom:${60 + c.length * 10 + 6}px"><span class="mono">${fmt(d).slice(0, 5)}</span> · ${c.length}</span>`;
+    });
+    MS.forEach((m, k) => { h += `<span class="ms-d${m.n < T ? " past" : ""}" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(MS_SHORT[m.date])}"></span><span class="ms-dn mono" style="left:${xp(m.n)}%;top:${k % 2 ? 222 : 206}px">${k + 1}</span>`; });
+    if (T >= D0 && T <= D1) h += `<div class="ms-today" style="left:${xp(T)}%"><span>сегодня</span></div>`;
+    h += `</div></div><ol class="ms-legend">${MS.map((m, k) => `<li class="${m.n < T ? "past" : ""}"><span class="ms-num mono">${k + 1}</span><span class="mono">${fmt(m.n)}</span><span>${esc(MS_SHORT[m.date] || m.title)}</span></li>`).join("")}</ol>`;
+    h += `<div class="ms-mlist"><ul class="list">${keys.map((d) => { const c = clusters.get(d); return `<li><button class="lrow" data-ms="${d}" data-k="msm-${d}" aria-pressed="${S.msDate === d}"><span class="mono">${fmt(d)}</span><span>${c.length} ${pl(c.length, "работа", "работы", "работ")}</span></button></li>`; }).join("")}</ul></div></section>`;
+    const sel = S.msDate != null ? clusters.get(S.msDate) : null;
+    if (sel) h += `<section class="card"><h2>Срок ${fmt(S.msDate)} <span class="note">${sel.length} ${pl(sel.length, "работа", "работы", "работ")}</span></h2><ul class="list">${sel.map((i) => `<li><button class="lrow" data-open="${i.num}" data-k="msl-${i.num}" title="${nameAttr(i)}"><span class="t">${esc(title(i))}</span><span class="own">${esc(ownersText(i))}</span><span class="stc">${status(i)}${dueWords(i, true)}</span></button></li>`).join("")}</ul></section>`;
+    return h + `</div>`;
+  }
+
+  // ── КАРТОЧКА ПОЗИЦИИ
+  function renderPanel() {
+    const i = S.selected && M.by[S.selected];
+    if (!i) return "";
+    const ctx = orgKey && i.kind !== "section" && !i.owners.includes(orgName);
+    const dl = (rows) => `<dl>${rows.filter((r) => r[1] != null && r[1] !== "").map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`;
+    let h = `<aside class="panel" role="dialog" aria-modal="false" aria-labelledby="p-title">
+      <header><div class="ph"><h2 id="p-title" tabindex="-1">${esc(title(i))}</h2><p class="pnum">№ ${i.num} по План-графику</p></div><button class="iconbtn" data-act="close-panel" data-k="p-close" aria-label="Закрыть карточку">${ico("x")}</button></header><div class="body">`;
+    if (i.kind === "section") return h + `<p class="muted">Раздел План-графика «${esc(i.name)}». Период ${fmt(i.start)} – ${fmt(i.due)}; даты вычислены по вложенным работам.</p></div></aside>`;
+    if (!ctx) {
+      h += `<section class="pstat"><div class="pline">${status(i)} ${dueWords(i, false)}${i.ctrlPassed ? ` <span class="due-t warn">контрольная дата ${fmt(i.ctrl)} прошла</span>` : ""}</div>`;
+      if (i.src === "inherited") h += `<p class="note">Отдельной отметки нет — показан статус группы «${esc(title(M.by[i.inheritedFrom]))}».</p>`;
+      if (i.src === "derived") h += `<p class="note">Статус группы в данных не задан и вычислен по составу работ.</p>`;
+      if (i.kind === "group") h += `<p class="note">В составе: выполнено ${i.progress.closed} из ${i.progress.total}.</p>`;
+      if (showChain && M.chainSet.has(i.num)) h += `<p class="note">На пути к демонстрации лабораторного образца. Окончание — не ранее ${fmt(M.F[i.num])}.</p>`;
+      if (!readonly) {
+        h += `<div class="stseg" role="group" aria-label="Изменить статус">${E.STATUSES.map((st) => `<button aria-pressed="${(S.closeForm && S.closeForm.num === i.num ? "Закрыто" : i.status) === st}" data-status="${st}" data-k="st-${st}">${st}</button>`).join("")}</div>`;
+        if (S.closeForm && S.closeForm.num === i.num) {
+          const f = S.closeForm, noName = !f.name.trim();
+          h += `<div class="form"><b>Подтверждающий документ</b>
+            <label>Наименование документа<input data-cf="name" data-k="cf-name" value="${esc(f.name)}"></label>
+            <div class="row2"><label>№ письма<input data-cf="letter" data-k="cf-letter" value="${esc(f.letter)}"></label>
+            <label>Дата (ДД.ММ.ГГГГ)<input inputmode="numeric" data-cf="date" data-k="cf-date" value="${esc(f.date)}" aria-invalid="${f.dateBad ? "true" : "false"}"></label></div>
+            ${f.dateBad ? `<span class="due-t bad" role="alert">Укажите дату в формате ДД.ММ.ГГГГ, например ${fmt(T)}.</span>` : ""}
+            ${noName ? `<div class="warnbox" role="alert">${ico("alert")}<span>Работа будет отмечена выполненной без подтверждающего документа.</span></div>` : ""}
+            <div class="actions"><button class="btn primary" data-act="do-close" data-k="cf-do">${noName ? "Закрыть без документа" : "Отметить выполненной"}</button><button class="btn" data-act="cancel-close" data-k="cf-cancel">Отменить</button></div></div>`;
+        }
+        if (edits[i.num]) h += `<button class="btn link" data-act="reset-one" data-k="p-reset">${ico("reset")} Вернуть исходные данные</button>`;
+      }
+      h += `</section>`;
+    }
+    h += `<section><h3>Сроки</h3>${dl([
+      ["Срок по План-графику", `<span class="mono">${fmt(i.due)}</span>${i.s.due_qualifier ? ` (${esc(i.s.due_qualifier)})` : ""}`],
+      ["Предоставить Заказчику", i.dueCust != null ? `<span class="mono">${fmt(i.dueCust)}</span>${i.s.due_to_customer_qualifier ? ` (${esc(i.s.due_to_customer_qualifier)})` : ""}` : null],
+      ["Контрольная дата", i.ctrl != null ? `<span class="mono">${fmt(i.ctrl)}</span>` : null],
+      ["Выполнено", i.closed ? (i.closeDate != null ? `<span class="mono">${fmt(i.closeDate)}</span>` : "дата не указана") : null],
+    ])}</section>`;
+    h += `<section><h3>Официальное наименование</h3><p>${esc(i.name)}</p></section>`;
+    h += `<section><h3>Исполнитель</h3><p>${esc(i.s.owner_raw || "—")}</p></section>`;
+    if (i.s.output_doc) h += `<section><h3>Представляемые документы</h3><p>${esc(i.s.output_doc)}</p></section>`;
+    if (i.closed && i.edit && i.edit.closeDoc) { const cd = i.edit.closeDoc; h += `<section><h3>Подтверждающий документ</h3><p>${cd.name ? esc(cd.name) : "не указан"}${cd.letter ? `, № ${esc(cd.letter)}` : ""}${cd.date ? `, ${fmt(E.dn(cd.date))}` : ""}</p></section>`; }
+    if (i.s.status_mark) h += `<section><h3>Отметка вкладки «Важное»</h3><p>${esc(i.s.status_mark)}</p></section>`;
+    h += `<section><h3>Комментарий руководителя</h3>${readonly ? `<p>${esc(i.comment || "—")}</p>` : `<label class="sr" for="p-comment">Комментарий</label><textarea id="p-comment" data-comment="${i.num}" data-k="p-comment" placeholder="Факты: документ, дата, договорённость">${esc(i.comment)}</textarea>`}</section>`;
+    const links = C.LINKS.filter(([a, b]) => a === i.num || b === i.num);
+    if (links.length) h += `<section><h3>Связанные работы</h3><ul class="list">${links.map(([a, b]) => { const o = M.by[a === i.num ? b : a]; return `<li><button class="btn link" data-open="${o.num}" data-k="lk-${o.num}">${esc(title(o))}</button></li>`; }).join("")}</ul></section>`;
+    h += `<details class="more"><summary>Основание и примечание План-графика</summary>${dl([["Документ, определяющий исполнение", esc(i.s.execution_doc || "—")], ["Основание включения", esc(i.s.basis || "—")], ["Примечание", i.s.plan_note ? esc(i.s.plan_note) : null], ["Начало", `<span class="mono">${fmt(i.start)}</span> — расчётное, только для графика`]])}</details>`;
+    return h + `</div></aside>`;
+  }
+
+  // ── Повестка
+  function renderAgenda() {
+    if (!S.agendaOpen) return "";
+    const a = E.agenda(M);
+    return `<div class="modal-back" data-act="close-agenda-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="ag-title">
+      <header><h2 id="ag-title">Повестка оперативки на ${fmt(T)}</h2><button class="iconbtn" data-act="close-agenda" data-k="ag-x" aria-label="Закрыть">${ico("x")}</button></header>
+      <p class="note mp">Строка: «Наименование — комментарий (п. N)», как принято в письмах Исполнителю. Комментарий — текст руководителя, при его отсутствии — отметка «Важного». Просрочено: ${a.counts[0]}, контрольная дата прошла: ${a.counts[1]}, срок в 14 дней: ${a.counts[2]}.</p>
+      <label class="sr" for="ag-text">Текст повестки</label><textarea id="ag-text" readonly data-k="ag-text">${esc(a.text)}</textarea>
+      <footer><span class="note" id="ag-status" role="status"></span><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></footer></div></div>`;
+  }
+
+  // ── Отрисовка
+  const root = document.getElementById("app");
+  function render() {
+    const act = document.activeElement;
+    const fk = act && act.getAttribute && act.getAttribute("data-k");
+    const sel = act && "selectionStart" in act ? [act.selectionStart, act.selectionEnd] : null;
+    const scrollers = [...document.querySelectorAll(".gwrap,.board,.panel .body,.ms-scroll")].map((e) => [e.className.split(" ")[0], e.scrollTop, e.scrollLeft]);
+    recompute();
+    let main;
+    try { main = { summary: viewSummary, gantt: viewGantt, focus: viewFocus, board: viewBoard, milestones: viewMilestones }[view](); }
+    catch (err) { console.error(err); main = `<div class="empty" role="alert"><p>Не удалось построить отображение. Обновите страницу; если ошибка повторится, сообщите руководителю проекта.</p></div>`; }
+    root.innerHTML = `<a class="skip" href="#main">Перейти к содержанию</a>${renderHeader()}${renderBanners()}
+      <main id="main" role="tabpanel" aria-labelledby="tab-${view}" tabindex="-1" class="v-${view}">${main}</main>
+      <footer class="foot"><span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span>Рабочие дни — по производственному календарю РФ.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="reset-all" data-k="reset-all">Сбросить отметки (${Object.keys(edits).length})</button>` : ""}</footer>
+      ${renderPanel()}${renderAgenda()}`;
+    scrollers.forEach(([cls, t, l]) => { const e = document.getElementsByClassName(cls)[0]; if (e) { e.scrollTop = t; e.scrollLeft = l; } });
+    if (fk) { const el = root.querySelector(`[data-k="${CSS.escape(fk)}"]`); if (el) { el.focus({ preventScroll: true }); if (sel && "setSelectionRange" in el) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* не текстовое поле */ } } }
+  }
+  function setView(v) {
+    view = v; S.closeForm = null;
+    const u = new URL(location.href);
+    u.searchParams.set("view", exec && v === "summary" ? "exec" : v);
+    try { history.replaceState(null, "", u); } catch (e) { /* file:// */ }
+    render();
+    const t = document.getElementById("tab-" + v); if (t) t.focus();
+  }
+  function openItem(num, from) { S.returnFocus = from && from.getAttribute("data-k"); S.selected = num; S.closeForm = null; render(); const h = document.getElementById("p-title"); if (h) h.focus(); }
+  function closePanel() { S.selected = null; S.closeForm = null; render(); if (S.returnFocus) { const el = root.querySelector(`[data-k="${CSS.escape(S.returnFocus)}"]`); if (el) el.focus(); } }
+  function setEdit(num, patch) {
+    edits[num] = Object.assign({}, edits[num] || {}, patch);
+    Object.keys(edits[num]).forEach((k) => { if (edits[num][k] === undefined) delete edits[num][k]; });
+    if (!Object.keys(edits[num]).length) delete edits[num];
+    saveEdits();
+  }
+  const clearFilters = () => { S.filters = { owner: "", section: "", search: "" }; };
+
+  root.addEventListener("click", (ev) => {
+    const t = ev.target.closest("[data-act],[data-view],[data-open],[data-toggle],[data-slice],[data-status],[data-ms]");
+    if (!t) return;
+    if (t.dataset.view) return setView(t.dataset.view);
+    if (t.dataset.toggle) { ev.stopPropagation(); const n = t.dataset.toggle; S.collapsed.has(n) ? S.collapsed.delete(n) : S.collapsed.add(n); return render(); }
+    if (t.dataset.slice) { S.slice = t.dataset.slice; return render(); }
+    if (t.dataset.ms) { S.msDate = Number(t.dataset.ms); return render(); }
+    if (t.dataset.status) {
+      const i = M.by[S.selected], st = t.dataset.status;
+      if (st === "Закрыто") { S.closeForm = { num: i.num, name: i.s.output_doc || "", letter: "", date: fmt(T) }; return render(); }
+      S.closeForm = null; setEdit(i.num, { status: st, closeDoc: undefined }); return render();
+    }
+    if (t.dataset.open && !t.dataset.act) return openItem(t.dataset.open, t);
+    const a = t.dataset.act;
+    if (a === "theme") { theme = theme === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", theme); store.set(C.THEME_KEY, theme); return render(); }
+    if (a === "reset-filters") { clearFilters(); S.slice = "all"; return render(); }
+    if (a === "collapse-all") { M.items.filter((i) => i.kind === "section" && i.num !== "2").forEach((i) => S.collapsed.add(i.num)); return render(); }
+    if (a === "expand-all") { S.collapsed.clear(); return render(); }
+    if (a === "go-overdue") { S.slice = "overdue"; clearFilters(); return setView("gantt"); }
+    if (a === "go-chain") { S.slice = "chain"; clearFilters(); return setView("gantt"); }
+    if (a === "go-board") return setView("board");
+    if (a === "go-ms") return setView("milestones");
+    if (a === "go-section") { S.slice = "all"; clearFilters(); S.filters.section = t.dataset.sec; S.collapsed.clear(); return setView("gantt"); }
+    if (a === "close-panel") return closePanel();
+    if (a === "cancel-close") { S.closeForm = null; return render(); }
+    if (a === "do-close") {
+      const f = S.closeForm, m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(f.date.trim());
+      const iso = m && E.parseISO(`${m[3]}-${m[2]}-${m[1]}`) != null ? `${m[3]}-${m[2]}-${m[1]}` : null;
+      if (!iso) { f.dateBad = true; render(); const d = document.querySelector('[data-k="cf-date"]'); if (d) d.focus(); return; }
+      setEdit(f.num, { status: "Закрыто", closeDoc: { name: f.name.trim(), letter: f.letter.trim(), date: iso } });
+      S.closeForm = null; return render();
+    }
+    if (a === "reset-one") { delete edits[S.selected]; saveEdits(); S.closeForm = null; return render(); }
+    if (a === "reset-all") { edits = {}; saveEdits(); S.closeForm = null; return render(); }
+    if (a === "agenda") { S.agendaOpen = true; render(); const c = document.querySelector('[data-k="ag-copy"]'); if (c) c.focus(); return; }
+    if (a === "close-agenda" || (a === "close-agenda-bg" && ev.target === t)) { S.agendaOpen = false; render(); const b = document.querySelector('[data-k="agenda"]'); if (b) b.focus(); return; }
+    if (a === "copy-agenda") {
+      const ta = document.getElementById("ag-text"), st = document.getElementById("ag-status");
+      const done = () => { st.textContent = "Текст скопирован."; };
+      const manual = () => { ta.focus(); ta.select(); st.textContent = "Автоматическое копирование недоступно: текст выделен, скопируйте его вручную."; };
+      try { navigator.clipboard.writeText(ta.value).then(done, manual); } catch (e) { manual(); }
+    }
+  });
+  root.addEventListener("input", (ev) => {
+    const t = ev.target;
+    if (t.dataset.f) { S.filters[t.dataset.f] = t.value; render(); }
+    else if (t.dataset.cf) { S.closeForm[t.dataset.cf] = t.value; if (t.dataset.cf === "name") render(); }
+    else if (t.dataset.comment) setEdit(t.dataset.comment, { comment: t.value || undefined });
+  });
+  root.addEventListener("change", (ev) => { if (ev.target.dataset.comment) render(); });
+  root.addEventListener("toggle", (ev) => { const d = ev.target; if (d.dataset && d.dataset.lane in S.lanes) S.lanes[d.dataset.lane] = d.open; }, true);
+  root.addEventListener("keydown", (ev) => {
+    const t = ev.target;
+    if (t.getAttribute("role") === "tab" && (ev.key === "ArrowRight" || ev.key === "ArrowLeft")) {
+      const tabs = [...root.querySelectorAll('[role="tab"]')], k = tabs.indexOf(t);
+      tabs[(k + (ev.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length].focus(); ev.preventDefault(); return;
+    }
+    if (t.tagName === "TR" && t.dataset.open) {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); return openItem(t.dataset.open, t); }
+      if (ev.key === "ArrowDown" || ev.key === "ArrowUp") { const s = ev.key === "ArrowDown" ? t.nextElementSibling : t.previousElementSibling; if (s) s.focus(); ev.preventDefault(); return; }
+      if ((ev.key === "ArrowLeft" || ev.key === "ArrowRight") && t.hasAttribute("aria-expanded")) { if (ev.key === "ArrowLeft") S.collapsed.add(t.dataset.open); else S.collapsed.delete(t.dataset.open); ev.preventDefault(); return render(); }
+    }
+  });
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") {
+      if (S.agendaOpen) { S.agendaOpen = false; render(); const b = document.querySelector('[data-k="agenda"]'); if (b) b.focus(); return; }
+      if (S.selected) closePanel();
+      return;
+    }
+    if (ev.key === "Tab" && S.agendaOpen) {
+      const m = document.querySelector(".modal"); if (!m) return;
+      const f = [...m.querySelectorAll("button, textarea")], first = f[0], last = f[f.length - 1];
+      if (ev.shiftKey && document.activeElement === first) { last.focus(); ev.preventDefault(); }
+      else if (!ev.shiftKey && document.activeElement === last) { first.focus(); ev.preventDefault(); }
+    }
+  });
+
+  if (!SEED || !Array.isArray(SEED.items) || !SEED.items.length) { root.innerHTML = `<div class="empty" role="alert"><p>Данные План-графика не загружены. Страница не может построить отображение. Обратитесь к руководителю проекта.</p></div>`; return; }
+  render();
+  window.__orbita = { get model() { return M; }, setView, openItem };
+})();
+
+</script>
+</body>
+</html>
