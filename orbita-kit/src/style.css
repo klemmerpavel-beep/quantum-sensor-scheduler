@@ -575,6 +575,8 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   header.top { height: auto; flex-wrap: wrap; padding: var(--sp-2) var(--sp-3) 0; gap: 0 var(--sp-2); position: static; }
   .brand { order: 1; flex: 1; min-height: var(--hit); }
   .today { order: 2; font-size: var(--fs-13); margin-right: var(--sp-2); }
+  .top .help { order: 2; width: var(--hit); height: var(--hit); margin-right: var(--sp-2); }
+  .top .print { display: none; }
   .top .theme { order: 3; width: var(--hit); height: var(--hit); }
   .top > .spacer { display: none; }
   .tabs { order: 4; width: calc(100% + 2 * var(--sp-3)); margin: var(--sp-1) calc(-1 * var(--sp-3)) 0; padding: 0 var(--sp-1); overflow-x: auto; scrollbar-width: none; }
@@ -593,7 +595,9 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .card > .slist { grid-template-columns: minmax(0, 1fr); }
   .bt .sub { display: block; font-size: var(--fs-12); }
-  .brand { padding: var(--sp-1) 0; }
+  .brand { padding: var(--sp-1) 0; min-width: 0; white-space: normal; }
+  .bt { min-width: 0; }
+  .top .help { margin-left: var(--sp-2); }
   .card { padding: 20px var(--sp-3); }
   .hero h1 { font-size: var(--fs-18); }
   .hero p { font-size: var(--fs-14); }
@@ -684,12 +688,19 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   .modal .mhdr, .agbar, .modal .mp { padding-left: var(--sp-3); padding-right: var(--sp-3); }
   .modal textarea { min-height: 220px; margin: var(--sp-2) var(--sp-3); }
   .modal .mftr { padding: 0 var(--sp-3) var(--sp-3); flex-wrap: wrap; }
+  .hbody { padding: var(--sp-2) var(--sp-3) var(--sp-3); }
   .modal .mp { font-size: var(--fs-12); }
   .stseg { flex-wrap: nowrap; overflow-x: auto; margin: var(--sp-1) calc(-1 * var(--sp-3)) 0; padding: 2px var(--sp-3); scrollbar-width: none; }
   .stseg button { flex: none; }
   footer.foot { padding: var(--sp-3); }
 }
 .ag-print { display: none; }
+.modal.help { width: min(880px, 100%); }
+.hbody { overflow-y: auto; padding: var(--sp-2) var(--sp-4) var(--sp-3); display: grid; gap: var(--sp-4); font-size: var(--fs-14); line-height: var(--lh-body); }
+.hbody h3 { font-size: var(--fs-14); font-weight: 600; margin-bottom: 6px; }
+.hbody ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--text-2); }
+.hbody b { color: var(--text-1); font-weight: 600; }
+.hbody .hst .st { font-size: var(--fs-13); }
 @media print {
   @page { size: A4 landscape; margin: 10mm; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

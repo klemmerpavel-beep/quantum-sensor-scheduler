@@ -218,6 +218,20 @@ function stressPage() {
     await ctx.close();
   }
 
+  // 11. Справка «Как читать страницу» и метка пути (Р-65)
+  {
+    const { ctx, page, errs } = await open(V1, "today=2026-09-28");
+    const pill = await page.$eval("#h-ch", (e) => e.textContent);
+    await page.click('[data-k="help"]');
+    const txt = await page.textContent(".modal.help");
+    const focusIn = await page.evaluate(() => !!document.activeElement.closest(".modal.help"));
+    await page.keyboard.press("Escape");
+    const closed = !(await page.$(".modal.help"));
+    const back = await page.evaluate(() => document.activeElement.dataset.k);
+    ok("Справка: роли, статусы, путь; фокус внутри, Esc закрывает и возвращает фокус; метка «1 шаг просрочен»", txt.includes("требования к ним предъявляются через Исполнителя".replace("требования", "Требования")) && txt.includes("угроза срыва") && focusIn && closed && back === "help" && pill.includes("1 шаг просрочен") && pill.includes("резерв расходуется") && !errs.length, `${back}; ${errs.join("; ")}`);
+    await ctx.close();
+  }
+
   // 10. Согласованность чисел между режимами (итоги не расходятся)
   {
     const { ctx, page, errs } = await open(V1, "today=2026-09-28");

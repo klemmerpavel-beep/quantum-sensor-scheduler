@@ -17,6 +17,7 @@
     file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/>',
     reset: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
     arrow: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+    help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
     printer: '<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/>',
   };
   const ico = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
@@ -58,7 +59,7 @@
   // ── Состояние
   let edits = {};
   if (!readonly) { try { edits = JSON.parse(store.get(C.STORAGE_KEY) || "{}") || {}; } catch (e) { edits = {}; } }
-  const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, agendaFmt: "talk", returnFocus: null };
+  const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, agendaFmt: "talk", helpOpen: false, returnFocus: null };
   let M;
   const saveEdits = () => { if (!readonly) store.set(C.STORAGE_KEY, JSON.stringify(edits)); };
   const recompute = () => { M = E.build(SEED, C, edits, T); };
@@ -154,6 +155,7 @@
       <nav class="tabs" role="tablist" aria-label="Режимы отображения">${tabs}</nav>
       <div class="spacer"></div>
       <div class="today" title="${todayFromLink ? "Дата задана параметром ссылки" : "Текущая дата"}">на <b class="mono">${fmt(T)}</b></div>
+      <button class="iconbtn help" data-act="help" data-k="help" aria-label="Как читать страницу" title="Как читать страницу">${ico("help")}</button>
       <button class="iconbtn print" data-act="print" data-k="print" aria-label="Печать текущего режима" title="Печать">${ico("printer")}</button>
       <button class="iconbtn theme" data-act="theme" data-k="theme" aria-label="${theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}" title="${theme === "dark" ? "Светлая тема" : "Тёмная тема"}">${ico(theme === "dark" ? "sun" : "moon")}</button>
     </header>`;
@@ -313,7 +315,12 @@
     notes.push(`Параллельно: «${title(f)}» — срок ${fmt(f.due)}, ${f.closed ? "выполнено" : f.overdue ? "просрочено" : "в работе"}.`);
     return `<ul class="pnotes">${notes.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`;
   }
-  const chainPill = () => { const s = M.chainState; const w = { eroding: "резерв расходуется", breach: "угроза срыва", done: "выполнен", ok: "по плану" }[s]; return `<span class="pill ${s}">${w}</span>`; };
+  /** Состояние пути: просроченные шаги называются отдельно от состояния резерва [Р-47, Р-65]. */
+  const chainPill = () => {
+    const s = M.chainState, w = { eroding: "резерв расходуется", breach: "угроза срыва", done: "выполнен", ok: "по плану" }[s];
+    const late = M.chainNums.filter((n) => M.by[n].overdue).length;
+    return `${late && s !== "breach" ? `<span class="pill breach">${late} ${pl(late, "шаг просрочен", "шага просрочено", "шагов просрочено")}</span>` : ""}<span class="pill ${s}">${w}</span>`;
+  };
   function viewSummary() {
     if (VARIANT === "path") return viewSummaryPath();
     const hl = headline();
@@ -620,6 +627,43 @@
       <div class="mftr"><span class="note" id="ag-status" role="status"></span><button class="btn" data-act="print" data-k="ag-print">${ico("printer")} Печать</button><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></div></div></div>`;
   }
 
+  // ── Справка «Как читать страницу» [Р-65]
+  function renderHelp() {
+    if (!S.helpOpen) return "";
+    const dot = (cls, w) => `<span class="st st-${cls}"><i aria-hidden="true"></i>${w}</span>`;
+    return `<div class="modal-back" data-act="close-help-bg"><div class="modal help" role="dialog" aria-modal="true" aria-labelledby="hp-title">
+      <div class="mhdr"><div class="mh"><h2 id="hp-title">Как читать страницу</h2><p class="note">Планер статуса этапа 1 ОКР «ЯМГ-ИИМ» по План-графику и вкладке «Важное», редакция на 28.09.2026</p></div><button class="iconbtn" data-act="close-help" data-k="hp-x" aria-label="Закрыть">${ico("x")}</button></div>
+      <div class="hbody">
+        <section><h3>Кто за что отвечает</h3><ul>
+          <li><b>Электроприбор</b> — Исполнитель по договору. Отвечает перед Заказчиком за все обязательства, в том числе за работы соисполнителей.</li>
+          <li><b>ФТИ им. Иоффе и ИХС им. Гребенщикова</b> — соисполнители по договорам с Электроприбором. Требования к ним предъявляются через Исполнителя; в таблицах они показаны пометкой «+ ФТИ», «+ ИХС».</li>
+          <li><b>СП «Квант»</b> — Заказчик. Пометка «+ Заказчик» означает, что для работы нужно участие Заказчика.</li></ul></section>
+        <section><h3>Статусы</h3><ul class="hst">
+          <li>${dot("closed", "Закрыто")} — работа выполнена; пометка «без документа» — закрыта без реквизита подтверждающего документа.</li>
+          <li>${dot("progress", "В работе")}, ${dot("progress", "Подготовка материалов")} — идёт по графику.</li>
+          <li>${dot("action", "Ожидаем документ")}, ${dot("action", "На согласовании")}, ${dot("action", "Нет отметки")} — нужно действие.</li>
+          <li>${dot("future", "Не начато")} — срок впереди.</li>
+          <li>«по группе» — у подпозиции нет своей отметки, показан статус её группы.</li></ul></section>
+        <section><h3>Сроки</h3><ul>
+          <li><b>Просрочено</b> — срок План-графика прошёл, а работа не закрыта. Считается от даты «на ДД.ММ.ГГГГ» в шапке.</li>
+          <li><b>Контрольная дата</b> — дата, назначенная на оперативке; её пропуск — повод для вопроса, но не просрочка по договору.</li>
+          <li><b>Обязательства перед Заказчиком</b> — 47 из 71 позиций План-графика. Показатели «Сводки» считаются по ним; внутренние подпозиции входят в свою группу.</li></ul></section>
+        <section><h3>Путь к демонстрации лабораторного образца</h3><ul>
+          <li>8 работ, без которых демонстрация 30.11.2026 невозможна. Между шагами — резерв в рабочих днях по производственному календарю РФ.</li>
+          <li><b>по плану</b> — резерв не расходуется; <b>резерв расходуется</b> — предыдущий шаг задерживается, но срыва ещё нет; <b>угроза срыва</b> — резерва не осталось. Число просроченных шагов показывается отдельной красной меткой.</li>
+          <li>Пунктир между шагами — работы идут параллельно, так заложено в План-графике; это не срыв.</li></ul></section>
+        <section><h3>Режимы</h3><ul>
+          <li><b>Сводка</b> — вывод, показатели, сроки этапа, что требует внимания, путь к демонстрации.</li>
+          <li><b>График работ</b> — все работы на шкале этапа; срезы «Просроченные» и «Путь к демонстрации».</li>
+          <li><b>Ближайшие сроки</b> — работы по периодам и повестка оперативки.</li>
+          <li><b>Статусы</b> — работы по колонкам статусов. <b>Вехи</b> — ключевые даты этапа и загрузка по дням.</li>
+          <li>Нажатие на работу открывает карточку: официальное наименование, номер пункта, ответственность, документы, комментарий.</li></ul></section>
+        <section><h3>Отметки</h3><ul>
+          <li>Смена статуса и комментарии сохраняются только в этом браузере и не видны другим. Исходные данные План-графика не меняются; «Сбросить отметки» в подвале возвращает исходное состояние.</li></ul></section>
+      </div>
+      <div class="mftr"><button class="btn primary" data-act="close-help" data-k="hp-close">Понятно</button></div></div></div>`;
+  }
+
   // ── Отрисовка
   const root = document.getElementById("app");
   function render() {
@@ -633,8 +677,8 @@
     catch (err) { console.error(err); main = `<div class="empty" role="alert"><p>Не удалось построить отображение. Обновите страницу; если ошибка повторится, сообщите руководителю проекта.</p></div>`; }
     root.innerHTML = `<a class="skip" href="#main">Перейти к содержанию</a>${renderHeader()}${renderBanners()}
       <main id="main" tabindex="-1" class="v-${view}"><div class="tabpanel" role="tabpanel" aria-labelledby="tab-${view}">${main}</div></main>
-      <footer class="foot"><span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span>Рабочие дни — по производственному календарю РФ.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="reset-all" data-k="reset-all">Сбросить отметки (${Object.keys(edits).length})</button>` : ""}</footer>
-      ${renderPanel()}${renderAgenda()}`;
+      <footer class="foot"><span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span title="${esc(C.HOLIDAYS_NOTE)}">Рабочие дни — по производственному календарю РФ, включая переносы 2026–2027 годов.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="reset-all" data-k="reset-all">Сбросить отметки (${Object.keys(edits).length})</button>` : ""}</footer>
+      ${renderPanel()}${renderAgenda()}${renderHelp()}`;
     scrollers.forEach(([cls, t, l]) => { const e = document.getElementsByClassName(cls)[0]; if (e) { e.scrollTop = t; e.scrollLeft = l; } });
     if (fk) { const el = root.querySelector(`[data-k="${CSS.escape(fk)}"]`); if (el) { el.focus({ preventScroll: true }); if (sel && "setSelectionRange" in el) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* не текстовое поле */ } } }
   }
@@ -670,6 +714,8 @@
     }
     if (t.dataset.open && !t.dataset.act) return openItem(t.dataset.open, t);
     const a = t.dataset.act;
+    if (a === "help") { S.returnFocus = "help"; S.helpOpen = true; render(); const c = document.querySelector('[data-k="hp-close"]'); if (c) c.focus(); return; }
+    if (a === "close-help" || (a === "close-help-bg" && ev.target === t)) { S.helpOpen = false; render(); const b = document.querySelector('[data-k="help"]'); if (b) b.focus(); return; }
     if (a === "print") { try { window.print(); } catch (e) { /* печать недоступна */ } return; }
     if (a === "theme") { theme = theme === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", theme); store.set(C.THEME_KEY, theme); return render(); }
     if (a === "reset-filters") { clearFilters(); S.slice = "all"; return render(); }
@@ -730,11 +776,12 @@
   });
   document.addEventListener("keydown", (ev) => {
     if (ev.key === "Escape") {
+      if (S.helpOpen) { S.helpOpen = false; render(); const b = document.querySelector('[data-k="help"]'); if (b) b.focus(); return; }
       if (S.agendaOpen) { S.agendaOpen = false; render(); const b = document.querySelector('[data-k="agenda"]'); if (b) b.focus(); return; }
       if (S.selected) closePanel();
       return;
     }
-    if (ev.key === "Tab" && S.agendaOpen) {
+    if (ev.key === "Tab" && (S.agendaOpen || S.helpOpen)) {
       const m = document.querySelector(".modal"); if (!m) return;
       const f = [...m.querySelectorAll("button, textarea")], first = f[0], last = f[f.length - 1];
       if (ev.shiftKey && document.activeElement === first) { last.focus(); ev.preventDefault(); }
