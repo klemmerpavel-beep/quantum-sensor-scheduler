@@ -1,6 +1,7 @@
 """Сборка самодостаточных страниц «Орбиты» из src/ (Р-43, Р-45).
 
-Выход: versions/v1-panel.html, versions/v2-registry.html, versions/v3-path.html, index.html (выбранная версия).
+Выход: versions/v1-panel.html, versions/v2-registry.html, versions/v3-path.html, index.html (выбранная версия),
+dist/crm-ymg-iim-stage1-offline.html — выбранная версия без обращений в интернет для внутреннего контура (Р-42, Р-66).
 Запуск: python3 tools/build.py [--index v1|v2|v3]
 """
 import json
@@ -14,6 +15,15 @@ VARIANTS = {
     "v2": ("registry", "v2-registry.html", "В2 «Реестр»"),
     "v3": ("path", "v3-path.html", "В3 «Путь к демонстрации»"),
 }
+
+
+def offline(html):
+    """Убирает подключение Google Fonts: страница работает на системных гарнитурах без сети."""
+    import re
+    html = re.sub(r'<link rel="preconnect"[^>]*>\n?', "", html)
+    html = re.sub(r'<link rel="stylesheet" href="https://fonts\.googleapis\.com[^>]*>\n?', "", html)
+    assert "https://" not in html.split("<style>")[0], "во внешнем заголовке остались сетевые ссылки"
+    return html
 
 
 def page(variant_key):
@@ -47,6 +57,10 @@ def main():
         print("written", out / fname)
     (ROOT / "index.html").write_text(page(index_key), encoding="utf-8")
     print("index.html =", VARIANTS[index_key][2])
+    dist = ROOT / "dist"
+    dist.mkdir(exist_ok=True)
+    (dist / "crm-ymg-iim-stage1-offline.html").write_text(offline(page(index_key)), encoding="utf-8")
+    print("written", dist / "crm-ymg-iim-stage1-offline.html")
 
 
 if __name__ == "__main__":

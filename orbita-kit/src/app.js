@@ -533,7 +533,7 @@
     const ctx = orgKey && i.kind !== "section" && !orgMatch(i);
     const dl = (rows) => `<dl>${rows.filter((r) => r[1] != null && r[1] !== "").map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>`;
     let h = `<div class="panel" role="dialog" aria-modal="false" aria-labelledby="p-title">
-      <div class="phdr"><div class="ph"><h2 id="p-title" tabindex="-1">${esc(title(i))}</h2><p class="pnum">№ ${i.num} по План-графику</p></div><button class="iconbtn" data-act="close-panel" data-k="p-close" aria-label="Закрыть карточку">${ico("x")}</button></div><div class="body">`;
+      <div class="phdr"><div class="ph"><h2 id="p-title" tabindex="-1">${esc(title(i))}</h2><p class="pnum">№ ${i.num} по План-графику · <button class="btn link plink" data-act="copy-link" data-k="p-link">${ico("copy")} Ссылка на работу</button><span class="note" id="p-link-st" role="status"></span></p></div><button class="iconbtn" data-act="close-panel" data-k="p-close" aria-label="Закрыть карточку">${ico("x")}</button></div><div class="body">`;
     if (i.kind === "section") return h + `<p class="muted">Раздел План-графика «${esc(i.name)}». Период ${fmt(i.start)} – ${fmt(i.due)}; даты вычислены по вложенным работам.</p></div></div>`;
     if (!ctx) {
       h += `<section class="pstat"><div class="pline">${status(i)} ${dueWords(i, false)}${i.ctrlPassed ? ` <span class="due-t warn">контрольная дата ${fmt(i.ctrl)} прошла</span>` : ""}</div>`;
@@ -680,13 +680,18 @@
       <footer class="foot"><span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span title="${esc(C.HOLIDAYS_NOTE)}">Рабочие дни — по производственному календарю РФ, включая переносы 2026–2027 годов.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="reset-all" data-k="reset-all">Сбросить отметки (${Object.keys(edits).length})</button>` : ""}</footer>
       ${renderPanel()}${renderAgenda()}${renderHelp()}`;
     scrollers.forEach(([cls, t, l]) => { const e = document.getElementsByClassName(cls)[0]; if (e) { e.scrollTop = t; e.scrollLeft = l; } });
+    syncUrl();
     if (fk) { const el = root.querySelector(`[data-k="${CSS.escape(fk)}"]`); if (el) { el.focus({ preventScroll: true }); if (sel && "setSelectionRange" in el) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* не текстовое поле */ } } }
+  }
+  /** Адрес страницы отражает режим, открытую работу и отбор — ссылку можно передать [Р-66]. */
+  function syncUrl() {
+    const u = new URL(location.href), set = (k, v) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
+    u.searchParams.set("view", exec && view === "summary" ? "exec" : view);
+    set("item", S.selected); set("who", orgKey ? "" : S.filters.owner); set("sec", S.filters.section);
+    try { history.replaceState(null, "", u); } catch (e) { /* file:// в некоторых браузерах */ }
   }
   function setView(v) {
     view = v; S.closeForm = null;
-    const u = new URL(location.href);
-    u.searchParams.set("view", exec && v === "summary" ? "exec" : v);
-    try { history.replaceState(null, "", u); } catch (e) { /* file:// */ }
     render();
     const t = document.getElementById("tab-" + v); if (t) t.focus();
   }
@@ -714,6 +719,13 @@
     }
     if (t.dataset.open && !t.dataset.act) return openItem(t.dataset.open, t);
     const a = t.dataset.act;
+    if (a === "copy-link") {
+      const st = document.getElementById("p-link-st"), url = location.href;
+      const done = () => { if (st) st.textContent = " Ссылка скопирована."; };
+      const manual = () => { if (st) st.textContent = ` ${url}`; };
+      try { navigator.clipboard.writeText(url).then(done, manual); } catch (e) { manual(); }
+      return;
+    }
     if (a === "help") { S.returnFocus = "help"; S.helpOpen = true; render(); const c = document.querySelector('[data-k="hp-close"]'); if (c) c.focus(); return; }
     if (a === "close-help" || (a === "close-help-bg" && ev.target === t)) { S.helpOpen = false; render(); const b = document.querySelector('[data-k="help"]'); if (b) b.focus(); return; }
     if (a === "print") { try { window.print(); } catch (e) { /* печать недоступна */ } return; }
@@ -792,6 +804,10 @@
   // Печать всегда в светлой теме [Р-63]
   window.addEventListener("beforeprint", () => { document.documentElement.setAttribute("data-theme", "light"); });
   window.addEventListener("afterprint", () => { document.documentElement.setAttribute("data-theme", theme); });
+  // Параметры item, who, sec [Р-66]
+  if (q.has("item")) { const n = q.get("item"); if (SEED.items.some((i) => i.num === n && i.kind !== "section")) S.selected = n; else notices.push("Параметр item не распознан: работа с таким номером не найдена."); }
+  if (q.has("who") && !orgKey) { const w = q.get("who"); if (OWNER_F[w]) S.filters.owner = w; else notices.push("Параметр who не распознан, отбор по участнику не применён."); }
+  if (q.has("sec")) { const c = q.get("sec"); if (["1", "2.1", "2.2", "3"].includes(c)) S.filters.section = c; else notices.push("Параметр sec не распознан, отбор по разделу не применён."); }
   let rz = 0;
   window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ((view === "summary" || view === "milestones") && !S.agendaOpen) render(); }, 150); });
 

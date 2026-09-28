@@ -232,6 +232,31 @@ function stressPage() {
     await ctx.close();
   }
 
+  // 12. Ссылки на работу и отбор; сборка для внутреннего контура (Р-66)
+  {
+    let { ctx, page, errs } = await open(V1, "today=2026-09-28&item=2.1.7");
+    const t1 = await page.textContent("#p-title");
+    await page.keyboard.press("Escape");
+    await page.click('[data-k="tab-focus"]');
+    await page.selectOption('[data-k="f-owner"]', "ihs");
+    await page.click('[data-k="f-2.2.2"]');
+    const url = await page.evaluate(() => location.search);
+    await ctx.close();
+    ({ ctx, page, errs } = await open(V1, url.slice(1)));
+    const t2 = await page.textContent("#p-title"), who = await page.$eval('[data-k="f-owner"]', (e) => e.value), rows = await page.$$eval("button.frow", (e) => e.length);
+    ok("Ссылки: ?item открывает карточку; адрес хранит режим, работу и отбор", t1 === "Закупка материалов и оборудования" && /view=focus/.test(url) && /item=2\.2\.2/.test(url) && /who=ihs/.test(url) && t2 === "Работы ИХС по технологии ячеек" && who === "ihs" && rows === 2 && !errs.length, `${url}; строк ${rows}; ${errs.join("; ")}`);
+    await ctx.close();
+    const OFF = path.join(ROOT, "dist/crm-ymg-iim-stage1-offline.html");
+    const c2 = await b.newContext({ viewport: { width: 1440, height: 900 } });
+    const p2 = await c2.newPage(); const ext = [], e2 = [];
+    p2.on("request", (r) => { if (!/^(file|data|about):/.test(r.url())) ext.push(r.url()); });
+    p2.on("pageerror", (e) => e2.push(e.message)); p2.on("console", (m) => m.type() === "error" && e2.push(m.text()));
+    await p2.goto(`file://${OFF}?today=2026-09-28`, { waitUntil: "load" }); await p2.waitForTimeout(500);
+    const h = await p2.textContent("#h-main");
+    ok("Сборка для внутреннего контура: ни одного сетевого запроса, консоль без ошибок", !ext.length && !e2.length && h.includes("Этап 1"), ext.concat(e2).join("; "));
+    await c2.close();
+  }
+
   // 10. Согласованность чисел между режимами (итоги не расходятся)
   {
     const { ctx, page, errs } = await open(V1, "today=2026-09-28");
