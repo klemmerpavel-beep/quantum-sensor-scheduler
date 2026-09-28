@@ -257,6 +257,19 @@ function stressPage() {
     await c2.close();
   }
 
+  // 13. Режим для руководства сохраняется при смене вкладки и перезагрузке (Р-67)
+  {
+    let { ctx, page, errs } = await open(V1, "view=exec&today=2026-09-28");
+    await page.click('[data-k="tab-gantt"]');
+    const url = await page.evaluate(() => location.search);
+    await ctx.close();
+    ({ ctx, page, errs } = await open(V1, url.slice(1)));
+    await page.locator("tr[data-open]").first().click();
+    const ro = !(await page.$(".stseg")) && !(await page.$("textarea[data-comment]"));
+    ok("Режим для руководства: после смены вкладки и перезагрузки — только просмотр", /exec=1/.test(url) && /view=gantt/.test(url) && ro && !errs.length, url);
+    await ctx.close();
+  }
+
   // 10. Согласованность чисел между режимами (итоги не расходятся)
   {
     const { ctx, page, errs } = await open(V1, "today=2026-09-28");
