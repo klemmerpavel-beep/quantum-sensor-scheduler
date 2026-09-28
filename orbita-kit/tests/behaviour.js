@@ -79,8 +79,11 @@ function stressPage() {
     // повестка
     await page.keyboard.press("Escape");
     await page.click('[data-k="agenda"]');
+    const talk = await page.$eval("#ag-text", (e) => e.value);
+    ok("Повестка «для обсуждения»: вопросы к Исполнителю, наименования без номеров", talk.includes("Вопросы к Исполнителю") && !/\(п\. \d/.test(talk) && !/\b\d\.\d\.\d/.test(talk.replace(/\d{2}\.\d{2}\.\d{4}/g, "")), talk.split("\n").slice(3, 5).join(" | "));
+    await page.click('[data-k="ag-letter"]');
     const agenda = await page.$eval("#ag-text", (e) => e.value);
-    ok("Повестка: формат «Наименование — комментарий (п. N)»", /— .+ \(п\. 2\.1\.\d\)/.test(agenda) && agenda.startsWith("Повестка оперативки"));
+    ok("Повестка «для письма»: формат «Наименование — комментарий (п. N)»", /— .+ \(п\. 2\.1\.\d\)/.test(agenda) && agenda.startsWith("Повестка оперативки"));
     await page.screenshot({ path: path.join(OUT, "03_agenda.png") });
     await page.keyboard.press("Escape");
     ok("Сценарий 1: консоль без ошибок", !errs.length, errs.join("; "));

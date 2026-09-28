@@ -13,7 +13,7 @@
   --fs-12: 12px; --fs-13: 13px; --fs-14: 14px; --fs-16: 16px; --fs-18: 18px; --fs-22: 22px; --fs-28: 28px;
   --lh-tight: 1.2; --lh-snug: 1.35; --lh-body: 1.5;
   --sp-1: 4px; --sp-2: 8px; --sp-3: 16px; --sp-4: 24px; --sp-5: 32px; --sp-6: 48px;
-  --row: 40px; --row-gantt: 28px; --header-h: 56px; --axis-h: 40px; --panel-w: 480px; --hit: 40px; --page-w: 1200px;
+  --row: 40px; --row-gantt: 28px; --header-h: 56px; --axis-h: 40px; --panel-w: 560px; --hit: 40px; --page-w: 1200px;
   --radius-1: 4px; --radius-2: 8px; --radius-3: 12px;
   --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06);
   --shadow-2: 0 8px 24px rgba(16, 24, 40, 0.16);
@@ -387,7 +387,7 @@ table.gantt { border-collapse: separate; border-spacing: 0; table-layout: fixed;
 .gstrip .kpi { padding: 10px var(--sp-3); box-shadow: none; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: var(--sp-3); row-gap: 0; }
 .gstrip .kpi .lbl { grid-column: 1 / -1; }
 .gstrip .kpi .val { font-size: var(--fs-18); margin: 0; }
-.gstrip .kpi .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gstrip .kpi .sub { font-size: var(--fs-12); line-height: var(--lh-tight); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .empty { padding: var(--sp-5) var(--sp-4); color: var(--text-2); display: grid; gap: var(--sp-3); justify-items: start; }
 
 /* Мобильный список «Графика работ» */
@@ -518,7 +518,7 @@ button.lrow:hover { background: var(--surface-2); }
 .pstat { display: grid; gap: var(--sp-2); padding: var(--sp-3); background: var(--surface-2); border-radius: var(--radius-2); }
 .pline { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-3); font-size: var(--fs-14); }
 .pstat .note { font-size: var(--fs-13); }
-.panel dl { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 6px var(--sp-3); margin: 0; }
+.panel dl { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 6px var(--sp-3); margin: 0; }
 .panel dt { color: var(--text-2); font-size: var(--fs-13); }
 .panel dd { margin: 0; }
 .stseg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-1); }
@@ -533,6 +533,14 @@ button.lrow:hover { background: var(--surface-2); }
 .form input[aria-invalid="true"] { border-color: var(--st-overdue); }
 .warnbox { display: flex; gap: var(--sp-2); align-items: flex-start; padding: 10px 12px; border-radius: var(--radius-2); background: var(--b-action-bg); color: var(--b-action-fg); font-size: var(--fs-13); }
 .actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.pnav { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-2); }
+.pnav .btn { height: auto; min-height: 32px; padding: 4px 10px; white-space: normal; text-align: left; font-size: var(--fs-13); background: var(--surface); border-color: var(--border); }
+.plist { list-style: none; margin: 0; padding: 0; }
+.plist li + li button { border-top: 1px solid var(--surface-3); }
+.plist button { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--sp-3); align-items: center; padding: 8px 4px; border: 0; background: transparent; text-align: left; font-size: var(--fs-13); border-radius: var(--radius-1); }
+.plist button:hover { background: var(--surface-2); }
+.plist .t { font-weight: 500; }
+.plist .d { grid-column: 1 / -1; font-size: var(--fs-12); color: var(--text-3); }
 .more { border-top: 1px solid var(--border); padding-top: var(--sp-3); }
 .more > summary { cursor: pointer; color: var(--accent); font-weight: 500; font-size: var(--fs-13); min-height: 28px; display: flex; align-items: center; }
 .more[open] > summary { margin-bottom: var(--sp-3); }
@@ -540,8 +548,13 @@ button.lrow:hover { background: var(--surface-2); }
 
 /* ── Повестка */
 .modal-back { position: fixed; inset: 0; z-index: 40; background: rgba(16, 24, 40, 0.4); display: grid; place-items: center; padding: var(--sp-3); }
-.modal { width: min(880px, 100%); max-height: 90vh; display: flex; flex-direction: column; background: var(--surface); border-radius: var(--radius-3); box-shadow: var(--shadow-2); border: 1px solid var(--border); }
-.modal header { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-4) var(--sp-4) var(--sp-2); }
+.modal { width: min(960px, 100%); max-height: 90vh; display: flex; flex-direction: column; background: var(--surface); border-radius: var(--radius-3); box-shadow: var(--shadow-2); border: 1px solid var(--border); }
+.modal header { display: flex; align-items: flex-start; gap: var(--sp-2); padding: var(--sp-4) var(--sp-4) var(--sp-2); }
+.mh { flex: 1; display: grid; gap: 2px; }
+.agbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-4); padding: var(--sp-2) var(--sp-4); }
+.agc { display: flex; align-items: baseline; gap: 6px; font-size: var(--fs-13); color: var(--text-2); }
+.agn { font-size: var(--fs-22); font-weight: 600; color: var(--text-1); }
+.agn.bad { color: var(--b-overdue-fg); } .agn.warn { color: var(--b-action-fg); }
 .modal h2 { flex: 1; font-size: var(--fs-18); font-weight: 600; }
 .modal .mp { padding: 0 var(--sp-4); }
 .modal textarea { flex: 1; margin: var(--sp-3) var(--sp-4); min-height: 360px; border: 1px solid var(--border); border-radius: var(--radius-2); padding: var(--sp-3); font-size: var(--fs-14); line-height: var(--lh-body); background: var(--surface-2); color: var(--text-1); resize: vertical; }
@@ -580,7 +593,7 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   .toolbar .field:not(.search) { flex: 1 1 40%; min-width: 0; }
   .toolbar .field select, .toolbar .field.search input { width: 100%; }
   .toolbar > .spacer { display: none; }
-  .field select, .field input, .btn, .seg button, .stseg button, .form input, .skip, .iconbtn, .chev, .lane > summary, .more > summary { min-height: var(--hit); }
+  .field select, .field input, .btn, .seg button, .stseg button, .form input, .skip, .iconbtn, .chev, .lane > summary, .more > summary, .pnav .btn, .plist button { min-height: var(--hit); }
   .btn.link { min-height: var(--hit); }
   .seg { flex: 1 1 100%; }
   .seg button { flex: 1 1 auto; padding: 0 var(--sp-2); font-size: var(--fs-13); }
@@ -677,6 +690,12 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   .panel dl { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .panel dt { margin-top: var(--sp-2); }
   .row2 { grid-template-columns: minmax(0, 1fr); }
+  .modal-back { padding: var(--sp-2); }
+  .modal { max-height: 96vh; overflow-y: auto; }
+  .modal header, .agbar, .modal .mp { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  .modal textarea { min-height: 220px; margin: var(--sp-2) var(--sp-3); }
+  .modal footer { padding: 0 var(--sp-3) var(--sp-3); flex-wrap: wrap; }
+  .modal .mp { font-size: var(--fs-12); }
   .stseg { flex-wrap: nowrap; overflow-x: auto; margin: var(--sp-1) calc(-1 * var(--sp-3)) 0; padding: 2px var(--sp-3); scrollbar-width: none; }
   .stseg button { flex: none; }
   footer.foot { padding: var(--sp-3); }

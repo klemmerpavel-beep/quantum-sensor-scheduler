@@ -25,7 +25,7 @@
   --fs-12: 12px; --fs-13: 13px; --fs-14: 14px; --fs-16: 16px; --fs-18: 18px; --fs-22: 22px; --fs-28: 28px;
   --lh-tight: 1.2; --lh-snug: 1.35; --lh-body: 1.5;
   --sp-1: 4px; --sp-2: 8px; --sp-3: 16px; --sp-4: 24px; --sp-5: 32px; --sp-6: 48px;
-  --row: 40px; --row-gantt: 28px; --header-h: 56px; --axis-h: 40px; --panel-w: 480px; --hit: 40px; --page-w: 1200px;
+  --row: 40px; --row-gantt: 28px; --header-h: 56px; --axis-h: 40px; --panel-w: 560px; --hit: 40px; --page-w: 1200px;
   --radius-1: 4px; --radius-2: 8px; --radius-3: 12px;
   --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06);
   --shadow-2: 0 8px 24px rgba(16, 24, 40, 0.16);
@@ -399,7 +399,7 @@ table.gantt { border-collapse: separate; border-spacing: 0; table-layout: fixed;
 .gstrip .kpi { padding: 10px var(--sp-3); box-shadow: none; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: var(--sp-3); row-gap: 0; }
 .gstrip .kpi .lbl { grid-column: 1 / -1; }
 .gstrip .kpi .val { font-size: var(--fs-18); margin: 0; }
-.gstrip .kpi .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gstrip .kpi .sub { font-size: var(--fs-12); line-height: var(--lh-tight); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .empty { padding: var(--sp-5) var(--sp-4); color: var(--text-2); display: grid; gap: var(--sp-3); justify-items: start; }
 
 /* Мобильный список «Графика работ» */
@@ -530,7 +530,7 @@ button.lrow:hover { background: var(--surface-2); }
 .pstat { display: grid; gap: var(--sp-2); padding: var(--sp-3); background: var(--surface-2); border-radius: var(--radius-2); }
 .pline { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-1) var(--sp-3); font-size: var(--fs-14); }
 .pstat .note { font-size: var(--fs-13); }
-.panel dl { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 6px var(--sp-3); margin: 0; }
+.panel dl { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 6px var(--sp-3); margin: 0; }
 .panel dt { color: var(--text-2); font-size: var(--fs-13); }
 .panel dd { margin: 0; }
 .stseg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-1); }
@@ -545,6 +545,14 @@ button.lrow:hover { background: var(--surface-2); }
 .form input[aria-invalid="true"] { border-color: var(--st-overdue); }
 .warnbox { display: flex; gap: var(--sp-2); align-items: flex-start; padding: 10px 12px; border-radius: var(--radius-2); background: var(--b-action-bg); color: var(--b-action-fg); font-size: var(--fs-13); }
 .actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.pnav { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-2); }
+.pnav .btn { height: auto; min-height: 32px; padding: 4px 10px; white-space: normal; text-align: left; font-size: var(--fs-13); background: var(--surface); border-color: var(--border); }
+.plist { list-style: none; margin: 0; padding: 0; }
+.plist li + li button { border-top: 1px solid var(--surface-3); }
+.plist button { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--sp-3); align-items: center; padding: 8px 4px; border: 0; background: transparent; text-align: left; font-size: var(--fs-13); border-radius: var(--radius-1); }
+.plist button:hover { background: var(--surface-2); }
+.plist .t { font-weight: 500; }
+.plist .d { grid-column: 1 / -1; font-size: var(--fs-12); color: var(--text-3); }
 .more { border-top: 1px solid var(--border); padding-top: var(--sp-3); }
 .more > summary { cursor: pointer; color: var(--accent); font-weight: 500; font-size: var(--fs-13); min-height: 28px; display: flex; align-items: center; }
 .more[open] > summary { margin-bottom: var(--sp-3); }
@@ -552,8 +560,13 @@ button.lrow:hover { background: var(--surface-2); }
 
 /* ── Повестка */
 .modal-back { position: fixed; inset: 0; z-index: 40; background: rgba(16, 24, 40, 0.4); display: grid; place-items: center; padding: var(--sp-3); }
-.modal { width: min(880px, 100%); max-height: 90vh; display: flex; flex-direction: column; background: var(--surface); border-radius: var(--radius-3); box-shadow: var(--shadow-2); border: 1px solid var(--border); }
-.modal header { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-4) var(--sp-4) var(--sp-2); }
+.modal { width: min(960px, 100%); max-height: 90vh; display: flex; flex-direction: column; background: var(--surface); border-radius: var(--radius-3); box-shadow: var(--shadow-2); border: 1px solid var(--border); }
+.modal header { display: flex; align-items: flex-start; gap: var(--sp-2); padding: var(--sp-4) var(--sp-4) var(--sp-2); }
+.mh { flex: 1; display: grid; gap: 2px; }
+.agbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-4); padding: var(--sp-2) var(--sp-4); }
+.agc { display: flex; align-items: baseline; gap: 6px; font-size: var(--fs-13); color: var(--text-2); }
+.agn { font-size: var(--fs-22); font-weight: 600; color: var(--text-1); }
+.agn.bad { color: var(--b-overdue-fg); } .agn.warn { color: var(--b-action-fg); }
 .modal h2 { flex: 1; font-size: var(--fs-18); font-weight: 600; }
 .modal .mp { padding: 0 var(--sp-4); }
 .modal textarea { flex: 1; margin: var(--sp-3) var(--sp-4); min-height: 360px; border: 1px solid var(--border); border-radius: var(--radius-2); padding: var(--sp-3); font-size: var(--fs-14); line-height: var(--lh-body); background: var(--surface-2); color: var(--text-1); resize: vertical; }
@@ -592,7 +605,7 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   .toolbar .field:not(.search) { flex: 1 1 40%; min-width: 0; }
   .toolbar .field select, .toolbar .field.search input { width: 100%; }
   .toolbar > .spacer { display: none; }
-  .field select, .field input, .btn, .seg button, .stseg button, .form input, .skip, .iconbtn, .chev, .lane > summary, .more > summary { min-height: var(--hit); }
+  .field select, .field input, .btn, .seg button, .stseg button, .form input, .skip, .iconbtn, .chev, .lane > summary, .more > summary, .pnav .btn, .plist button { min-height: var(--hit); }
   .btn.link { min-height: var(--hit); }
   .seg { flex: 1 1 100%; }
   .seg button { flex: 1 1 auto; padding: 0 var(--sp-2); font-size: var(--fs-13); }
@@ -689,6 +702,12 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   .panel dl { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .panel dt { margin-top: var(--sp-2); }
   .row2 { grid-template-columns: minmax(0, 1fr); }
+  .modal-back { padding: var(--sp-2); }
+  .modal { max-height: 96vh; overflow-y: auto; }
+  .modal header, .agbar, .modal .mp { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  .modal textarea { min-height: 220px; margin: var(--sp-2) var(--sp-3); }
+  .modal footer { padding: 0 var(--sp-3) var(--sp-3); flex-wrap: wrap; }
+  .modal .mp { font-size: var(--fs-12); }
   .stseg { flex-wrap: nowrap; overflow-x: auto; margin: var(--sp-1) calc(-1 * var(--sp-3)) 0; padding: 2px var(--sp-3); scrollbar-width: none; }
   .stseg button { flex: none; }
   footer.foot { padding: var(--sp-3); }
@@ -1048,7 +1067,7 @@ const Engine = (() => {
     sec("1. Просрочено", s1);
     sec("2. Контрольная дата прошла", s2);
     sec("3. Срок в ближайшие 14 дней", s3);
-    return { text: out.join("\n").trim(), counts: [s1.length, s2.length, s3.length] };
+    return { text: out.join("\n").trim(), counts: [s1.length, s2.length, s3.length], lists: [s1, s2, s3] };
   }
 
   return { build, agenda, dn, fmt, iso, parseISO, todayLocal, remainText, plural, STATUSES, CLS, ACTIVE, calendar };
@@ -1116,7 +1135,7 @@ if (typeof module !== "undefined") module.exports = Engine;
   // ── Состояние
   let edits = {};
   if (!readonly) { try { edits = JSON.parse(store.get(C.STORAGE_KEY) || "{}") || {}; } catch (e) { edits = {}; } }
-  const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, returnFocus: null };
+  const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, agendaFmt: "talk", returnFocus: null };
   let M;
   const saveEdits = () => { if (!readonly) store.set(C.STORAGE_KEY, JSON.stringify(edits)); };
   const recompute = () => { M = E.build(SEED, C, edits, T); };
@@ -1270,7 +1289,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     const tile = (id, lbl, val, sub, act, tone) => `<button class="kpi${tone ? " " + tone : ""}" data-act="${act}" data-k="kpi-${id}"><span class="lbl">${lbl}</span><span class="val">${val}</span><span class="sub">${sub}</span></button>`;
     return [
       tile("closed", "Выполнено", `${k.closed}<small> из ${k.base}</small>`, `${k.pct} %${k.noReq ? ` · ${k.noReq} без документа` : ""}`, "go-board"),
-      tile("plan", "План на сегодня", `${k.reachedClosed}<small> из ${k.reached}</small>`, k.reached ? `срок наступил у ${k.reached}${k.early ? ` · досрочно ещё ${k.early}` : ""}` : "сроки ещё не наступили", "go-overdue"),
+      tile("plan", "План на сегодня", `${k.reachedClosed}<small> из ${k.reached}</small>`, k.reached ? `срок наступил у ${k.reached}${k.early ? `; ещё ${k.early} — досрочно` : ""}` : "сроки ещё не наступили", "go-overdue"),
       tile("overdue", "Просрочено", `${k.overdue}`, k.overdue ? "по сроку План-графика" : "просроченных обязательств нет", "go-overdue", k.overdue ? "bad" : ""),
       tile("demo", "До демонстрации образца", k.toDemo >= 0 ? `${k.toDemoWd}<small> ${pl(k.toDemoWd, "рабочий день", "рабочих дня", "рабочих дней")}</small>` : `<small>прошла</small>`, "30.11.2026", "go-chain"),
       tile("end", "До окончания этапа", k.toEnd >= 0 ? `${k.toEnd}<small> ${pl(k.toEnd, "день", "дня", "дней")}</small>` : `<small>этап завершён</small>`, "30.12.2026", "go-ms"),
@@ -1392,9 +1411,10 @@ if (typeof module !== "undefined") module.exports = Engine;
     return `<div class="page">
       <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><p>${esc(hl.t)}</p></section>
       <section class="card" aria-labelledby="h-ch"><h2 id="h-ch">Путь к демонстрации лабораторного образца ${chainPill()}<span class="spacer"></span><button class="btn link" data-act="go-chain" data-k="ch-open">Подробно на графике ${ico("arrow")}</button></h2>${pathSteps(true)}${pathNotes()}</section>
+      <section class="kpis" aria-label="Ключевые показатели">${kpiTiles()}</section>
       <div class="cols">
         <section class="card" aria-labelledby="h-r"><h2 id="h-r">Требует внимания</h2>${attention()}</section>
-        <section class="kpis col" aria-label="Ключевые показатели">${kpiTiles()}</section>
+        <section class="card" aria-labelledby="h-o"><h2 id="h-o">Исполнитель и соисполнители</h2>${ownersBlock()}</section>
       </div>
     </div>`;
   }
@@ -1588,7 +1608,11 @@ if (typeof module !== "undefined") module.exports = Engine;
       if (i.src === "inherited") h += `<p class="note">Отдельной отметки нет — показан статус группы «${esc(title(M.by[i.inheritedFrom]))}».</p>`;
       if (i.src === "derived") h += `<p class="note">Статус группы в данных не задан и вычислен по составу работ.</p>`;
       if (i.kind === "group") h += `<p class="note">В составе: выполнено ${i.progress.closed} из ${i.progress.total}.</p>`;
-      if (showChain && M.chainSet.has(i.num)) h += `<p class="note">На пути к демонстрации лабораторного образца. Окончание — не ранее ${fmt(M.F[i.num])}.</p>`;
+      if (showChain && M.chainSet.has(i.num)) {
+        const k = M.chainNums.indexOf(i.num), pv = M.chainNums[k - 1], nx = M.chainNums[k + 1];
+        h += `<p class="note">Шаг ${k + 1} из ${M.chainNums.length} пути к демонстрации лабораторного образца. Окончание — не ранее ${fmt(M.F[i.num])}.</p>`;
+        h += `<div class="pnav">${pv ? `<button class="btn ghost" data-open="${pv}" data-k="pn-prev">← ${esc(title(M.by[pv]))}</button>` : ""}${nx ? `<button class="btn ghost" data-open="${nx}" data-k="pn-next">${esc(title(M.by[nx]))} →</button>` : ""}</div>`;
+      }
       if (!readonly) {
         h += `<div class="stseg" role="group" aria-label="Изменить статус">${E.STATUSES.map((st) => `<button aria-pressed="${(S.closeForm && S.closeForm.num === i.num ? "Закрыто" : i.status) === st}" data-status="${st}" data-k="st-${st}">${st}</button>`).join("")}</div>`;
         if (S.closeForm && S.closeForm.num === i.num) {
@@ -1611,6 +1635,8 @@ if (typeof module !== "undefined") module.exports = Engine;
       ["Контрольная дата", i.ctrl != null ? `<span class="mono">${fmt(i.ctrl)}</span>` : null],
       ["Выполнено", i.closed ? (i.closeDate != null ? `<span class="mono">${fmt(i.closeDate)}</span>` : "дата не указана") : null],
     ])}</section>`;
+    if (i.parent && M.by[i.parent].kind === "group") { const g = M.by[i.parent]; h += `<section><h3>Входит в группу</h3><button class="btn link" data-open="${g.num}" data-k="pg-${g.num}">${esc(title(g))}</button><span class="muted"> · выполнено ${g.progress.closed} из ${g.progress.total}</span></section>`; }
+    if (i.kind === "group") h += `<section><h3>Состав группы</h3><ul class="plist">${i.children.map((c) => `<li><button data-open="${c.num}" data-k="pc-${c.num}"><span class="t">${esc(title(c))}</span>${status(c, false)}<span class="d">${fmt(c.due)}${c.overdue ? ` · <span class="bad-t">−${c.overdueDays} дн.</span>` : ""}</span></button></li>`).join("")}</ul></section>`;
     h += `<section><h3>Официальное наименование</h3><p>${esc(i.name)}</p></section>`;
     {
       const co = cosOf(i), r = resp(i);
@@ -1631,14 +1657,41 @@ if (typeof module !== "undefined") module.exports = Engine;
     return h + `</div></aside>`;
   }
 
-  // ── Повестка
+  // ── Повестка [Р-62]: «для обсуждения» — наименования без номеров; «для письма Исполнителю» — формат Р-33 с п. N
+  function agendaTalk(a) {
+    const why = (i, sec) => {
+      if (sec === 0) {
+        if (i.overdue) return `просрочено на ${days(i.overdueDays)} (срок ${fmt(i.due)})`;
+        return `просрочены: ${i.overdueSubs.map((n) => title(M.by[n])).join(", ")}`;
+      }
+      if (sec === 1) return `контрольная дата ${fmt(i.ctrl)} прошла, срок ${fmt(i.due)}`;
+      return i.remain === 0 ? "срок сегодня" : `срок ${fmt(i.due)}, через ${days(i.remain)}`;
+    };
+    const note = (i) => {
+      const co = cosOf(i), t = [];
+      if (co.length) t.push(`${co.length > 1 ? "соисполнители" : "соисполнитель"} ${co.map((o) => CO_SHORT[o]).join(", ")} — через Исполнителя`);
+      if (i.owners.includes(KV)) t.push("требуется участие Заказчика");
+      return t.length ? ` [${t.join("; ")}]` : "";
+    };
+    const out = [`Повестка оперативки по этапу 1 ОКР «ЯМГ-ИИМ» на ${fmt(T)}`, "Вопросы к Исполнителю — АО «Концерн «ЦНИИ «Электроприбор»", ""];
+    ["1. Просрочено", "2. Контрольная дата прошла", "3. Срок в ближайшие 14 дней"].forEach((h, k) => {
+      out.push(h);
+      if (!a.lists[k].length) out.push("— вопросов нет");
+      a.lists[k].forEach((i, n) => { const c = i.comment || i.s.status_mark || ""; out.push(`${n + 1}. ${title(i)} — ${why(i, k)}${c ? `. ${c}` : ""}${note(i)}`); });
+      out.push("");
+    });
+    return out.join("\n").trim();
+  }
   function renderAgenda() {
     if (!S.agendaOpen) return "";
-    const a = E.agenda(M);
+    const a = E.agenda(M), letter = S.agendaFmt === "letter";
+    const text = letter ? a.text : agendaTalk(a);
+    const seg = `<div class="seg" role="group" aria-label="Формат повестки"><button aria-pressed="${!letter}" data-act="ag-fmt" data-fmt="talk" data-k="ag-talk">Для обсуждения</button><button aria-pressed="${letter}" data-act="ag-fmt" data-fmt="letter" data-k="ag-letter">Для письма Исполнителю</button></div>`;
     return `<div class="modal-back" data-act="close-agenda-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="ag-title">
-      <header><h2 id="ag-title">Повестка оперативки на ${fmt(T)}</h2><button class="iconbtn" data-act="close-agenda" data-k="ag-x" aria-label="Закрыть">${ico("x")}</button></header>
-      <p class="note mp">Строка: «Наименование — комментарий (п. N)», как принято в письмах Исполнителю. Комментарий — текст руководителя, при его отсутствии — отметка «Важного». Просрочено: ${a.counts[0]}, контрольная дата прошла: ${a.counts[1]}, срок в 14 дней: ${a.counts[2]}.</p>
-      <label class="sr" for="ag-text">Текст повестки</label><textarea id="ag-text" readonly data-k="ag-text">${esc(a.text)}</textarea>
+      <header><div class="mh"><h2 id="ag-title">Повестка оперативки на ${fmt(T)}</h2><p class="note">Вопросы к Исполнителю — Электроприбору; по работам соисполнителей спрос через него</p></div><button class="iconbtn" data-act="close-agenda" data-k="ag-x" aria-label="Закрыть">${ico("x")}</button></header>
+      <div class="agbar"><div class="agc"><span class="agn bad">${a.counts[0]}</span>просрочено</div><div class="agc"><span class="agn warn">${a.counts[1]}</span>контрольная дата прошла</div><div class="agc"><span class="agn">${a.counts[2]}</span>срок в 14 дней</div><span class="spacer"></span>${seg}</div>
+      <p class="note mp">${letter ? "Официальные наименования и номера пунктов План-графика — формат писем Исполнителю: «Наименование — комментарий (п. N)»." : "Краткие наименования работ без номеров; причина и комментарий словами, участие соисполнителей и Заказчика — в скобках."} Учитываются обязательства перед Заказчиком; просроченные подпозиции указаны в строке своей группы, поэтому число меньше, чем в «Ближайших сроках».</p>
+      <label class="sr" for="ag-text">Текст повестки</label><textarea id="ag-text" readonly data-k="ag-text">${esc(text)}</textarea>
       <footer><span class="note" id="ag-status" role="status"></span><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></footer></div></div>`;
   }
 
@@ -1720,6 +1773,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     if (a === "reset-all") { edits = {}; saveEdits(); S.closeForm = null; return render(); }
     if (a === "agenda") { S.agendaOpen = true; render(); const c = document.querySelector('[data-k="ag-copy"]'); if (c) c.focus(); return; }
     if (a === "close-agenda" || (a === "close-agenda-bg" && ev.target === t)) { S.agendaOpen = false; render(); const b = document.querySelector('[data-k="agenda"]'); if (b) b.focus(); return; }
+    if (a === "ag-fmt") { S.agendaFmt = t.dataset.fmt; render(); const b = document.querySelector(`[data-k="ag-${t.dataset.fmt === "letter" ? "letter" : "talk"}"]`); if (b) b.focus(); return; }
     if (a === "copy-agenda") {
       const ta = document.getElementById("ag-text"), st = document.getElementById("ag-status");
       const done = () => { st.textContent = "Текст скопирован."; };

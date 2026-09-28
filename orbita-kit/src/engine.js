@@ -235,7 +235,7 @@ const Engine = (() => {
     sec("1. Просрочено", s1);
     sec("2. Контрольная дата прошла", s2);
     sec("3. Срок в ближайшие 14 дней", s3);
-    return { text: out.join("\n").trim(), counts: [s1.length, s2.length, s3.length] };
+    return { text: out.join("\n").trim(), counts: [s1.length, s2.length, s3.length], lists: [s1, s2, s3] };
   }
 
   return { build, agenda, dn, fmt, iso, parseISO, todayLocal, remainText, plural, STATUSES, CLS, ACTIVE, calendar };

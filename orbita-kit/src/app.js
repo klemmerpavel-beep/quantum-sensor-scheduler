@@ -57,7 +57,7 @@
   // ── Состояние
   let edits = {};
   if (!readonly) { try { edits = JSON.parse(store.get(C.STORAGE_KEY) || "{}") || {}; } catch (e) { edits = {}; } }
-  const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, returnFocus: null };
+  const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, agendaFmt: "talk", returnFocus: null };
   let M;
   const saveEdits = () => { if (!readonly) store.set(C.STORAGE_KEY, JSON.stringify(edits)); };
   const recompute = () => { M = E.build(SEED, C, edits, T); };
@@ -211,7 +211,7 @@
     const tile = (id, lbl, val, sub, act, tone) => `<button class="kpi${tone ? " " + tone : ""}" data-act="${act}" data-k="kpi-${id}"><span class="lbl">${lbl}</span><span class="val">${val}</span><span class="sub">${sub}</span></button>`;
     return [
       tile("closed", "Выполнено", `${k.closed}<small> из ${k.base}</small>`, `${k.pct} %${k.noReq ? ` · ${k.noReq} без документа` : ""}`, "go-board"),
-      tile("plan", "План на сегодня", `${k.reachedClosed}<small> из ${k.reached}</small>`, k.reached ? `срок наступил у ${k.reached}${k.early ? ` · досрочно ещё ${k.early}` : ""}` : "сроки ещё не наступили", "go-overdue"),
+      tile("plan", "План на сегодня", `${k.reachedClosed}<small> из ${k.reached}</small>`, k.reached ? `срок наступил у ${k.reached}${k.early ? `; ещё ${k.early} — досрочно` : ""}` : "сроки ещё не наступили", "go-overdue"),
       tile("overdue", "Просрочено", `${k.overdue}`, k.overdue ? "по сроку План-графика" : "просроченных обязательств нет", "go-overdue", k.overdue ? "bad" : ""),
       tile("demo", "До демонстрации образца", k.toDemo >= 0 ? `${k.toDemoWd}<small> ${pl(k.toDemoWd, "рабочий день", "рабочих дня", "рабочих дней")}</small>` : `<small>прошла</small>`, "30.11.2026", "go-chain"),
       tile("end", "До окончания этапа", k.toEnd >= 0 ? `${k.toEnd}<small> ${pl(k.toEnd, "день", "дня", "дней")}</small>` : `<small>этап завершён</small>`, "30.12.2026", "go-ms"),
@@ -333,9 +333,10 @@
     return `<div class="page">
       <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><p>${esc(hl.t)}</p></section>
       <section class="card" aria-labelledby="h-ch"><h2 id="h-ch">Путь к демонстрации лабораторного образца ${chainPill()}<span class="spacer"></span><button class="btn link" data-act="go-chain" data-k="ch-open">Подробно на графике ${ico("arrow")}</button></h2>${pathSteps(true)}${pathNotes()}</section>
+      <section class="kpis" aria-label="Ключевые показатели">${kpiTiles()}</section>
       <div class="cols">
         <section class="card" aria-labelledby="h-r"><h2 id="h-r">Требует внимания</h2>${attention()}</section>
-        <section class="kpis col" aria-label="Ключевые показатели">${kpiTiles()}</section>
+        <section class="card" aria-labelledby="h-o"><h2 id="h-o">Исполнитель и соисполнители</h2>${ownersBlock()}</section>
       </div>
     </div>`;
   }
@@ -529,7 +530,11 @@
       if (i.src === "inherited") h += `<p class="note">Отдельной отметки нет — показан статус группы «${esc(title(M.by[i.inheritedFrom]))}».</p>`;
       if (i.src === "derived") h += `<p class="note">Статус группы в данных не задан и вычислен по составу работ.</p>`;
       if (i.kind === "group") h += `<p class="note">В составе: выполнено ${i.progress.closed} из ${i.progress.total}.</p>`;
-      if (showChain && M.chainSet.has(i.num)) h += `<p class="note">На пути к демонстрации лабораторного образца. Окончание — не ранее ${fmt(M.F[i.num])}.</p>`;
+      if (showChain && M.chainSet.has(i.num)) {
+        const k = M.chainNums.indexOf(i.num), pv = M.chainNums[k - 1], nx = M.chainNums[k + 1];
+        h += `<p class="note">Шаг ${k + 1} из ${M.chainNums.length} пути к демонстрации лабораторного образца. Окончание — не ранее ${fmt(M.F[i.num])}.</p>`;
+        h += `<div class="pnav">${pv ? `<button class="btn ghost" data-open="${pv}" data-k="pn-prev">← ${esc(title(M.by[pv]))}</button>` : ""}${nx ? `<button class="btn ghost" data-open="${nx}" data-k="pn-next">${esc(title(M.by[nx]))} →</button>` : ""}</div>`;
+      }
       if (!readonly) {
         h += `<div class="stseg" role="group" aria-label="Изменить статус">${E.STATUSES.map((st) => `<button aria-pressed="${(S.closeForm && S.closeForm.num === i.num ? "Закрыто" : i.status) === st}" data-status="${st}" data-k="st-${st}">${st}</button>`).join("")}</div>`;
         if (S.closeForm && S.closeForm.num === i.num) {
@@ -552,6 +557,8 @@
       ["Контрольная дата", i.ctrl != null ? `<span class="mono">${fmt(i.ctrl)}</span>` : null],
       ["Выполнено", i.closed ? (i.closeDate != null ? `<span class="mono">${fmt(i.closeDate)}</span>` : "дата не указана") : null],
     ])}</section>`;
+    if (i.parent && M.by[i.parent].kind === "group") { const g = M.by[i.parent]; h += `<section><h3>Входит в группу</h3><button class="btn link" data-open="${g.num}" data-k="pg-${g.num}">${esc(title(g))}</button><span class="muted"> · выполнено ${g.progress.closed} из ${g.progress.total}</span></section>`; }
+    if (i.kind === "group") h += `<section><h3>Состав группы</h3><ul class="plist">${i.children.map((c) => `<li><button data-open="${c.num}" data-k="pc-${c.num}"><span class="t">${esc(title(c))}</span>${status(c, false)}<span class="d">${fmt(c.due)}${c.overdue ? ` · <span class="bad-t">−${c.overdueDays} дн.</span>` : ""}</span></button></li>`).join("")}</ul></section>`;
     h += `<section><h3>Официальное наименование</h3><p>${esc(i.name)}</p></section>`;
     {
       const co = cosOf(i), r = resp(i);
@@ -572,14 +579,41 @@
     return h + `</div></aside>`;
   }
 
-  // ── Повестка
+  // ── Повестка [Р-62]: «для обсуждения» — наименования без номеров; «для письма Исполнителю» — формат Р-33 с п. N
+  function agendaTalk(a) {
+    const why = (i, sec) => {
+      if (sec === 0) {
+        if (i.overdue) return `просрочено на ${days(i.overdueDays)} (срок ${fmt(i.due)})`;
+        return `просрочены: ${i.overdueSubs.map((n) => title(M.by[n])).join(", ")}`;
+      }
+      if (sec === 1) return `контрольная дата ${fmt(i.ctrl)} прошла, срок ${fmt(i.due)}`;
+      return i.remain === 0 ? "срок сегодня" : `срок ${fmt(i.due)}, через ${days(i.remain)}`;
+    };
+    const note = (i) => {
+      const co = cosOf(i), t = [];
+      if (co.length) t.push(`${co.length > 1 ? "соисполнители" : "соисполнитель"} ${co.map((o) => CO_SHORT[o]).join(", ")} — через Исполнителя`);
+      if (i.owners.includes(KV)) t.push("требуется участие Заказчика");
+      return t.length ? ` [${t.join("; ")}]` : "";
+    };
+    const out = [`Повестка оперативки по этапу 1 ОКР «ЯМГ-ИИМ» на ${fmt(T)}`, "Вопросы к Исполнителю — АО «Концерн «ЦНИИ «Электроприбор»", ""];
+    ["1. Просрочено", "2. Контрольная дата прошла", "3. Срок в ближайшие 14 дней"].forEach((h, k) => {
+      out.push(h);
+      if (!a.lists[k].length) out.push("— вопросов нет");
+      a.lists[k].forEach((i, n) => { const c = i.comment || i.s.status_mark || ""; out.push(`${n + 1}. ${title(i)} — ${why(i, k)}${c ? `. ${c}` : ""}${note(i)}`); });
+      out.push("");
+    });
+    return out.join("\n").trim();
+  }
   function renderAgenda() {
     if (!S.agendaOpen) return "";
-    const a = E.agenda(M);
+    const a = E.agenda(M), letter = S.agendaFmt === "letter";
+    const text = letter ? a.text : agendaTalk(a);
+    const seg = `<div class="seg" role="group" aria-label="Формат повестки"><button aria-pressed="${!letter}" data-act="ag-fmt" data-fmt="talk" data-k="ag-talk">Для обсуждения</button><button aria-pressed="${letter}" data-act="ag-fmt" data-fmt="letter" data-k="ag-letter">Для письма Исполнителю</button></div>`;
     return `<div class="modal-back" data-act="close-agenda-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="ag-title">
-      <header><h2 id="ag-title">Повестка оперативки на ${fmt(T)}</h2><button class="iconbtn" data-act="close-agenda" data-k="ag-x" aria-label="Закрыть">${ico("x")}</button></header>
-      <p class="note mp">Строка: «Наименование — комментарий (п. N)», как принято в письмах Исполнителю. Комментарий — текст руководителя, при его отсутствии — отметка «Важного». Просрочено: ${a.counts[0]}, контрольная дата прошла: ${a.counts[1]}, срок в 14 дней: ${a.counts[2]}.</p>
-      <label class="sr" for="ag-text">Текст повестки</label><textarea id="ag-text" readonly data-k="ag-text">${esc(a.text)}</textarea>
+      <header><div class="mh"><h2 id="ag-title">Повестка оперативки на ${fmt(T)}</h2><p class="note">Вопросы к Исполнителю — Электроприбору; по работам соисполнителей спрос через него</p></div><button class="iconbtn" data-act="close-agenda" data-k="ag-x" aria-label="Закрыть">${ico("x")}</button></header>
+      <div class="agbar"><div class="agc"><span class="agn bad">${a.counts[0]}</span>просрочено</div><div class="agc"><span class="agn warn">${a.counts[1]}</span>контрольная дата прошла</div><div class="agc"><span class="agn">${a.counts[2]}</span>срок в 14 дней</div><span class="spacer"></span>${seg}</div>
+      <p class="note mp">${letter ? "Официальные наименования и номера пунктов План-графика — формат писем Исполнителю: «Наименование — комментарий (п. N)»." : "Краткие наименования работ без номеров; причина и комментарий словами, участие соисполнителей и Заказчика — в скобках."} Учитываются обязательства перед Заказчиком; просроченные подпозиции указаны в строке своей группы, поэтому число меньше, чем в «Ближайших сроках».</p>
+      <label class="sr" for="ag-text">Текст повестки</label><textarea id="ag-text" readonly data-k="ag-text">${esc(text)}</textarea>
       <footer><span class="note" id="ag-status" role="status"></span><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></footer></div></div>`;
   }
 
@@ -661,6 +695,7 @@
     if (a === "reset-all") { edits = {}; saveEdits(); S.closeForm = null; return render(); }
     if (a === "agenda") { S.agendaOpen = true; render(); const c = document.querySelector('[data-k="ag-copy"]'); if (c) c.focus(); return; }
     if (a === "close-agenda" || (a === "close-agenda-bg" && ev.target === t)) { S.agendaOpen = false; render(); const b = document.querySelector('[data-k="agenda"]'); if (b) b.focus(); return; }
+    if (a === "ag-fmt") { S.agendaFmt = t.dataset.fmt; render(); const b = document.querySelector(`[data-k="ag-${t.dataset.fmt === "letter" ? "letter" : "talk"}"]`); if (b) b.focus(); return; }
     if (a === "copy-agenda") {
       const ta = document.getElementById("ag-text"), st = document.getElementById("ag-status");
       const done = () => { st.textContent = "Текст скопирован."; };
