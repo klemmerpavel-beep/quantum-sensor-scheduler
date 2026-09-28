@@ -22,7 +22,7 @@ def page(variant_key):
     tpl = (SRC / "template.html").read_text(encoding="utf-8")
     seed_js = json.dumps(seed, ensure_ascii=False).replace("</", "<\\/")
     repl = {
-        "{{TITLE}}": "Орбита · ЯМГ-ИИМ · Этап 1",
+        "{{TITLE}}": "CRM · Квантовый сенсор ИИМ ЯМГ (Электроприбор)",
         "{{VARIANT}}": code,
         "{{VARIANT_TITLE}}": title,
         "{{STYLE}}": (SRC / "style.css").read_text(encoding="utf-8"),
