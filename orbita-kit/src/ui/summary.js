@@ -81,7 +81,7 @@
   function sectionsBlock() {
     return `<ul class="slist">${M.sections.map((s) => `<li><button class="srow" data-act="go-section" data-sec="${s.num}" data-k="sec-${s.num}">
       <span class="t">${esc(C.SHORT[s.num] || s.name)}</span><span class="n">${s.closed} из ${s.total}${s.overdue ? ` · <span class="bad-t">просрочено ${s.overdue}</span>` : ""}</span>
-      <span class="prog" role="img" aria-label="Выполнено ${s.closed} из ${s.total}"><i style="width:${(s.closed / s.total) * 100}%"></i></span></button></li>`).join("")}</ul>`;
+      <span class="prog" role="img" aria-label="Выполнено ${s.closed} из ${s.total}"><i style="width:${s.total ? (s.closed / s.total) * 100 : 0}%"></i></span></button></li>`).join("")}</ul>`;
   }
   const stepState = (i) => (i.closed ? "done" : i.overdue ? "late" : i.soon ? "soon" : "plan");
   const stepWord = { done: "выполнено", late: "просрочено", soon: "срок близко", plan: "по плану" };

@@ -12,7 +12,7 @@
     catch (err) { console.error(err); main = `<div class="empty" role="alert"><p>Не удалось построить отображение. Обновите страницу; если ошибка повторится, сообщите руководителю проекта.</p></div>`; }
     root.innerHTML = `<a class="skip" href="#main">Перейти к содержанию</a>${renderHeader()}${renderBanners()}
       <main id="main" tabindex="-1" class="v-${view}"><div class="tabpanel" role="tabpanel" aria-labelledby="tab-${view}">${main}</div></main>
-      <footer class="foot"><span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span title="${esc(C.HOLIDAYS_NOTE)}">Рабочие дни — по производственному календарю РФ, включая переносы 2026–2027 годов.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="marks" data-k="marks">Отметки в этом браузере: ${Object.keys(edits).length}</button>` : ""}</footer>
+      <footer class="foot">${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="marks" data-k="marks">Отметки в этом браузере: ${Object.keys(edits).length}</button>` : ""}<span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span title="${esc(C.HOLIDAYS_NOTE)}">Рабочие дни — по производственному календарю РФ, включая переносы 2026–2027 годов.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}</footer>
       ${renderPanel()}${renderAgenda()}${renderMarks()}${renderHelp()}`;
     scrollers.forEach(([cls, t, l]) => { const e = document.getElementsByClassName(cls)[0]; if (e) { e.scrollTop = t; e.scrollLeft = l; } });
     syncUrl();
@@ -86,7 +86,8 @@
     if (a === "do-close") {
       const f = S.closeForm, m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(f.date.trim());
       const iso = m && E.parseISO(`${m[3]}-${m[2]}-${m[1]}`) != null ? `${m[3]}-${m[2]}-${m[1]}` : null;
-      if (!iso) { f.dateBad = true; render(); const d = document.querySelector('[data-k="cf-date"]'); if (d) d.focus(); return; }
+      f.dateLate = !!iso && E.dn(iso) > T;
+      if (!iso || f.dateLate) { f.dateBad = !iso; render(); const d = document.querySelector('[data-k="cf-date"]'); if (d) d.focus(); return; }
       setEdit(f.num, { status: "Закрыто", closeDoc: { name: f.name.trim(), letter: f.letter.trim(), date: iso } });
       S.closeForm = null; return render();
     }
@@ -117,10 +118,22 @@
     const t = ev.target;
     if (t.dataset.f) { S.filters[t.dataset.f] = t.value; render(); }
     else if (t.dataset.cf) { S.closeForm[t.dataset.cf] = t.value; if (t.dataset.cf === "name") render(); }
-    else if (t.dataset.comment) setEdit(t.dataset.comment, { comment: t.value || undefined });
+    else if (t.dataset.comment) setEdit(t.dataset.comment, { comment: t.value.trim() ? t.value : undefined });
   });
   root.addEventListener("change", (ev) => { if (ev.target.dataset.mspick !== undefined) { S.msDate = Number(ev.target.value); render(); } });
-  root.addEventListener("change", (ev) => { if (ev.target.dataset.comment) render(); });
+  // Комментарий: перерисовка после ухода из поля. Если поле покинуто нажатием мыши, перерисовка ждёт завершения нажатия,
+  // иначе кнопка под указателем заменяется до события click и нажатие теряется [Р-72].
+  let pointerDown = false;
+  document.addEventListener("pointerdown", () => { pointerDown = true; }, true);
+  document.addEventListener("pointerup", () => { pointerDown = false; }, true);
+  root.addEventListener("change", (ev) => {
+    if (!ev.target.dataset.comment) return;
+    if (!pointerDown) return render();
+    let done = false;
+    const later = () => { if (done) return; done = true; document.removeEventListener("pointerup", later, true); setTimeout(render, 0); };
+    document.addEventListener("pointerup", later, true);
+    setTimeout(later, 1500);
+  });
   root.addEventListener("toggle", (ev) => { const d = ev.target; if (d.dataset && d.dataset.lane in S.lanes) S.lanes[d.dataset.lane] = d.open; }, true);
   root.addEventListener("keydown", (ev) => {
     const t = ev.target;
@@ -139,6 +152,9 @@
       if (S.helpOpen) { S.helpOpen = false; render(); const b = document.querySelector('[data-k="help"]'); if (b) b.focus(); return; }
       if (S.agendaOpen) { S.agendaOpen = false; render(); const b = document.querySelector('[data-k="agenda"]'); if (b) b.focus(); return; }
       if (S.marksOpen) return closeMarks();
+      // Escape в форме закрытия отменяет только форму; в полях ввода карточку не закрывает [Р-72]
+      if (S.closeForm) { S.closeForm = null; render(); const b = document.querySelector('[data-k="st-Закрыто"]'); if (b) b.focus(); return; }
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
       if (S.selected) closePanel();
       return;
     }
@@ -154,8 +170,8 @@
   window.addEventListener("beforeprint", () => { document.documentElement.setAttribute("data-theme", "light"); });
   window.addEventListener("afterprint", () => { document.documentElement.setAttribute("data-theme", theme); });
   // Параметры item, who, sec [Р-66]
-  if (q.has("item")) { const n = q.get("item"); if (SEED.items.some((i) => i.num === n && i.kind !== "section")) S.selected = n; else notices.push("Параметр item не распознан: работа с таким номером не найдена."); }
-  if (q.has("who") && !orgKey) { const w = q.get("who"); if (OWNER_F[w]) S.filters.owner = w; else notices.push("Параметр who не распознан, отбор по участнику не применён."); }
+  if (q.has("item")) { const n = q.get("item"); if (SEED.items.some((i) => i.num === n)) S.selected = n; else notices.push("Параметр item не распознан: работа с таким номером не найдена."); }
+  if (q.has("who") && !orgKey) { const w = q.get("who"); if (own(OWNER_F, w)) S.filters.owner = w; else notices.push("Параметр who не распознан, отбор по участнику не применён."); }
   if (q.has("sec")) { const c = q.get("sec"); if (["1", "2.1", "2.2", "3"].includes(c)) S.filters.section = c; else notices.push("Параметр sec не распознан, отбор по разделу не применён."); }
   let rz = 0;
   window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ((view === "summary" || view === "milestones") && !S.agendaOpen && !S.marksOpen) render(); }, 150); });

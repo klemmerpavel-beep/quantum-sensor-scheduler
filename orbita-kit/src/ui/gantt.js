@@ -25,7 +25,7 @@
     const g = i.kind === "group";
     h += `<span class="bar ${i.cls}${g ? " group" : ""}${chain ? " chain" : ""}" style="left:${l}%;width:${w}%">`;
     if (derW && !g) h += `<span class="der" style="width:${(derW / w) * 100}%"></span>`;
-    if (g) h += `<span class="gp" style="width:${(i.progress.closed / i.progress.total) * 100}%"></span>`;
+    if (g) h += `<span class="gp" style="width:${i.progress.total ? (i.progress.closed / i.progress.total) * 100 : 0}%"></span>`;
     if (i.closed) h += `<span class="ok">${ico("check")}</span>`;
     h += `</span>`;
     if (i.overdue) h += `<span class="od" style="left:${r}%;width:${Math.max(xp(T) - r, 0.3)}%"></span>`;

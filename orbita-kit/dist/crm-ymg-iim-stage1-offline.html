@@ -995,7 +995,7 @@ const Engine = (() => {
       if (i.closed) {
         const cd = i.edit && i.edit.closeDoc;
         i.closeDate = cd ? dn(cd.date) : i.closedDate;
-        i.noReq = cd ? !(cd.name && cd.name.trim()) : (i.src === "mark" && i.closedDate == null);
+        i.noReq = cd ? !(cd.name && cd.name.trim()) : i.src === "edit" || (i.src === "mark" && i.closedDate == null);
       }
       i.horizon = i.closed ? "closed" : i.remain < 0 ? "overdue" : i.remain <= 14 ? "h14" : i.remain <= 30 ? "h30" : i.remain <= 60 ? "h60" : "later";
       i.inBase = !isSub(i) || (i.kind === "task" && i.dueCust != null);
@@ -1026,7 +1026,7 @@ const Engine = (() => {
       toDemo: dn("2026-11-30") - T,
       toEnd: dn(seed.project.stage_end) - T,
     };
-    kpi.pct = Math.round((kpi.closed / kpi.base) * 100);
+    kpi.pct = kpi.base ? Math.round((kpi.closed / kpi.base) * 100) : 0;
 
     // Прогресс разделов [SPEC 4.6]
     const sectionOf = (i) => { const p = i.num.split("."); return p[0] === "2" ? p.slice(0, 2).join(".") : p[0]; };
@@ -1190,15 +1190,18 @@ if (typeof module !== "undefined") module.exports = Engine;
 
   // ── Параметры ссылки [SPEC §3]
   const q = new URLSearchParams(location.search);
+  /** Только собственные ключи справочника: ?who=__proto__ и подобные не совпадают со встроенными свойствами [Р-72]. */
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   const notices = [];
   let T = E.todayLocal(), todayFromLink = false;
   if (q.has("today")) {
     const t = E.parseISO(q.get("today"));
-    if (t != null) { T = t; todayFromLink = true; } else notices.push("Параметр today не распознан, использована текущая дата.");
+    if (t != null && t >= E.dn("2020-01-01") && t <= E.dn("2035-12-31")) { T = t; todayFromLink = true; }
+    else notices.push(t != null ? "Параметр today вне допустимого диапазона 01.01.2020–31.12.2035, использована текущая дата." : "Параметр today не распознан, использована текущая дата.");
   }
   let orgKey = null, orgName = null;
   if (q.has("org")) {
-    if (C.ORGS[q.get("org")]) { orgKey = q.get("org"); orgName = C.ORGS[orgKey]; }
+    if (own(C.ORGS, q.get("org"))) { orgKey = q.get("org"); orgName = C.ORGS[orgKey]; }
     else notices.push("Параметр org не распознан: открыто полное представление только для просмотра.");
   }
   // Режим для руководства: ?view=exec (первый экран) или ?exec=1 (сохраняется при смене вкладки) [Р-67]
@@ -1284,7 +1287,7 @@ if (typeof module !== "undefined") module.exports = Engine;
   const sectionOf = (num) => { const p = num.split("."); return p[0] === "2" ? p.slice(0, 2).join(".") : p[0]; };
   const matchesFilters = (i) => {
     const f = S.filters;
-    if (f.owner && OWNER_F[f.owner] && !OWNER_F[f.owner](i)) return false;
+    if (f.owner && own(OWNER_F, f.owner) && !OWNER_F[f.owner](i)) return false;
     if (f.section && sectionOf(i.num) !== f.section) return false;
     if (f.search) {
       const s = f.search.toLowerCase().trim();
@@ -1449,7 +1452,7 @@ if (typeof module !== "undefined") module.exports = Engine;
   function sectionsBlock() {
     return `<ul class="slist">${M.sections.map((s) => `<li><button class="srow" data-act="go-section" data-sec="${s.num}" data-k="sec-${s.num}">
       <span class="t">${esc(C.SHORT[s.num] || s.name)}</span><span class="n">${s.closed} из ${s.total}${s.overdue ? ` · <span class="bad-t">просрочено ${s.overdue}</span>` : ""}</span>
-      <span class="prog" role="img" aria-label="Выполнено ${s.closed} из ${s.total}"><i style="width:${(s.closed / s.total) * 100}%"></i></span></button></li>`).join("")}</ul>`;
+      <span class="prog" role="img" aria-label="Выполнено ${s.closed} из ${s.total}"><i style="width:${s.total ? (s.closed / s.total) * 100 : 0}%"></i></span></button></li>`).join("")}</ul>`;
   }
   const stepState = (i) => (i.closed ? "done" : i.overdue ? "late" : i.soon ? "soon" : "plan");
   const stepWord = { done: "выполнено", late: "просрочено", soon: "срок близко", plan: "по плану" };
@@ -1544,7 +1547,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     const g = i.kind === "group";
     h += `<span class="bar ${i.cls}${g ? " group" : ""}${chain ? " chain" : ""}" style="left:${l}%;width:${w}%">`;
     if (derW && !g) h += `<span class="der" style="width:${(derW / w) * 100}%"></span>`;
-    if (g) h += `<span class="gp" style="width:${(i.progress.closed / i.progress.total) * 100}%"></span>`;
+    if (g) h += `<span class="gp" style="width:${i.progress.total ? (i.progress.closed / i.progress.total) * 100 : 0}%"></span>`;
     if (i.closed) h += `<span class="ok">${ico("check")}</span>`;
     h += `</span>`;
     if (i.overdue) h += `<span class="od" style="left:${r}%;width:${Math.max(xp(T) - r, 0.3)}%"></span>`;
@@ -1723,8 +1726,9 @@ if (typeof module !== "undefined") module.exports = Engine;
           h += `<div class="form"><b>Подтверждающий документ</b>
             <label>Наименование документа<input data-cf="name" data-k="cf-name" value="${esc(f.name)}"></label>
             <div class="row2"><label>№ письма<input data-cf="letter" data-k="cf-letter" value="${esc(f.letter)}"></label>
-            <label>Дата (ДД.ММ.ГГГГ)<input inputmode="numeric" data-cf="date" data-k="cf-date" value="${esc(f.date)}" aria-invalid="${f.dateBad ? "true" : "false"}"></label></div>
+            <label>Дата (ДД.ММ.ГГГГ)<input inputmode="numeric" data-cf="date" data-k="cf-date" value="${esc(f.date)}" aria-invalid="${f.dateBad || f.dateLate ? "true" : "false"}"></label></div>
             ${f.dateBad ? `<span class="due-t bad" role="alert">Укажите дату в формате ДД.ММ.ГГГГ, например ${fmt(T)}.</span>` : ""}
+            ${f.dateLate ? `<span class="due-t bad" role="alert">Дата документа не может быть позже ${fmt(T)}.</span>` : ""}
             ${noName ? `<div class="warnbox" role="alert">${ico("alert")}<span>Работа будет отмечена выполненной без подтверждающего документа.</span></div>` : ""}
             <div class="actions"><button class="btn primary" data-act="do-close" data-k="cf-do">${noName ? "Закрыть без документа" : "Отметить выполненной"}</button><button class="btn" data-act="cancel-close" data-k="cf-cancel">Отменить</button></div></div>`;
         }
@@ -1884,7 +1888,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     catch (err) { console.error(err); main = `<div class="empty" role="alert"><p>Не удалось построить отображение. Обновите страницу; если ошибка повторится, сообщите руководителю проекта.</p></div>`; }
     root.innerHTML = `<a class="skip" href="#main">Перейти к содержанию</a>${renderHeader()}${renderBanners()}
       <main id="main" tabindex="-1" class="v-${view}"><div class="tabpanel" role="tabpanel" aria-labelledby="tab-${view}">${main}</div></main>
-      <footer class="foot"><span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span title="${esc(C.HOLIDAYS_NOTE)}">Рабочие дни — по производственному календарю РФ, включая переносы 2026–2027 годов.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="marks" data-k="marks">Отметки в этом браузере: ${Object.keys(edits).length}</button>` : ""}</footer>
+      <footer class="foot">${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="marks" data-k="marks">Отметки в этом браузере: ${Object.keys(edits).length}</button>` : ""}<span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span title="${esc(C.HOLIDAYS_NOTE)}">Рабочие дни — по производственному календарю РФ, включая переносы 2026–2027 годов.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}</footer>
       ${renderPanel()}${renderAgenda()}${renderMarks()}${renderHelp()}`;
     scrollers.forEach(([cls, t, l]) => { const e = document.getElementsByClassName(cls)[0]; if (e) { e.scrollTop = t; e.scrollLeft = l; } });
     syncUrl();
@@ -1958,7 +1962,8 @@ if (typeof module !== "undefined") module.exports = Engine;
     if (a === "do-close") {
       const f = S.closeForm, m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(f.date.trim());
       const iso = m && E.parseISO(`${m[3]}-${m[2]}-${m[1]}`) != null ? `${m[3]}-${m[2]}-${m[1]}` : null;
-      if (!iso) { f.dateBad = true; render(); const d = document.querySelector('[data-k="cf-date"]'); if (d) d.focus(); return; }
+      f.dateLate = !!iso && E.dn(iso) > T;
+      if (!iso || f.dateLate) { f.dateBad = !iso; render(); const d = document.querySelector('[data-k="cf-date"]'); if (d) d.focus(); return; }
       setEdit(f.num, { status: "Закрыто", closeDoc: { name: f.name.trim(), letter: f.letter.trim(), date: iso } });
       S.closeForm = null; return render();
     }
@@ -1989,10 +1994,22 @@ if (typeof module !== "undefined") module.exports = Engine;
     const t = ev.target;
     if (t.dataset.f) { S.filters[t.dataset.f] = t.value; render(); }
     else if (t.dataset.cf) { S.closeForm[t.dataset.cf] = t.value; if (t.dataset.cf === "name") render(); }
-    else if (t.dataset.comment) setEdit(t.dataset.comment, { comment: t.value || undefined });
+    else if (t.dataset.comment) setEdit(t.dataset.comment, { comment: t.value.trim() ? t.value : undefined });
   });
   root.addEventListener("change", (ev) => { if (ev.target.dataset.mspick !== undefined) { S.msDate = Number(ev.target.value); render(); } });
-  root.addEventListener("change", (ev) => { if (ev.target.dataset.comment) render(); });
+  // Комментарий: перерисовка после ухода из поля. Если поле покинуто нажатием мыши, перерисовка ждёт завершения нажатия,
+  // иначе кнопка под указателем заменяется до события click и нажатие теряется [Р-72].
+  let pointerDown = false;
+  document.addEventListener("pointerdown", () => { pointerDown = true; }, true);
+  document.addEventListener("pointerup", () => { pointerDown = false; }, true);
+  root.addEventListener("change", (ev) => {
+    if (!ev.target.dataset.comment) return;
+    if (!pointerDown) return render();
+    let done = false;
+    const later = () => { if (done) return; done = true; document.removeEventListener("pointerup", later, true); setTimeout(render, 0); };
+    document.addEventListener("pointerup", later, true);
+    setTimeout(later, 1500);
+  });
   root.addEventListener("toggle", (ev) => { const d = ev.target; if (d.dataset && d.dataset.lane in S.lanes) S.lanes[d.dataset.lane] = d.open; }, true);
   root.addEventListener("keydown", (ev) => {
     const t = ev.target;
@@ -2011,6 +2028,9 @@ if (typeof module !== "undefined") module.exports = Engine;
       if (S.helpOpen) { S.helpOpen = false; render(); const b = document.querySelector('[data-k="help"]'); if (b) b.focus(); return; }
       if (S.agendaOpen) { S.agendaOpen = false; render(); const b = document.querySelector('[data-k="agenda"]'); if (b) b.focus(); return; }
       if (S.marksOpen) return closeMarks();
+      // Escape в форме закрытия отменяет только форму; в полях ввода карточку не закрывает [Р-72]
+      if (S.closeForm) { S.closeForm = null; render(); const b = document.querySelector('[data-k="st-Закрыто"]'); if (b) b.focus(); return; }
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
       if (S.selected) closePanel();
       return;
     }
@@ -2026,8 +2046,8 @@ if (typeof module !== "undefined") module.exports = Engine;
   window.addEventListener("beforeprint", () => { document.documentElement.setAttribute("data-theme", "light"); });
   window.addEventListener("afterprint", () => { document.documentElement.setAttribute("data-theme", theme); });
   // Параметры item, who, sec [Р-66]
-  if (q.has("item")) { const n = q.get("item"); if (SEED.items.some((i) => i.num === n && i.kind !== "section")) S.selected = n; else notices.push("Параметр item не распознан: работа с таким номером не найдена."); }
-  if (q.has("who") && !orgKey) { const w = q.get("who"); if (OWNER_F[w]) S.filters.owner = w; else notices.push("Параметр who не распознан, отбор по участнику не применён."); }
+  if (q.has("item")) { const n = q.get("item"); if (SEED.items.some((i) => i.num === n)) S.selected = n; else notices.push("Параметр item не распознан: работа с таким номером не найдена."); }
+  if (q.has("who") && !orgKey) { const w = q.get("who"); if (own(OWNER_F, w)) S.filters.owner = w; else notices.push("Параметр who не распознан, отбор по участнику не применён."); }
   if (q.has("sec")) { const c = q.get("sec"); if (["1", "2.1", "2.2", "3"].includes(c)) S.filters.section = c; else notices.push("Параметр sec не распознан, отбор по разделу не применён."); }
   let rz = 0;
   window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ((view === "summary" || view === "milestones") && !S.agendaOpen && !S.marksOpen) render(); }, 150); });

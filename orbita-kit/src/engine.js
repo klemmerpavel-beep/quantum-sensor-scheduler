@@ -109,7 +109,7 @@ const Engine = (() => {
       if (i.closed) {
         const cd = i.edit && i.edit.closeDoc;
         i.closeDate = cd ? dn(cd.date) : i.closedDate;
-        i.noReq = cd ? !(cd.name && cd.name.trim()) : (i.src === "mark" && i.closedDate == null);
+        i.noReq = cd ? !(cd.name && cd.name.trim()) : i.src === "edit" || (i.src === "mark" && i.closedDate == null);
       }
       i.horizon = i.closed ? "closed" : i.remain < 0 ? "overdue" : i.remain <= 14 ? "h14" : i.remain <= 30 ? "h30" : i.remain <= 60 ? "h60" : "later";
       i.inBase = !isSub(i) || (i.kind === "task" && i.dueCust != null);
@@ -140,7 +140,7 @@ const Engine = (() => {
       toDemo: dn("2026-11-30") - T,
       toEnd: dn(seed.project.stage_end) - T,
     };
-    kpi.pct = Math.round((kpi.closed / kpi.base) * 100);
+    kpi.pct = kpi.base ? Math.round((kpi.closed / kpi.base) * 100) : 0;
 
     // Прогресс разделов [SPEC 4.6]
     const sectionOf = (i) => { const p = i.num.split("."); return p[0] === "2" ? p.slice(0, 2).join(".") : p[0]; };

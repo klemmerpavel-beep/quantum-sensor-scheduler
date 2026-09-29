@@ -25,8 +25,9 @@
           h += `<div class="form"><b>Подтверждающий документ</b>
             <label>Наименование документа<input data-cf="name" data-k="cf-name" value="${esc(f.name)}"></label>
             <div class="row2"><label>№ письма<input data-cf="letter" data-k="cf-letter" value="${esc(f.letter)}"></label>
-            <label>Дата (ДД.ММ.ГГГГ)<input inputmode="numeric" data-cf="date" data-k="cf-date" value="${esc(f.date)}" aria-invalid="${f.dateBad ? "true" : "false"}"></label></div>
+            <label>Дата (ДД.ММ.ГГГГ)<input inputmode="numeric" data-cf="date" data-k="cf-date" value="${esc(f.date)}" aria-invalid="${f.dateBad || f.dateLate ? "true" : "false"}"></label></div>
             ${f.dateBad ? `<span class="due-t bad" role="alert">Укажите дату в формате ДД.ММ.ГГГГ, например ${fmt(T)}.</span>` : ""}
+            ${f.dateLate ? `<span class="due-t bad" role="alert">Дата документа не может быть позже ${fmt(T)}.</span>` : ""}
             ${noName ? `<div class="warnbox" role="alert">${ico("alert")}<span>Работа будет отмечена выполненной без подтверждающего документа.</span></div>` : ""}
             <div class="actions"><button class="btn primary" data-act="do-close" data-k="cf-do">${noName ? "Закрыть без документа" : "Отметить выполненной"}</button><button class="btn" data-act="cancel-close" data-k="cf-cancel">Отменить</button></div></div>`;
         }

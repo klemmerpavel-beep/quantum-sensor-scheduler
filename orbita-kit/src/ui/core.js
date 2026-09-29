@@ -30,15 +30,18 @@
 
   // ── Параметры ссылки [SPEC §3]
   const q = new URLSearchParams(location.search);
+  /** Только собственные ключи справочника: ?who=__proto__ и подобные не совпадают со встроенными свойствами [Р-72]. */
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   const notices = [];
   let T = E.todayLocal(), todayFromLink = false;
   if (q.has("today")) {
     const t = E.parseISO(q.get("today"));
-    if (t != null) { T = t; todayFromLink = true; } else notices.push("Параметр today не распознан, использована текущая дата.");
+    if (t != null && t >= E.dn("2020-01-01") && t <= E.dn("2035-12-31")) { T = t; todayFromLink = true; }
+    else notices.push(t != null ? "Параметр today вне допустимого диапазона 01.01.2020–31.12.2035, использована текущая дата." : "Параметр today не распознан, использована текущая дата.");
   }
   let orgKey = null, orgName = null;
   if (q.has("org")) {
-    if (C.ORGS[q.get("org")]) { orgKey = q.get("org"); orgName = C.ORGS[orgKey]; }
+    if (own(C.ORGS, q.get("org"))) { orgKey = q.get("org"); orgName = C.ORGS[orgKey]; }
     else notices.push("Параметр org не распознан: открыто полное представление только для просмотра.");
   }
   // Режим для руководства: ?view=exec (первый экран) или ?exec=1 (сохраняется при смене вкладки) [Р-67]
@@ -124,7 +127,7 @@
   const sectionOf = (num) => { const p = num.split("."); return p[0] === "2" ? p.slice(0, 2).join(".") : p[0]; };
   const matchesFilters = (i) => {
     const f = S.filters;
-    if (f.owner && OWNER_F[f.owner] && !OWNER_F[f.owner](i)) return false;
+    if (f.owner && own(OWNER_F, f.owner) && !OWNER_F[f.owner](i)) return false;
     if (f.section && sectionOf(i.num) !== f.section) return false;
     if (f.search) {
       const s = f.search.toLowerCase().trim();

@@ -311,6 +311,43 @@ function stressPage() {
     await ctx.close();
   }
 
+  // 16. Находки независимой проверки кода (Р-72)
+  {
+    const r = {};
+    let { ctx, page, errs } = await open(V1, "today=2026-09-28&view=gantt&who=__proto__");
+    r.proto = (await page.$$eval(".banner.warn", (e) => e.map((x) => x.textContent).join(" "))).includes("who не распознан") && !(await page.$(".empty[role=alert]"));
+    await ctx.close();
+    ({ ctx, page, errs } = await open(V1, "today=2026-09-28&org=toString"));
+    r.org = (await page.$$eval(".banner", (e) => e.map((x) => x.textContent).join(" "))).includes("org не распознан");
+    await ctx.close();
+    ({ ctx, page, errs } = await open(V1, "today=9999-12-31"));
+    r.far = (await page.$$eval(".banner.warn", (e) => e.map((x) => x.textContent).join(" "))).includes("вне допустимого диапазона");
+    await ctx.close();
+    ({ ctx, page, errs } = await open(V1, "today=2026-09-28&item=2.1"));
+    r.section = !!(await page.$(".panel #p-title"));
+    // комментарий, затем сразу нажатие на кнопку карточки — нажатие не теряется
+    await page.click('[data-k="p-close"]');
+    await page.click('[data-k="tab-gantt"]');
+    await page.click('tr[data-open="1.4"]');
+    await page.fill("#p-comment", "   ");
+    await page.click('[data-k="st-В работе"]');
+    r.click = await page.evaluate(() => window.__orbita.model.by["1.4"].status === "В работе");
+    r.blank = await page.evaluate(() => !("comment" in (JSON.parse(localStorage.getItem("orbita.ymg-iim.s1.edits.v1") || "{}")["1.4"] || {})));
+    // форма закрытия: дата позже сегодняшней отклоняется; Escape закрывает только форму
+    await page.click('[data-k="st-Закрыто"]');
+    await page.fill('[data-k="cf-date"]', "31.12.2099");
+    await page.click('[data-k="cf-do"]');
+    r.late = (await page.textContent(".panel")).includes("не может быть позже 28.09.2026") && !(await page.evaluate(() => window.__orbita.model.by["1.4"].closed));
+    await page.keyboard.press("Escape");
+    r.esc = !(await page.$('[data-k="cf-do"]')) && !!(await page.$(".panel"));
+    await page.click('[data-k="p-close"]');
+    await page.reload();
+    r.noWarn = !(await page.$$eval(".banner.warn", (e) => e.map((x) => x.textContent).join(" "))).includes("не распознана");
+    const bad = Object.entries(r).filter(([, v]) => !v).map(([k]) => k);
+    ok("Проверка кода: собственные ключи справочников, ссылка на раздел, диапазон даты, нажатие после комментария, дата документа, Escape в форме", !bad.length && !errs.length, bad.join(", ") || "8 сверок");
+    await ctx.close();
+  }
+
   // 10. Согласованность чисел между режимами (итоги не расходятся)
   {
     const { ctx, page, errs } = await open(V1, "today=2026-09-28");
