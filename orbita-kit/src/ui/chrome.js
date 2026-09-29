@@ -6,7 +6,7 @@
       <div class="brand"><span class="logo" aria-hidden="true"></span><span class="bt"><b>CRM</b><span class="sub">Квантовый сенсор ИИМ ЯМГ (Электроприбор)</span></span></div>
       <nav class="tabs" role="tablist" aria-label="Режимы отображения">${tabs}</nav>
       <div class="spacer"></div>
-      <div class="today" title="${todayFromLink ? "Дата задана параметром ссылки" : "Текущая дата"}">на <b class="mono">${fmt(T)}</b></div>
+      <div class="today" title="${todayFromLink ? "Дата задана параметром ссылки" : "Текущая дата"}">на <b class="mono">${fmt(T)}</b>${EDITION != null && T !== EDITION ? `<span class="edn" title="Статусы — по вкладке «Важное» на ${fmt(EDITION)}; сроки и просрочка считаются на ${fmt(T)}">отметки на ${fmt(EDITION)}</span>` : ""}</div>
       <button class="iconbtn help" data-act="help" data-k="help" aria-label="Как читать страницу" title="Как читать страницу">${ico("help")}</button>
       <button class="iconbtn print" data-act="print" data-k="print" aria-label="Печать текущего режима" title="Печать">${ico("printer")}</button>
       <button class="iconbtn theme" data-act="theme" data-k="theme" aria-label="${theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}" title="${theme === "dark" ? "Светлая тема" : "Тёмная тема"}">${ico(theme === "dark" ? "sun" : "moon")}</button>

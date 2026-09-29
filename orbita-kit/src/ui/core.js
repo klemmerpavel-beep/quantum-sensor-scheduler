@@ -57,7 +57,15 @@
 
   // ── Состояние
   let edits = {};
-  if (!readonly) { try { edits = JSON.parse(store.get(C.STORAGE_KEY) || "{}") || {}; } catch (e) { edits = {}; } }
+  if (!readonly) {
+    let raw = null;
+    try { raw = JSON.parse(store.get(C.STORAGE_KEY) || "{}"); } catch (e) { raw = []; }
+    const chk = E.sanitizeEdits(SEED, raw);
+    edits = chk.edits;
+    if (chk.dropped.length) notices.push("Часть сохранённых отметок не распознана и не применена; исходные данные не затронуты.");
+  }
+  // Дата редакции отметок «Важного» [Р-70]: при расчёте на другую дату отметки могут быть устаревшими
+  const EDITION = E.parseISO(SEED.project.demo_today);
   const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, agendaFmt: "talk", helpOpen: false, returnFocus: null };
   let M;
   const saveEdits = () => { if (!readonly) store.set(C.STORAGE_KEY, JSON.stringify(edits)); };

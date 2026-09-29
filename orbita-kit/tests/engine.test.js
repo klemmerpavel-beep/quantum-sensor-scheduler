@@ -92,6 +92,22 @@ test("Краткие наименования есть у всех 71 позиц
   nums.forEach((n) => assert.ok(C.SHORT[n] && C.SHORT[n].trim(), n));
 });
 
+test("Проверка отметок из хранилища: чужие работы, неизвестные статусы и HTML отбрасываются [Р-70]", () => {
+  const r = E.sanitizeEdits(SEED, {
+    "2.1.7": { status: "Закрыто", closeDoc: { name: "Акт", letter: 12, date: "2026-09-28" }, comment: "  " },
+    "9.9.9": { status: "В работе" },
+    "2.1.6": { status: "<img src=x onerror=alert(1)>" },
+    "1": { status: "Закрыто" },
+    "2.1.5": { comment: "x".repeat(3000) },
+  });
+  assert.deepStrictEqual(Object.keys(r.edits).sort(), ["2.1.5", "2.1.7"]);
+  assert.deepStrictEqual(r.edits["2.1.7"].closeDoc, { name: "Акт", letter: "", date: "2026-09-28" });
+  assert.strictEqual(r.edits["2.1.5"].comment.length, 2000);
+  assert.deepStrictEqual(r.dropped.sort(), ["1", "2.1.6", "9.9.9"]);
+  assert.deepStrictEqual(E.sanitizeEdits(SEED, [1, 2]).dropped, ["*"]);
+  assert.deepStrictEqual(E.sanitizeEdits(SEED, null), { edits: {}, dropped: [] });
+});
+
 const pad = (s, n) => (s + " ".repeat(n)).slice(0, n);
 results.forEach(([r, n, e]) => console.log(`${r}  ${pad(n, 96)} ${e || ""}`));
 const fails = results.filter((r) => r[0] === "FAIL").length;

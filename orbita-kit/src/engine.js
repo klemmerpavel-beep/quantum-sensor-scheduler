@@ -238,6 +238,31 @@ const Engine = (() => {
     return { text: out.join("\n").trim(), counts: [s1.length, s2.length, s3.length], lists: [s1, s2, s3] };
   }
 
-  return { build, agenda, dn, fmt, iso, parseISO, todayLocal, remainText, plural, STATUSES, CLS, ACTIVE, calendar };
+  /**
+   * Проверка правок из хранилища браузера [Р-70]: остаются только работы из данных,
+   * статусы словаря, документ закрытия со строковыми полями и датой ISO, комментарий-строка (≤ 2000 знаков).
+   * Повреждённое или чужое содержимое хранилища не должно ломать расчёт.
+   */
+  function sanitizeEdits(seed, raw) {
+    const out = {}, dropped = [];
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return { edits: out, dropped: raw == null ? [] : ["*"] };
+    const nums = new Set(seed.items.filter((i) => i.kind !== "section").map((i) => i.num));
+    const str = (v, n) => (typeof v === "string" ? v.slice(0, n) : "");
+    Object.keys(raw).forEach((num) => {
+      const e = raw[num];
+      if (!nums.has(num) || !e || typeof e !== "object") { dropped.push(num); return; }
+      const r = {};
+      if (typeof e.status === "string" && STATUSES.includes(e.status)) r.status = e.status;
+      if (e.closeDoc && typeof e.closeDoc === "object" && r.status === "Закрыто") {
+        const d = parseISO(str(e.closeDoc.date, 10));
+        r.closeDoc = { name: str(e.closeDoc.name, 500), letter: str(e.closeDoc.letter, 100), date: d != null ? iso(d) : "" };
+      }
+      if (typeof e.comment === "string" && e.comment.trim()) r.comment = e.comment.slice(0, 2000);
+      if (Object.keys(r).length) out[num] = r; else dropped.push(num);
+    });
+    return { edits: out, dropped };
+  }
+
+  return { build, agenda, sanitizeEdits, dn, fmt, iso, parseISO, todayLocal, remainText, plural, STATUSES, CLS, ACTIVE, calendar };
 })();
 if (typeof module !== "undefined") module.exports = Engine;

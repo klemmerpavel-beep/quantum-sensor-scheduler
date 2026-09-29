@@ -96,6 +96,7 @@ header.top {
 .tab:focus-visible { outline-offset: -2px; }
 .today { align-self: center; white-space: nowrap; color: var(--text-2); }
 .today b { color: var(--text-1); font-weight: 500; }
+.today .edn { display: block; font-size: var(--fs-12); color: var(--b-action-fg); text-align: right; }
 .iconbtn {
   align-self: center; width: 36px; height: 36px; display: inline-grid; place-items: center; border-radius: var(--radius-2);
   border: 1px solid var(--border); background: var(--surface); color: var(--text-2); transition: border-color var(--dur), background-color var(--dur);

@@ -270,6 +270,22 @@ function stressPage() {
     await ctx.close();
   }
 
+  // 14. Дата редакции отметок и проверка хранилища (Р-70)
+  {
+    let { ctx, page, errs } = await open(V1, "today=2026-09-30");
+    const edn = await page.textContent(".today");
+    await ctx.close();
+    ({ ctx, page, errs } = await open(V1, "today=2026-09-28"));
+    const noEdn = !(await page.$(".today .edn"));
+    await ctx.close();
+    const init = `try{localStorage.setItem("orbita.ymg-iim.s1.edits.v1", ${JSON.stringify(JSON.stringify({ "2.1.6": { status: "<b>x</b>" }, "9.9": { status: "Закрыто" } }))});}catch(e){}`;
+    ({ ctx, page, errs } = await open(V1, "today=2026-09-28", { init }));
+    const warn = await page.$$eval(".banner.warn", (e) => e.map((x) => x.textContent).join(" "));
+    const injected = await page.evaluate(() => { const i = window.__orbita.model.by["2.1.6"]; return i.src === "edit" || !!i.edit || document.body.innerHTML.includes("<b>x</b>"); });
+    ok("Отметки «на дату редакции» при расчёте на другую дату; повреждённые отметки отброшены с сообщением", edn.includes("отметки на 28.09.2026") && noEdn && warn.includes("не распознана") && !injected && !errs.length, edn);
+    await ctx.close();
+  }
+
   // 10. Согласованность чисел между режимами (итоги не расходятся)
   {
     const { ctx, page, errs } = await open(V1, "today=2026-09-28");

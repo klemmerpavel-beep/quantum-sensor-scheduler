@@ -123,7 +123,7 @@
     if (VARIANT === "path") return viewSummaryPath();
     const hl = headline();
     return `<div class="page">
-      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><span class="asof">на ${fmt(T)}</span></section>
+      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><span class="asof">на ${fmt(T)}${EDITION != null && T !== EDITION ? ` · отметки на ${fmt(EDITION)}` : ""}</span></section>
       <section class="kpis" aria-label="Ключевые показатели">${kpiTiles()}</section>
       <section class="card" aria-labelledby="h-tl"><h2 id="h-tl">Сроки этапа<span class="spacer"></span><button class="btn link" data-act="go-ms" data-k="tl-open">Все вехи ${ico("arrow")}</button></h2>${stageTimeline()}</section>
       <div class="cols">
@@ -139,7 +139,7 @@
   function viewSummaryPath() {
     const hl = headline();
     return `<div class="page">
-      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><span class="asof">на ${fmt(T)}</span></section>
+      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><span class="asof">на ${fmt(T)}${EDITION != null && T !== EDITION ? ` · отметки на ${fmt(EDITION)}` : ""}</span></section>
       <section class="card" aria-labelledby="h-ch"><h2 id="h-ch">Путь к демонстрации лабораторного образца ${chainPill()}<span class="spacer"></span><button class="btn link" data-act="go-chain" data-k="ch-open">Подробно на графике ${ico("arrow")}</button></h2>${pathSteps(true)}${pathNotes()}</section>
       <section class="kpis" aria-label="Ключевые показатели">${kpiTiles()}</section>
       <div class="cols">
