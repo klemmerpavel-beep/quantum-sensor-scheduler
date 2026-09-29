@@ -30,10 +30,12 @@
 | Путь | Содержание |
 |---|---|
 | `data/seed_ymg_stage1.json`, `source/*.xlsx` | исходные данные (не изменяются) |
-| `src/` | исходники страницы: стили, модуль расчёта, интерфейс, шаблон |
+| `src/` | исходники: `engine.js` (расчёт), `ui/` (10 модулей интерфейса), `config.js`, `style.css`, `template.html`, `versions.html`; устройство — `docs/ARCHITECTURE.md` |
 | `tools/build.py` | сборка версий: `python3 tools/build.py [--index v1\|v2\|v3]` |
+| `tools/check.sh` | все проверки перед публикацией: `bash tools/check.sh` |
+| `tools/publish.sh` | публикация на GitHub Pages: `bash tools/publish.sh` |
 | `docs/` | карта данных, свод решений, совет, спецификация, UX, токены, приёмка, вопросы по остатку (`QUESTIONS.md`), сценарий показа (`DEMO.md`) |
-| `tests/` | проверки в Playwright: `node tests/behaviour.js`, `node tests/shots.js`, `node tests/targets.js`, `node tests/latin.js`, `AXE=…/axe.min.js node tests/a11y.js` |
+| `tests/` | правила расчёта: `node tests/engine.test.js`; проверки в Playwright: `node tests/behaviour.js`, `node tests/shots.js`, `node tests/targets.js`, `node tests/latin.js`, `AXE=…/axe.min.js node tests/a11y.js` |
 | `screenshots/` | снимки режимов и стресс-сценариев |
 
 ## Публикация

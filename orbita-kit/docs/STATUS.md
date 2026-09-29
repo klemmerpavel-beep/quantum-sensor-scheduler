@@ -1,27 +1,23 @@
-# Состояние работ на 28.09.2026 · выпуск 1.1.2
+# Состояние работ на 29.09.2026 · выпуск 1.2.0
 
 ## Где лежит результат
 
 | Что | Где |
 |---|---|
 | Опубликованная версия | https://klemmerpavel-beep.github.io/quantum-sensor-scheduler/ (ветка `gh-pages`) |
-| Исходники и документы | ветки `claude/loving-ramanujan-sdvyb1` и `main`, коммит `cfaa9ff` |
+| Исходники и документы | ветки `claude/loving-ramanujan-sdvyb1` и `main` |
 | Файл для внутреннего контура | `orbita-kit/dist/crm-ymg-iim-stage1-offline.html` |
 | Сценарий показа | `orbita-kit/docs/DEMO.md` |
-| Свод решений | `orbita-kit/docs/DECISIONS.md` (Р-01…Р-68) |
+| Устройство | `orbita-kit/docs/ARCHITECTURE.md` |
+| Свод решений | `orbita-kit/docs/DECISIONS.md` (Р-01…Р-69) |
 | Журнал изменений | `orbita-kit/CHANGELOG.md` |
 
 ## Как продолжить
 
-1. Правки вносятся в `orbita-kit/src/`: `app.js` — интерфейс, `engine.js` — расчёт, `config.js` — краткие наименования и календарь, `style.css` — оформление.
+1. Правки вносятся в `orbita-kit/src/`: `ui/*.js` — интерфейс (10 модулей), `engine.js` — расчёт, `config.js` — краткие наименования и календарь, `style.css` — оформление. Устройство — `docs/ARCHITECTURE.md`.
 2. Сборка: `python3 orbita-kit/tools/build.py`.
-3. Проверки:
-   - `node tests/behaviour.js` — 32 проверки;
-   - `node tests/shots.js` — снимки;
-   - `node tests/targets.js`, `node tests/latin.js`;
-   - `python3 tools/contrast.py`;
-   - `AXE=…/axe.min.js node tests/a11y.js`.
-4. Публикация: скопировать `index.html`, `versions/`, `dist/` и три снимка из `screenshots/` в ветку `gh-pages`.
+3. Проверки: `bash orbita-kit/tools/check.sh` — данные, сверка, сборка, 13 проверок расчёта, 32 поведенческих, доступность, латиница, контраст, снимки.
+4. Публикация: `bash orbita-kit/tools/publish.sh`.
 
 ## Открытые вопросы (`docs/QUESTIONS.md`)
 
