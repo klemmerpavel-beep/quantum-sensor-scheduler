@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Instagram Dolgiy Studio — отчёт</title>
+<style>
+/*FONTS*/
+</style>
+<style>
+/* Deck: 16:9 pages 1280x720, action titles, one idea per slide; chart | commentary split. Light theme. */
+:root{
+  --bg:#eff1ee; --surface:#fcfcfb; --surface-2:#f3f5f1;
+  --ink:#121513; --ink-2:#4b514c; --muted:#6f766f;
+  --grid:#e3e6e1; --axis:#c3c8c2; --border:rgba(18,21,19,.11);
+  --accent:#2a78d6;
+  --s-exp:#2a78d6; --s-ent:#eb6834; --s-other:#8c928c;
+  --pos:#2a78d6; --neg:#e34948; --flat:#8c928c;
+  --seq-off:#e6e9e4; --seq-lo:#86b6ef; --seq-hi:#2a78d6;
+  --band:rgba(42,120,214,.09);
+  --good:#006300; --bad:#b42323;
+  --sev-high:#d03b3b; --sev-mid:#fab219;
+  --font-display:"Geologica","Golos Text",system-ui,sans-serif;
+  --font-body:"Golos Text",system-ui,sans-serif;
+  color-scheme:light;
+}
+@page{size:1280px 720px;margin:0}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:#d9dcd7}
+body{font-family:var(--font-body);color:var(--ink);-webkit-font-smoothing:antialiased;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+
+.slide{width:1280px;height:720px;overflow:hidden;position:relative;background:var(--surface);padding:40px 64px 44px;display:flex;flex-direction:column;gap:22px;break-after:page;page-break-after:always;margin:0 auto 24px}
+@media print{.slide{margin:0}}
+.bar{display:flex;justify-content:space-between;align-items:center;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.bar .brand{display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+.tilemark{width:13px;height:13px;display:inline-grid;grid-template-columns:1fr 1fr;gap:2px}
+.tilemark i{background:var(--ink);border-radius:1px}
+.tilemark i:nth-child(2){background:var(--accent)}
+.bar .pg{font-variant-numeric:tabular-nums;letter-spacing:.06em}
+.slide h2{font-size:32px;font-weight:600;line-height:1.15;max-width:34ch}
+.slide .lead{font-size:17px;color:var(--ink-2);margin-top:8px;max-width:78ch;line-height:1.45}
+.body{flex:1;min-height:0;display:grid;gap:28px}
+.split{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}
+.split.wide{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}
+.panel{background:var(--surface-2);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel h3{font-size:15px;font-weight:600}
+.panel .cap{font-size:12.5px;color:var(--muted);margin-top:2px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:11px;height:11px;border-radius:2px;flex:none}
+.bg-acc{background:var(--accent)} .bg-exp{background:var(--s-exp)} .bg-ent{background:var(--s-ent)} .bg-oth{background:var(--s-other)}
+.bg-lo{background:var(--seq-lo)} .bg-hi{background:var(--seq-hi)} .bg-off{background:var(--seq-off);box-shadow:inset 0 0 0 1px var(--border)}
+
+.pts{display:grid;gap:14px;font-size:16px;line-height:1.45;min-width:0}
+.pts .pt{display:grid;gap:3px;padding-left:16px;border-left:2px solid var(--grid)}
+.pts .pt.key{border-left-color:var(--accent)}
+.pts .pt b{font-weight:600}
+.pts .pt span{color:var(--ink-2)}
+.est{font-size:13.5px;color:var(--ink-2);background:var(--surface-2);border-radius:10px;padding:10px 14px;line-height:1.45}
+.est b{color:var(--ink)}
+
+/* zoomed charts */
+.zbox{position:relative;width:100%;min-width:0}
+.zbox > .chart{transform-origin:0 0;position:absolute;left:0;top:0}
+.chart svg{display:block;overflow:visible}
+
+/* title slide */
+.title{justify-content:space-between;padding:48px 64px 52px}
+.title .eyebrow{font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.title h1{font-size:60px;font-weight:600;line-height:1.05;max-width:17ch;margin-top:14px}
+.title .sub{font-size:19px;color:var(--ink-2);margin-top:18px;max-width:60ch;line-height:1.45}
+.bigs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--axis);padding-top:22px}
+.bigs > div{padding:0 24px;border-left:1px solid var(--grid);display:grid;gap:4px}
+.bigs > div:first-child{padding-left:0;border-left:0}
+.bigs .n{font-size:46px;font-weight:600;line-height:1;letter-spacing:-.02em}
+.bigs .l{font-size:15px;color:var(--ink-2)}
+.title .meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.bigmark{position:absolute;right:64px;top:112px;width:176px;height:176px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bigmark i{border-radius:6px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--border)}
+.bigmark i:nth-child(2){background:var(--accent);box-shadow:none}
+
+/* KPI slide */
+.kpis{display:grid;grid-template-columns:1.5fr 1fr 1fr;grid-template-rows:auto auto;gap:14px}
+.tile{background:var(--surface-2);border-radius:12px;padding:22px 26px;display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0}
+.tile .lbl{font-size:14px;color:var(--ink-2);font-weight:500}
+.tile .val{font-size:46px;font-weight:600;line-height:1.05;letter-spacing:-.015em}
+.tile .dlt{font-size:15px;font-weight:600}
+.tile .was{font-size:13.5px;color:var(--muted)}
+.hero{grid-row:1/3;justify-content:center;gap:10px}
+.hero .val{font-size:96px}
+.up{color:var(--good)} .flat{color:var(--ink-2)}
+.hsplit{display:flex;gap:2px;height:12px;margin-top:8px}
+.hsplit span{display:block;height:100%}
+.hsplit span:first-child{border-radius:4px 0 0 4px}.hsplit span:last-child{border-radius:0 4px 4px 0}
+.hlegend{display:grid;gap:4px;font-size:14px;color:var(--ink-2)}
+.hlegend span{display:inline-flex;align-items:center;gap:8px}
+.hlegend b{color:var(--ink);font-weight:600}
+.verdict{display:flex;gap:14px;align-items:baseline;font-size:17px;border-top:1px solid var(--axis);padding-top:16px}
+.verdict .k{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;flex:none}
+
+/* metric rows */
+.mrows{display:grid;gap:0}
+.mrow{display:grid;grid-template-columns:1fr auto auto auto;gap:14px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums}
+.mrow:first-child{padding-top:0}
+.mrow .m{font-size:15px}
+.mrow .a{font-size:15px;color:var(--muted)}
+.mrow .ar{color:var(--muted);font-size:13px}
+.mrow .b{font-size:20px;font-weight:600}
+
+/* base chips */
+.basechips{display:flex;align-items:center;gap:8px;font-size:15px;font-variant-numeric:tabular-nums}
+.basechips .b{display:flex;flex-direction:column;padding:6px 14px;border-radius:8px;background:var(--surface);border:1px solid var(--border)}
+.basechips .b small{font-size:12px;color:var(--muted)}
+.basechips .b strong{font-weight:600;font-size:18px}
+.basechips .arr{font-size:14px;font-weight:600}
+.basechips .neg{color:var(--bad)} .basechips .pos{color:var(--good)}
+
+/* tables */
+table.t{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+.t th{font-weight:600;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:7px 10px;border-bottom:1px solid var(--axis);vertical-align:bottom}
+.t td{padding:8px 10px;border-bottom:1px solid var(--grid);text-align:right;vertical-align:top}
+.t th:first-child,.t td:first-child{text-align:left;padding-left:0}
+.t .hl{font-weight:600}
+.t .muted{color:var(--muted)}
+.t.left th,.t.left td{text-align:left}
+.t .pri{font-weight:600;color:var(--accent);width:30px}
+.t.plan td{font-size:15px;padding:11px 12px;line-height:1.35}
+.t.plan td:first-child{padding-left:0}
+
+/* audience */
+.aud{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.gsplit{display:flex;gap:2px;height:14px}
+.gsplit span{display:block;height:100%}
+.gsplit span:first-child{border-radius:4px 0 0 4px}.gsplit span:last-child{border-radius:0 4px 4px 0}
+
+/* risks */
+.risks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-content:start}
+.risk{background:var(--surface-2);border-radius:12px;padding:14px 16px;display:grid;gap:7px;align-content:start}
+.risk h3{font-size:16px;font-weight:600;line-height:1.25}
+.risk p{font-size:14px;color:var(--ink-2);line-height:1.4}
+.risk p b{color:var(--ink);font-weight:600}
+.sev{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;justify-self:start;border:1px solid var(--border);border-radius:999px;padding:2px 10px 2px 8px;background:var(--surface)}
+.sev svg{width:11px;height:11px}
+.sev.high svg{fill:var(--sev-high)} .sev.mid svg{fill:var(--sev-mid)}
+
+/* decisions */
+.dec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.dec .d{background:var(--surface-2);border-radius:12px;padding:18px 20px;display:grid;gap:6px;align-content:start}
+.dec .d .no{font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--accent)}
+.dec .d h3{font-size:18px;font-weight:600;line-height:1.25}
+.dec .d p{font-size:14.5px;color:var(--ink-2);line-height:1.45}
+
+/* svg text & marks (shared with dashboard charts) */
+svg text{font-family:var(--font-body);font-variant-numeric:tabular-nums}
+.t1{fill:var(--ink);font-size:12.5px;font-weight:500}
+.t2{fill:var(--ink-2);font-size:12px}
+.t3{fill:var(--muted);font-size:11px}
+.tv{fill:var(--ink);font-size:12px;font-weight:600}
+.f-acc{fill:var(--accent)} .f-exp{fill:var(--s-exp)} .f-ent{fill:var(--s-ent)} .f-oth{fill:var(--s-other)}
+.f-pos{fill:var(--pos)} .f-neg{fill:var(--neg)} .f-flat{fill:var(--flat)}
+.f-lo{fill:var(--seq-lo)} .f-hi{fill:var(--seq-hi)} .f-off{fill:var(--seq-off)}
+.f-band{fill:var(--band)}
+.l-grid{stroke:var(--grid);stroke-width:1;fill:none}
+.l-axis{stroke:var(--axis);stroke-width:1;fill:none}
+.l-ref{stroke:var(--ink-2);stroke-width:1;fill:none}
+.l-range{stroke:var(--axis);stroke-width:2;stroke-linecap:round;fill:none}
+.l-brk{stroke:var(--ink-2);stroke-width:1;fill:none}
+.ring{stroke:var(--surface-2);stroke-width:2}
+.hitbox{fill:transparent}
+.halo{paint-order:stroke;stroke:var(--surface-2);stroke-width:4px;stroke-linejoin:round}
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="slide title">
+  <div class="bar"><span class="brand"><span class="tilemark"><i></i><i></i><i></i><i></i></span>Dolgiy Studio · Instagram</span><span class="pg">01 / 11</span></div>
+  <div class="bigmark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div>
+    <div class="eyebrow">Аналитический отчёт · 06.07–06.09.2026</div>
+    <h1>Охват вырос в 22 раза, подписчиков принесла экспертиза</h1>
+    <p class="sub">Сравнение двух месячных периодов: 06.07–06.08 и 06.08–06.09. База подписчиков на момент выгрузки — 4&nbsp;404.</p>
+  </div>
+  <div>
+    <div class="bigs">
+      <div><span class="n">×22,5</span><span class="l">просмотры: 16&nbsp;751 → 376&nbsp;977</span></div>
+      <div><span class="n">+69</span><span class="l">подписчиков за период; в первом периоде −16</span></div>
+      <div><span class="n">1,3%</span><span class="l">вовлечённость, без изменений</span></div>
+    </div>
+  </div>
+  <div class="meta"><span>Подготовлено: сентябрь 2026</span><span>Данные выгрузки на 06.09.2026</span></div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="bar"><span class="brand"><span class="tilemark"><i></i><i></i><i></i><i></i></span>Dolgiy Studio · Instagram</span><span class="pg">02 / 11</span></div>
+  <div>
+    <h2>Ключевые показатели периода 06.08–06.09</h2>
+  </div>
+  <div class="body" style="grid-template-rows:1fr auto;gap:20px">
+    <div class="kpis" style="grid-template-rows:1fr 1fr">
+      <div class="tile hero">
+        <span class="lbl">Просмотры</span>
+        <span class="val">376&nbsp;977</span>
+        <span class="dlt up">▲ ×22,5 <span class="was" style="font-weight:400">было 16&nbsp;751</span></span>
+        <div class="hsplit"><span class="bg-acc" style="flex:99.7"></span><span class="bg-oth" style="flex:0 0 5px"></span></div>
+        <div class="hlegend">
+          <span><i class="sw bg-acc"></i>Reels <b>375 тыс.</b> · 99,7%</span>
+          <span><i class="sw bg-oth"></i>Посты <b>1,1 тыс.</b> · 0,3% (было 1,6 тыс.)</span>
+        </div>
+      </div>
+      <div class="tile"><span class="lbl">Зрители</span><span class="val">277&nbsp;443</span><span class="dlt up">▲ ×27,8</span><span class="was">было 9&nbsp;974 · 98,9% не подписаны</span></div>
+      <div class="tile"><span class="lbl">Чистый прирост подписчиков</span><span class="val">+69</span><span class="dlt up">▲ +1,6% к базе</span><span class="was">было −16 (−0,4%)</span></div>
+      <div class="tile"><span class="lbl">Взаимодействия</span><span class="val">≈4&nbsp;980</span><span class="dlt up">▲ ×22,3</span><span class="was">было 223</span></div>
+      <div class="tile"><span class="lbl">Вовлечённость</span><span class="val">≈1,3%</span><span class="dlt flat">= без изменений</span><span class="was">взаимодействия / просмотры</span></div>
+    </div>
+    <div class="verdict"><span class="k">Итог</span><span>Прорыв по охвату обеспечили два ролика. Удержание аудитории и перевод охвата в заявки остаются зоной риска.</span></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="bar"><span class="brand"><span class="tilemark"><i></i><i></i><i></i><i></i></span>Dolgiy Studio · Instagram</span><span class="pg">03 / 11</span></div>
+  <div>
+    <h2>Охват вырос быстрее, чем качество контакта</h2>
+    <p class="lead">Рост экстенсивный: приток дали разовые контакты с новой аудиторией, 98,9% зрителей не подписаны на аккаунт.</p>
+  </div>
+  <div class="body split">
+    <div class="panel">
+      <div><h3>Кратность изменения к периоду 1</h3><p class="cap">06.08–06.09 к 06.07–06.08, раз; линия ×1 — без изменений</p></div>
+      <div class="zbox" data-k="1.32"><div class="chart" id="c-index"></div></div>
+    </div>
+    <div style="display:grid;gap:18px;min-width:0">
+      <div class="mrows">
+        <div class="mrow"><span class="m">Просмотров на зрителя</span><span class="a">1,68</span><span class="ar">→</span><span class="b">1,36</span></div>
+        <div class="mrow"><span class="m">Чистый прирост на 1&nbsp;000 просмотров</span><span class="a">−0,96</span><span class="ar">→</span><span class="b">+0,18</span></div>
+        <div class="mrow"><span class="m">Подписчики среди зрителей, доля базы</span><span class="a">≈53%</span><span class="ar">→</span><span class="b">≈70%</span></div>
+        <div class="mrow"><span class="m">Доля постов в просмотрах</span><span class="a">9,6%</span><span class="ar">→</span><span class="b">0,3%</span></div>
+      </div>
+      <p class="est"><b>Вывод.</b> Вовлечённость 1,3% при двадцатикратном охвате холодной аудитории — удовлетворительный результат, но качество контакта не выросло. Конверсия охвата в подписчиков остаётся низкой. Посты утратили роль канала, ресурс целесообразно перенести в Reels.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="bar"><span class="brand"><span class="tilemark"><i></i><i></i><i></i><i></i></span>Dolgiy Studio · Instagram</span><span class="pg">04 / 11</span></div>
+  <div>
+    <h2>Подписчики: из минуса в плюс, но за счёт двух дней</h2>
+    <p class="lead">Основной прирост пришёлся на 4–5 сентября — около 40 подписок в день после ролика «Цена за м²».</p>
+  </div>
+  <div class="body split">
+    <div class="panel">
+      <div><h3>Чистый прирост подписчиков</h3><p class="cap">Подписки минус отписки за период</p></div>
+      <div class="zbox" data-k="1.4"><div class="chart" id="c-net"></div></div>
+      <div class="basechips">
+        <span class="b"><small>06.07</small><strong>4&nbsp;351</strong></span><span class="arr neg">−16</span>
+        <span class="b"><small>06.08</small><strong>4&nbsp;335</strong></span><span class="arr pos">+69</span>
+        <span class="b"><small>06.09</small><strong>4&nbsp;404</strong></span>
+      </div>
+    </div>
+    <div class="pts">
+      <div class="pt key"><b>138+ новых подписок у ролика «Цена за м²»</b><span>Счётчик ролика не учитывает отписки и продолжает расти после 06.09, поэтому он выше чистого прироста месяца (+69).</span></div>
+      <div class="pt"><b>Лидеры первого периода давали +3–4</b><span>«Вопрос-ответ с основателем» (+4), «Чек-лист перед началом ремонта» (+3).</span></div>
+      <div class="pt"><b>Фоновый отток, вероятно, сохраняется</b><span>Если 40 в день — это подписки без учёта отписок, то в остальные ≈29 дней баланс был около нуля или отрицательным. Рост держится на одном ролике.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="bar"><span class="brand"><span class="tilemark"><i></i><i></i><i></i><i></i></span>Dolgiy Studio · Instagram</span><span class="pg">05 / 11</span></div>
+  <div>
+    <h2>Охват даёт развлечение, подписчиков — экспертиза про деньги</h2>
+    <p class="lead">Два главных ролика периода выполняют разные функции. Сравнение — в пересчёте на 1&nbsp;000 просмотров.</p>
+  </div>
+  <div class="body split">
+    <div class="panel">
+      <div class="legend">
+        <span><i class="sw bg-ent"></i>Развлекательный · плитка, 330 тыс. просмотров</span>
+        <span><i class="sw bg-exp"></i>Экспертный · «Цена за м²», 71 тыс.</span>
+      </div>
+      <div class="zbox" data-k="1.28"><div class="chart" id="c-pairs"></div></div>
+      <p class="cap" style="font-size:12px;color:var(--muted)">Действия на 1&nbsp;000 просмотров; шкала своя в каждой строке. Данные по роликам накопленные.</p>
+    </div>
+    <div style="display:grid;gap:16px;min-width:0">
+      <table class="t">
+        <thead><tr><th>Всего</th><th>Плитка</th><th>«Цена за м²»</th></tr></thead>
+        <tbody>
+          <tr><td>Просмотры</td><td class="hl">330 тыс.</td><td>71 тыс.</td></tr>
+          <tr><td>Лайки</td><td>1,5 тыс.</td><td>462</td></tr>
+          <tr><td>Комментарии</td><td>12</td><td class="hl">64</td></tr>
+          <tr><td>Отправки</td><td class="hl">2,4 тыс.</td><td>157</td></tr>
+          <tr><td>Подписки</td><td class="muted">немного</td><td class="hl">138+</td></tr>
+        </tbody>
+      </table>
+      <div class="pts" style="font-size:15px">
+        <div class="pt"><b>Плитка распространяется через отправки друзьям</b><span>7,3 на 1&nbsp;000 просмотров — в 3,3 раза больше. Это охват без намерения подписаться.</span></div>
+        <div class="pt key"><b>«Цена за м²» вызывает обсуждение</b><span>В 25 раз больше комментариев на 1&nbsp;000 просмотров. 64 вопроса о стоимости — потенциальные заявки.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="bar"><span class="brand"><span class="tilemark"><i></i><i></i><i></i><i></i></span>Dolgiy Studio · Instagram</span><span class="pg">06 / 11</span></div>
+  <div>
+    <h2>Типичный ролик — 300–600 просмотров, выше поднимает Андрей с конкретикой</h2>
+  </div>
+  <div class="body split wide">
+    <div class="panel">
+      <div class="legend">
+        <span><i class="sw bg-exp"></i>Экспертный</span>
+        <span><i class="sw bg-ent"></i>Развлекательный</span>
+        <span><i class="sw bg-oth"></i>Тип не указан / обзорный</span>
+        <span style="color:var(--muted)">логарифмическая шкала</span>
+      </div>
+      <div class="zbox" data-k="1.1"><div class="chart" id="c-ladder"></div></div>
+    </div>
+    <div class="pts" style="font-size:15px">
+      <div class="pt"><b>300–600 — базовый коридор</b><span>Основная масса роликов, в том числе пробные версии.</span></div>
+      <div class="pt key"><b>1,5–3,1 тыс. — Андрей в кадре и конкретика</b><span>«Видео носит исключительно…», «Если у вас есть квартира…», «Лестница за 1&nbsp;000&nbsp;000&nbsp;₽», «Вопрос-ответ».</span></div>
+      <div class="pt"><b>71–330 тыс. — единичные хиты</b><span>Выход на два-три порядка выше базы, повторить по заказу нельзя.</span></div>
+      <p class="est"><b>Тема денег сама по себе не работает.</b> «Сколько стоит ремонт?» и «Сэкономить клиенту миллион» — около 460 просмотров. Решает подача: цифра в первых секундах, основатель в кадре, практическая польза.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="bar"><span class="brand"><span class="tilemark"><i></i><i></i><i></i><i></i></span>Dolgiy Studio · Instagram</span><span class="pg">07 / 11</span></div>
+  <div>
+    <h2>Одно и то же видео даёт разницу в 2–7 раз</h2>
+    <p class="lead">Пробные публикации одного ролика с интервалом 8–10 часов. Точки — версии; справа — отношение лучшей версии к худшей.</p>
+  </div>
+  <div class="body split wide">
+    <div class="panel">
+      <div class="legend">
+        <span><i class="sw bg-exp"></i>Экспертный</span>
+        <span><i class="sw bg-ent"></i>Развлекательный</span>
+        <span><i class="sw bg-oth"></i>Обзорный</span>
+      </div>
+      <div class="zbox" data-k="1.08"><div class="chart" id="c-trials"></div></div>
+    </div>
+    <div class="pts" style="font-size:15px">
+      <div class="pt key"><b>Разброс ×1,9–6,6, медиана ×2,7</b><span>Отклонение в 2–3 раза — норма, а не провал.</span></div>
+      <div class="pt"><b>Одна публикация — не тест темы</b><span>Форматы сравниваются по медиане серии из нескольких роликов.</span></div>
+      <div class="pt"><b>Повторы одного файла опасны</b><span>Версии «Сколько стоит ремонт?» получили 13 и 0 просмотров: алгоритм, вероятно, счёл их дублями. Тестировать нужно разные первые кадры и обложки.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="bar"><span class="brand"><span class="tilemark"><i></i><i></i><i></i><i></i></span>Dolgiy Studio · Instagram</span><span class="pg">08 / 11</span></div>
+  <div>
+    <h2>Ядро аудитории — женщины 25–44 лет, локальная база — 28%</h2>
+  </div>
+  <div class="body split wide" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)">
+    <div class="aud">
+      <div class="panel" style="padding:14px 16px;gap:8px"><div><h3>География, %</h3><p class="cap">Выделено локальное ядро</p></div><div class="zbox" data-k="1"><div class="chart" id="c-geo"></div></div></div>
+      <div class="panel" style="padding:14px 16px;gap:8px"><div><h3>Возраст, %</h3><p class="cap">Прочие группы не детализированы</p></div><div class="zbox" data-k="1"><div class="chart" id="c-age"></div></div>
+        <div style="display:grid;gap:8px;margin-top:6px"><h3>Пол, %</h3>
+          <div class="gsplit"><span class="bg-acc" style="flex:79.6"></span><span class="bg-oth" style="flex:20.4"></span></div>
+          <div class="legend"><span><i class="sw bg-acc"></i>Женщины <b style="color:var(--ink)">79,6%</b></span><span><i class="sw bg-oth"></i>Мужчины <b style="color:var(--ink)">20,4%</b></span></div>
+        </div>
+      </div>
+      <div class="panel" style="grid-column:1/-1;padding:14px 16px;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><h3>Активность по часам, МСК</h3>
+          <div class="legend"><span><i class="sw bg-hi"></i>Пик 18–21</span><span><i class="sw bg-lo"></i>Основная 09–18</span><span><i class="sw bg-off"></i>Низкая</span></div></div>
+        <div class="zbox" data-k="1"><div class="chart" id="c-hours"></div></div>
+      </div>
+    </div>
+    <div class="pts" style="font-size:15px">
+      <div class="pt key"><b>Профиль совпадает с заказчиком</b><span>79,6% — женщины, 77,8% — 25–44 года: группа, которая принимает решения по ремонту и интерьеру.</span></div>
+      <div class="pt"><b>Локальное ядро — 27,9%, ≈1,2 тыс.</b><span>Новая Усмань и Воронеж — основной пул потенциальных заказчиков. Это немногим больше четверти, а не треть.</span></div>
+      <div class="pt"><b>Чита — 8,4%: требует проверки</b><span>Нетипично для регионального сервиса; вероятно, след вирусного охвата.</span></div>
+      <div class="pt"><b>Слот 18:00–21:00 МСК</b><span>Совпадает с вечером локального ядра; для Читы (МСК+6) это ночь.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="bar"><span class="brand"><span class="tilemark"><i></i><i></i><i></i><i></i></span>Dolgiy Studio · Instagram</span><span class="pg">09 / 11</span></div>
+  <div>
+    <h2>Риски: результат не закреплён и не измерен в заявках</h2>
+    <p class="lead">Уровень оценивается по влиянию на главную цель аккаунта — поток заявок от локальной аудитории.</p>
+  </div>
+  <div class="body risks">
+    <div class="risk"><span class="sev high"><svg viewBox="0 0 12 12"><path d="M6 1 11.5 11H.5Z"/></svg>Высокий</span><h3>Концентрация в двух роликах</h3><p>Хиты дали ≈401 тыс. просмотров при 375 тыс. Reels за период; устойчивого формата выше базы нет.</p><p><b>Мера:</b> серийный формат, оценка по медиане.</p></div>
+    <div class="risk"><span class="sev high"><svg viewBox="0 0 12 12"><path d="M6 1 11.5 11H.5Z"/></svg>Высокий</span><h3>Нет данных о заявках</h3><p>Отчёт заканчивается подписками; обращения, заявки и договоры не учитываются.</p><p><b>Мера:</b> учёт заявок с источником-роликом с октября.</p></div>
+    <div class="risk"><span class="sev high"><svg viewBox="0 0 12 12"><path d="M6 1 11.5 11H.5Z"/></svg>Высокий</span><h3>Нецелевой охват</h3><p>98,9% зрителей не подписаны, география хитов неизвестна, 8,4% базы — Чита.</p><p><b>Мера:</b> проверить географию хитов, усилить локальные маркеры.</p></div>
+    <div class="risk"><span class="sev mid"><svg viewBox="0 0 12 12"><path d="M6 .8 11.2 6 6 11.2.8 6Z"/></svg>Средний</span><h3>Волатильность и дубли</h3><p>Одно видео даёт разброс ×1,9–6,6; повторы получили 13 и 0 просмотров.</p><p><b>Мера:</b> без идентичных повторов, публикация 18–21 МСК.</p></div>
+    <div class="risk"><span class="sev mid"><svg viewBox="0 0 12 12"><path d="M6 .8 11.2 6 6 11.2.8 6Z"/></svg>Средний</span><h3>Зависимость от основателя</h3><p>Работающий формат построен на Андрее в кадре.</p><p><b>Мера:</b> запас роликов на 3–4 недели, второй эксперт.</p></div>
+    <div class="risk"><span class="sev mid"><svg viewBox="0 0 12 12"><path d="M6 .8 11.2 6 6 11.2.8 6Z"/></svg>Средний</span><h3>Платформенный риск</h3><p>Доступ к Instagram в РФ ограничен; с 01.09.2025 реклама в нём запрещена — масштабировать хиты платно нельзя.</p><p><b>Мера:</b> дублировать формат в VK Клипах и Telegram.</p></div>
+    <div class="risk"><span class="sev mid"><svg viewBox="0 0 12 12"><path d="M6 .8 11.2 6 6 11.2.8 6Z"/></svg>Средний</span><h3>Ограничения данных</h3><p>Два периода не дают тренда; данные роликов накопленные; счётчик подписок без отписок.</p><p><b>Мера:</b> ежемесячный снимок статистики роликов.</p></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="bar"><span class="brand"><span class="tilemark"><i></i><i></i><i></i><i></i></span>Dolgiy Studio · Instagram</span><span class="pg">10 / 11</span></div>
+  <div>
+    <h2>План на период 06.09–06.10</h2>
+    <p class="lead">Меры по приоритету. Ориентиры предварительные: их задача — зафиксировать базовую линию для следующего отчёта.</p>
+  </div>
+  <div class="body" style="align-content:start">
+    <table class="t left plan">
+      <colgroup><col style="width:34px"><col style="width:46%"><col style="width:28%"><col></colgroup>
+      <thead><tr><th>№</th><th>Мера</th><th>Метрика контроля</th><th>Ориентир</th></tr></thead>
+      <tbody>
+        <tr><td class="pri">1</td><td>Серия «Экономика ремонта с Андреем»: 2 ролика в неделю, запас записей на 3–4 недели</td><td>Медианы подписок на 1&nbsp;000 просмотров и просмотров по серии</td><td>≥1,0 подписки на 1&nbsp;000; медиана &gt;600</td></tr>
+        <tr><td class="pri">2</td><td>Разобрать 64 комментария под «Цена за м²», перевести вопросы о стоимости в директ</td><td>Диалоги и заявки из комментариев</td><td>Ответ на 100% вопросов за 24 ч</td></tr>
+        <tr><td class="pri">3</td><td>Учёт воронки: директ → заявка → договор с указанием ролика-источника</td><td>Обращения, заявки, конверсия</td><td>Базовая линия — октябрь 2026</td></tr>
+        <tr><td class="pri">4</td><td>Публикация 18:00–21:00 МСК; вместо повторов — разные первые кадры и обложки</td><td>Доля роликов выше 600 просмотров</td><td>Рост к периоду 2</td></tr>
+        <tr><td class="pri">5</td><td>Развлекательные ролики вести на экспертные: закреп и финальный кадр со ссылкой</td><td>Подписки на 1&nbsp;000 просмотров у развлекательных</td><td>Рост к текущему уровню</td></tr>
+        <tr><td class="pri">6</td><td>Проверить происхождение читинской аудитории; усилить локальные маркеры</td><td>Доля Воронежа и Новой Усмани</td><td>≥30% (сейчас 27,9%)</td></tr>
+        <tr><td class="pri">7</td><td>Ежемесячный снимок статистики роликов и реестр публикаций</td><td>Наличие реестра</td><td>С 06.10.2026</td></tr>
+        <tr><td class="pri">8</td><td>Дублировать экспертный формат в VK Клипах и Telegram</td><td>Доля обращений не из Instagram</td><td>Фиксировать с октября</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+  <div class="bar"><span class="brand"><span class="tilemark"><i></i><i></i><i></i><i></i></span>Dolgiy Studio · Instagram</span><span class="pg">11 / 11</span></div>
+  <div>
+    <h2>Решения для утверждения</h2>
+    <p class="lead">Охват доказал потенциал аккаунта. Следующий шаг — превратить разовые всплески в устойчивый поток подписчиков и заявок.</p>
+  </div>
+  <div class="body dec" style="align-content:start">
+    <div class="d"><span class="no">01</span><h3>Утвердить серию «Экономика ремонта с Андреем»</h3><p>2 ролика в неделю; оценка по медиане серии, а не по отдельному ролику. Запас съёмок на 3–4 недели.</p></div>
+    <div class="d"><span class="no">02</span><h3>Внедрить учёт обращений и заявок</h3><p>С октября 2026: директ, заявка, договор, ролик-источник. Без этих данных эффект контента в деньгах не измеряется.</p></div>
+    <div class="d"><span class="no">03</span><h3>Принять ориентиры следующего отчёта</h3><p>Медиана просмотров &gt;600; ≥1,0 подписки на 1&nbsp;000 просмотров; доля локальной аудитории ≥30%.</p></div>
+    <div class="d"><span class="no">04</span><h3>Выйти на вторую площадку</h3><p>Дублировать экспертный формат в VK Клипах и Telegram, чтобы снизить зависимость от одной платформы.</p></div>
+  </div>
+</section>
+
+<div id="tip" hidden></div>
+<script>
+/* size zoomed chart hosts before the chart script renders */
+document.querySelectorAll('.zbox').forEach(z=>{const k=+z.dataset.k||1,c=z.firstElementChild;c.style.width=(z.clientWidth/k)+'px';c.style.transform='scale('+k+')';});
+</script>
+<script>
+/*CHARTS*/
+</script>
+<script>
+function fitZoom(){document.querySelectorAll('.zbox').forEach(z=>{const k=+z.dataset.k||1,c=z.firstElementChild;z.style.height=(c.offsetHeight*k)+'px';});}
+fitZoom();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>setTimeout(fitZoom,60));
+setTimeout(fitZoom,400);
+</script>
+</body>
+</html>

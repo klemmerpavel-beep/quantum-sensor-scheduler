@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instagram Dolgiy Studio</title>
+<style>
+
+</style>
+<style>
+/* Light-only by request. Layout: summary-first dashboard. Screen 1 = header, KPI band (hero + 4 tiles), three chart cards, findings panel.
+   Below: numbered analytic sections in a chart | commentary grid, risks, action plan, method & sources. */
+:root{
+  --bg:#eff1ee; --surface:#fcfcfb; --surface-2:#f5f6f3;
+  --ink:#121513; --ink-2:#4b514c; --muted:#6f766f;
+  --grid:#e3e6e1; --axis:#c3c8c2; --border:rgba(18,21,19,.11);
+  --accent:#2a78d6;
+  --s-exp:#2a78d6; --s-ent:#eb6834; --s-other:#8c928c;
+  --pos:#2a78d6; --neg:#e34948; --flat:#8c928c;
+  --seq-off:#e6e9e4; --seq-lo:#86b6ef; --seq-hi:#2a78d6;
+  --band:rgba(42,120,214,.09);
+  --good:#006300; --bad:#b42323;
+  --sev-high:#d03b3b; --sev-mid:#fab219;
+  --font-display:"Geologica","Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:clamp(16px,3vw,32px);padding-block:22px 56px;display:grid;gap:16px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+p{margin:0}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- header ---------- */
+.top{display:grid;gap:10px;padding-block:4px 6px}
+.brand{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.brand .sep{color:var(--muted)}
+.tilemark{width:14px;height:14px;display:inline-grid;grid-template-columns:1fr 1fr;gap:2px}
+.tilemark i{background:var(--ink);border-radius:1px}
+.tilemark i:nth-child(2){background:var(--accent)}
+.top-row{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 32px}
+.top-row > div{min-width:0}
+h1{font-size:clamp(22px,2.6vw,30px);font-weight:600;line-height:1.15;max-width:30ch}
+.lede{color:var(--ink-2);margin-top:6px;max-width:72ch}
+.periods{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.chip{display:flex;flex-direction:column;gap:0;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.chip dt{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.chip dd{margin:0;font-weight:600;font-size:13.5px;font-variant-numeric:tabular-nums}
+
+/* ---------- KPI band ---------- */
+.kpis{display:grid;grid-template-columns:1.55fr repeat(4,1fr);gap:12px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tile .lbl{font-size:12.5px;color:var(--ink-2);font-weight:500}
+.tile .val{font-size:28px;font-weight:600;line-height:1.1;letter-spacing:-.01em}
+.tile .dlt{font-size:12.5px;font-weight:600;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.tile .was{font-size:12px;color:var(--muted)}
+.up{color:var(--good)} .down{color:var(--bad)} .flat{color:var(--ink-2)}
+.hero .val{font-size:clamp(40px,4.4vw,54px)}
+.hero{gap:6px}
+.split{display:flex;gap:2px;height:10px;margin-top:6px;background:var(--surface)}
+.split span{display:block;height:100%}
+.split span:first-child{border-radius:4px 0 0 4px}
+.split span:last-child{border-radius:0 4px 4px 0}
+.split-legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--ink-2)}
+.split-legend span{display:inline-flex;align-items:center;gap:6px}
+.split-legend b{color:var(--ink);font-weight:600}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;flex:none}
+.bg-acc{background:var(--accent)} .bg-exp{background:var(--s-exp)} .bg-ent{background:var(--s-ent)} .bg-oth{background:var(--s-other)}
+.bg-lo{background:var(--seq-lo)} .bg-hi{background:var(--seq-hi)} .bg-off{background:var(--seq-off);box-shadow:inset 0 0 0 1px var(--border)}
+
+/* ---------- chart cards ---------- */
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px 12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h3{font-size:15px;font-weight:600;line-height:1.25}
+.card .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.chart{width:100%;min-width:0;position:relative}
+.chart svg{display:block;overflow:visible}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.note{font-size:12px;color:var(--ink-2);border-top:1px solid var(--grid);padding-top:8px;margin-top:auto}
+.note b{color:var(--ink);font-weight:600}
+.basechips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12.5px;font-variant-numeric:tabular-nums}
+.basechips .b{display:flex;flex-direction:column;padding:4px 10px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border)}
+.basechips .b small{font-size:11px;color:var(--muted)}
+.basechips .b strong{font-weight:600}
+.basechips .arr{color:var(--muted);font-size:12px}
+.basechips .arr.neg{color:var(--bad)} .basechips .arr.pos{color:var(--good)}
+
+/* ---------- findings ---------- */
+.findings{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.findings h2{font-size:15px;font-weight:600;margin-bottom:10px}
+.fgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
+.f{padding:2px 16px 2px 16px;border-left:1px solid var(--grid);display:flex;flex-direction:column;gap:4px;min-width:0}
+.f:first-child{border-left:0;padding-left:0}
+.f .n{font-size:20px;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+.f p{font-size:13px;color:var(--ink-2)}
+
+/* ---------- nav ---------- */
+.toc{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;padding-block:6px;font-size:13px}
+.toc .lbl{color:var(--muted);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin-right:4px}
+.toc a{color:var(--ink);text-decoration:none;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--surface)}
+.toc a:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- sections ---------- */
+.sec{border-top:1px solid var(--axis);padding-top:22px;margin-top:10px;display:grid;gap:18px;scroll-margin-top:12px}
+.sec > header{display:grid;gap:6px}
+.sec h2{font-size:clamp(19px,2vw,23px);font-weight:600}
+.sec h2 .no{color:var(--muted);font-weight:500;margin-right:8px}
+.sec .intro{color:var(--ink-2);max-width:80ch}
+.duo{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px 32px;align-items:start}
+.duo.even{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.prose{display:grid;gap:10px;max-width:68ch;min-width:0}
+.prose p{color:var(--ink)}
+.prose h3{font-size:15px;font-weight:600;margin-top:4px}
+.prose .est{font-size:12.5px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+.tag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:grid;gap:10px;min-width:0}
+.panel h3{font-size:14.5px;font-weight:600}
+
+/* tables */
+.tscroll{overflow-x:auto;min-width:0}
+table.t{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+.t th{font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:6px 10px;border-bottom:1px solid var(--axis);white-space:nowrap}
+.t td{padding:7px 10px;border-bottom:1px solid var(--grid);text-align:right;vertical-align:top}
+.t th:first-child,.t td:first-child{text-align:left;padding-left:0}
+.t td:first-child{color:var(--ink)}
+.t tr.sub td:first-child{padding-left:14px;color:var(--ink-2)}
+.t tr.calc td:first-child{color:var(--ink-2)}
+.t td.hl{font-weight:600}
+.t .muted{color:var(--muted)}
+.t.left td,.t.left th{text-align:left}
+.t.left td{vertical-align:top}
+.t .pri{font-weight:600;color:var(--muted);width:28px}
+.fn{font-size:12px;color:var(--muted);margin-top:6px}
+
+/* audience grid */
+.aud{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+
+/* risks */
+.risks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.risk{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.risk h3{font-size:14.5px;font-weight:600;line-height:1.3}
+.risk p{font-size:13px;color:var(--ink-2)}
+.risk p b{color:var(--ink);font-weight:600}
+.sev{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink);border:1px solid var(--border);border-radius:999px;padding:2px 10px 2px 8px;justify-self:start;background:var(--surface-2)}
+.sev svg{width:11px;height:11px;flex:none}
+.sev.high svg{fill:var(--sev-high)} .sev.mid svg{fill:var(--sev-mid)}
+
+
+/* svg text & marks */
+svg text{font-family:var(--font-body);font-variant-numeric:tabular-nums}
+.t1{fill:var(--ink);font-size:12.5px;font-weight:500}
+.t2{fill:var(--ink-2);font-size:12px}
+.t3{fill:var(--muted);font-size:11px}
+.tv{fill:var(--ink);font-size:12px;font-weight:600}
+.f-acc{fill:var(--accent)} .f-exp{fill:var(--s-exp)} .f-ent{fill:var(--s-ent)} .f-oth{fill:var(--s-other)}
+.f-pos{fill:var(--pos)} .f-neg{fill:var(--neg)} .f-flat{fill:var(--flat)}
+.f-lo{fill:var(--seq-lo)} .f-hi{fill:var(--seq-hi)} .f-off{fill:var(--seq-off)}
+.f-band{fill:var(--band)}
+.l-grid{stroke:var(--grid);stroke-width:1;fill:none}
+.l-axis{stroke:var(--axis);stroke-width:1;fill:none}
+.l-ref{stroke:var(--ink-2);stroke-width:1;fill:none}
+.l-range{stroke:var(--axis);stroke-width:2;stroke-linecap:round;fill:none}
+.l-brk{stroke:var(--ink-2);stroke-width:1;fill:none}
+.ring{stroke:var(--surface);stroke-width:2}
+.hitbox{fill:transparent}
+.halo{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.hit{cursor:default;outline:none}
+.hit:hover .mark,.hit:focus-visible .mark{opacity:.78}
+.hit:focus-visible .hitbox{stroke:var(--accent);stroke-width:1.5}
+
+/* tooltip */
+#tip{position:fixed;z-index:10;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:8px 10px;box-shadow:0 6px 20px rgba(0,0,0,.14);font-size:12px;display:grid;gap:3px;max-width:280px}
+#tip .tt{color:var(--ink-2);font-weight:500;margin-bottom:2px}
+#tip .tr{display:flex;align-items:center;gap:8px}
+#tip .tr b{font-weight:600;font-variant-numeric:tabular-nums}
+#tip .tr span{color:var(--ink-2)}
+#tip .tk{width:12px;height:2px;border-radius:1px;flex:none}
+
+@media (max-width:1100px){
+  .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .kpis .hero{grid-column:1/-1}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cards .card:last-child{grid-column:1/-1}
+  .fgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 0}
+  .f:nth-child(3){border-left:0;padding-left:0}
+}
+@media (max-width:900px){
+  .duo,.duo.even,.aud,.risks{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:700px){
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cards{grid-template-columns:minmax(0,1fr)}
+  .cards .card:last-child{grid-column:auto}
+  .fgrid{grid-template-columns:minmax(0,1fr)}
+  .f{border-left:0;padding-left:0;border-top:1px solid var(--grid);padding-top:10px}
+  .f:first-child{border-top:0;padding-top:0}
+  .tile .val{font-size:24px}
+}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+@media print{.card,.tile,.risk,.panel,.findings{break-inside:avoid}.toc{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ================= SCREEN 1 ================= -->
+<header class="top" id="top">
+  <div class="brand"><span class="tilemark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Dolgiy Studio</span><span class="sep">·</span><span>Instagram</span></div>
+  <div class="top-row">
+    <div>
+      <h1>Охват вырос в 22 раза, подписчиков принесла экспертиза</h1>
+      <p class="lede">Сравнение двух месячных периодов 2026 года. Подписчиков на момент выгрузки: 4&nbsp;404. Второй период — прорыв по охвату за счёт двух роликов; удержание и перевод охвата в заявки остаются зоной риска.</p>
+    </div>
+    <dl class="periods">
+      <div class="chip"><dt>Период 1</dt><dd>06.07–06.08</dd></div>
+      <div class="chip"><dt>Период 2 (отчётный)</dt><dd>06.08–06.09</dd></div>
+      <div class="chip"><dt>База подписчиков</dt><dd>4&nbsp;351 → 4&nbsp;404</dd></div>
+    </dl>
+  </div>
+</header>
+
+<section class="kpis" aria-label="Ключевые показатели периода 06.08–06.09">
+  <div class="tile hero">
+    <span class="lbl">Просмотры за 06.08–06.09</span>
+    <span class="val">376&nbsp;977</span>
+    <span class="dlt up">▲ ×22,5 <span class="was">было 16&nbsp;751</span></span>
+    <div class="split" role="img" aria-label="Reels 99,7%, посты 0,3% просмотров">
+      <span class="bg-acc" style="flex:99.7"></span><span class="bg-oth" style="flex:0 0 4px"></span>
+    </div>
+    <div class="split-legend">
+      <span><i class="sw bg-acc"></i>Reels <b>375 тыс.</b> · 99,7%</span>
+      <span><i class="sw bg-oth"></i>Посты <b>1,1 тыс.</b> · 0,3% (было 1,6 тыс.)</span>
+    </div>
+  </div>
+  <div class="tile">
+    <span class="lbl">Зрители</span>
+    <span class="val">277&nbsp;443</span>
+    <span class="dlt up">▲ ×27,8</span>
+    <span class="was">было 9&nbsp;974 · 98,9% не подписаны</span>
+  </div>
+  <div class="tile">
+    <span class="lbl">Чистый прирост подписчиков</span>
+    <span class="val">+69</span>
+    <span class="dlt up">▲ +1,6% к базе</span>
+    <span class="was">было −16 (−0,4%)</span>
+  </div>
+  <div class="tile">
+    <span class="lbl">Взаимодействия</span>
+    <span class="val">≈4&nbsp;980</span>
+    <span class="dlt up">▲ ×22,3</span>
+    <span class="was">было 223</span>
+  </div>
+  <div class="tile">
+    <span class="lbl">Вовлечённость</span>
+    <span class="val">≈1,3%</span>
+    <span class="dlt flat">= без изменений</span>
+    <span class="was">взаимодействия / просмотры; было ≈1,3%</span>
+  </div>
+</section>
+
+<section class="cards" aria-label="Графики ключевых результатов">
+  <article class="card">
+    <div>
+      <h3>Кратность изменения к периоду 1</h3>
+      <p class="sub">06.08–06.09 к 06.07–06.08, раз; линия ×1 — без изменений</p>
+    </div>
+    <div class="chart" id="c-index"></div>
+    <p class="note">Охват растёт быстрее просмотров: <b>1,36</b> просмотра на зрителя против <b>1,68</b>. Рост обеспечен разовыми контактами с новой аудиторией.</p>
+  </article>
+
+  <article class="card">
+    <div>
+      <h3>Чистый прирост подписчиков</h3>
+      <p class="sub">Подписки минус отписки за период</p>
+    </div>
+    <div class="chart" id="c-net"></div>
+    <div class="basechips" aria-label="База подписчиков на даты">
+      <span class="b"><small>06.07</small><strong>4&nbsp;351</strong></span>
+      <span class="arr neg">−16</span>
+      <span class="b"><small>06.08</small><strong>4&nbsp;335</strong></span>
+      <span class="arr pos">+69</span>
+      <span class="b"><small>06.09</small><strong>4&nbsp;404</strong></span>
+    </div>
+    <p class="note">Прирост сконцентрирован во времени: <b>4–5 сентября ≈40 подписок в день</b> после ролика «Цена за м²». Счётчик ролика — 138+ новых подписок (без отписок, накопленно).</p>
+  </article>
+
+  <article class="card">
+    <div>
+      <h3>Два хита: охват против подписок</h3>
+      <p class="sub">Действия на 1&nbsp;000 просмотров; шкала своя в каждой строке</p>
+    </div>
+    <div class="legend">
+      <span><i class="sw bg-ent"></i>Развлекательный · плитка, 330 тыс.</span>
+      <span><i class="sw bg-exp"></i>Экспертный · «Цена за м²», 71 тыс.</span>
+    </div>
+    <div class="chart" id="c-pairs"></div>
+  </article>
+</section>
+
+<section class="findings" aria-labelledby="f-h">
+  <h2 id="f-h">Главное за период 06.08–06.09</h2>
+  <div class="fgrid">
+    <div class="f"><span class="n">330 тыс.</span><p>Охват дал один развлекательный ролик про плитку: 2,4 тыс. отправок друзьям, подписок — немного.</p></div>
+    <div class="f"><span class="n">138+</span><p>Подписчиков дал экспертный ролик «Цена за м²»: в 4,6 раза меньше просмотров, но 64 комментария и основной прирост месяца.</p></div>
+    <div class="f"><span class="n">1,3%</span><p>Вовлечённость не изменилась: выросло число касаний, а не их качество. 98,9% зрителей — не подписчики.</p></div>
+    <div class="f"><span class="n">300–600</span><p>Базовый коридор просмотров ролика не сдвинулся. Устойчивого формата выше базы пока нет; данных о заявках нет.</p></div>
+  </div>
+</section>
+
+<nav class="toc" aria-label="Разделы анализа">
+  <span class="lbl">Подробный анализ</span>
+  <a href="#dynamics">1. Динамика</a>
+  <a href="#content">2. Контент</a>
+  <a href="#trials">3. Пробные публикации</a>
+  <a href="#audience">4. Аудитория</a>
+  <a href="#risks">5. Риски</a>
+  <a href="#plan">6. Рекомендации</a>
+</nav>
+
+<!-- ================= 1. DYNAMICS ================= -->
+<section class="sec" id="dynamics">
+  <header>
+    <h2><span class="no">1</span>Динамика по периодам</h2>
+    <p class="intro">Исходные показатели отчёта дополнены расчётными метриками (помечены «расчёт»), которые разделяют эффект масштаба охвата и эффект качества контакта.</p>
+  </header>
+  <div class="duo">
+    <div class="tscroll">
+      <table class="t">
+        <thead><tr><th>Показатель</th><th>06.07–06.08</th><th>06.08–06.09</th><th>Изменение</th></tr></thead>
+        <tbody>
+          <tr><td>Просмотры</td><td>16&nbsp;751</td><td class="hl">376&nbsp;977</td><td>×22,5</td></tr>
+          <tr class="sub"><td>Reels</td><td>15 тыс.</td><td>375 тыс.</td><td>×25</td></tr>
+          <tr class="sub"><td>Посты</td><td>1,6 тыс.</td><td>1,1 тыс.</td><td>−31%</td></tr>
+          <tr><td>Зрители</td><td>9&nbsp;974</td><td class="hl">277&nbsp;443</td><td>×27,8</td></tr>
+          <tr><td>Доля зрителей — не подписчиков</td><td>76,7%</td><td>98,9%</td><td>+22,2 п.п.</td></tr>
+          <tr class="calc"><td>Зрители из числа подписчиков<span class="tag">расчёт</span></td><td>≈2,3 тыс. (53% базы)</td><td>≈3,1 тыс. (70% базы)</td><td>≈+30%</td></tr>
+          <tr class="calc"><td>Просмотров на зрителя<span class="tag">расчёт</span></td><td>1,68</td><td>1,36</td><td>−19%</td></tr>
+          <tr class="calc"><td>Подписчиков на начало периода<span class="tag">расчёт</span></td><td>4&nbsp;351</td><td>4&nbsp;335</td><td class="muted">—</td></tr>
+          <tr><td>Чистый прирост подписчиков</td><td>−16 (−0,4%)</td><td class="hl">+69 (+1,6%)</td><td>+85 чел.</td></tr>
+          <tr class="calc"><td>Чистый прирост на 1&nbsp;000 просмотров<span class="tag">расчёт</span></td><td>−0,96</td><td>+0,18</td><td class="muted">—</td></tr>
+          <tr><td>Взаимодействия</td><td>223</td><td class="hl">≈4&nbsp;980</td><td>×22,3</td></tr>
+          <tr><td>Вовлечённость (взаимодействия / просмотры)</td><td>1,33%</td><td>1,32%</td><td>≈0 п.п.</td></tr>
+          <tr><td>Лучший ролик по подпискам</td><td>«Вопрос-ответ» (+4)</td><td>«Цена за м²» (138+)</td><td class="muted">—</td></tr>
+          <tr><td>Лучший ролик по охвату</td><td>≈2,3 тыс.</td><td>330 тыс.*</td><td>×143*</td></tr>
+        </tbody>
+      </table>
+      <p class="fn">* Просмотры роликов — накопленные за срок жизни публикации (вкладка «Контент»), включая просмотры после 06.09. Подписчики-зрители рассчитаны от округлённых долей (23,3% и 1,1%), погрешность ±5%.</p>
+    </div>
+    <div class="prose">
+      <h3>Экстенсивный рост охвата</h3>
+      <p>Зрителей стало в 27,8 раза больше, просмотров — в 22,5 раза. Число просмотров на одного зрителя снизилось с 1,68 до 1,36: приток обеспечен разовыми контактами с холодной аудиторией, 98,9% которой не подписана на аккаунт.</p>
+      <p>Вовлечённость удержана на уровне 1,3%. При двадцатикратном масштабировании за счёт неподписанных зрителей это удовлетворительный результат: холодная аудитория, как правило, взаимодействует с контентом реже, чем база. Качество контакта при этом не выросло.</p>
+      <h3>Слабая конверсия охвата в аудиторию</h3>
+      <p>На 1&nbsp;000 просмотров аккаунт получил +0,18 подписчика против −0,96 в первом периоде. Ролики увидели ≈3,1 тыс. подписчиков (≈70% базы) против ≈2,3 тыс. (≈53%): охват собственной базы вырос, отток прекратился.</p>
+      <p class="est"><b>Оценка устойчивости прироста.</b> 4–5 сентября аккаунт получал ≈40 подписок в день. Если это брутто-подписки, то за оставшиеся ≈29 дней периода баланс подписок и отписок был близок к нулю или отрицателен. Фоновый отток первого периода, вероятно, сохраняется и перекрыт одним роликом.</p>
+      <p>Посты утратили роль канала: 0,3% просмотров и −31% к первому периоду. Ресурс производства целесообразно перераспределить в Reels.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2. CONTENT ================= -->
+<section class="sec" id="content">
+  <header>
+    <h2><span class="no">2</span>Контент: что даёт охват и что даёт подписчиков</h2>
+    <p class="intro">Данные вкладки «Контент» накопленные за срок жизни ролика и не выгружаются за период. Цифры по роликам могут превышать значения на 06.09; для сравнения роликов между собой используются удельные показатели на 1&nbsp;000 просмотров.</p>
+  </header>
+  <div class="duo">
+    <div class="tscroll">
+      <table class="t">
+        <thead><tr><th>Показатель</th><th>Плитка<br>развл.</th><th>на 1&nbsp;000</th><th>«Цена за м²»<br>эксп.</th><th>на 1&nbsp;000</th><th>Перевес</th></tr></thead>
+        <tbody>
+          <tr><td>Просмотры</td><td class="hl">330 тыс.</td><td class="muted">—</td><td>71 тыс.</td><td class="muted">—</td><td>развл. ×4,6</td></tr>
+          <tr><td>Лайки</td><td>1,5 тыс.</td><td>4,5</td><td>462</td><td>6,5</td><td>эксп. ×1,4</td></tr>
+          <tr><td>Комментарии</td><td>12</td><td>0,04</td><td class="hl">64</td><td class="hl">0,90</td><td>эксп. ×24,8</td></tr>
+          <tr><td>Репосты</td><td>19</td><td>0,06</td><td>16</td><td>0,23</td><td>эксп. ×3,9</td></tr>
+          <tr><td>Отправки</td><td class="hl">2,4 тыс.</td><td class="hl">7,3</td><td>157</td><td>2,2</td><td>развл. ×3,3</td></tr>
+          <tr><td>Подписки</td><td>«немного»</td><td class="muted">н/д</td><td class="hl">138+</td><td class="hl">1,9</td><td>эксп.</td></tr>
+        </tbody>
+      </table>
+      <p class="fn">Накопленные просмотры двух роликов (≈401 тыс.) превышают все просмотры Reels за период (375 тыс.). Это подтверждает накопительный характер данных вкладки «Контент».</p>
+    </div>
+    <div class="prose">
+      <h3>Разделение ролей</h3>
+      <p>Развлекательный ролик распространяется через личные отправки: 7,3 на 1&nbsp;000 просмотров, в 3,3 раза больше, чем у экспертного. Такой механизм даёт охват, но не формирует намерение подписаться.</p>
+      <p>Экспертный ролик вызывает обсуждение: 0,90 комментария на 1&nbsp;000 просмотров, в 25 раз больше, и 1,9 подписки на 1&nbsp;000 просмотров. 64 комментария под роликом о стоимости — ближайший к заявке сигнал в имеющихся данных; их следует разобрать и перевести в диалог.</p>
+      <p class="est"><b>Оценка.</b> При базовом коридоре 300–600 просмотров и 3–4 публикациях в неделю остальные ролики периода дают порядка 10–20 тыс. просмотров. Без двух хитов охват периода остался бы на уровне первого месяца (16,8 тыс.).</p>
+    </div>
+  </div>
+
+  <div class="duo">
+    <div class="panel">
+      <div>
+        <h3>Лестница охвата: просмотры роликов</h3>
+        <p class="sub" style="font-size:12px;color:var(--muted)">Логарифмическая шкала; полоса — базовый коридор 300–600; для пробных роликов — лучшая версия</p>
+      </div>
+      <div class="legend">
+        <span><i class="sw bg-exp"></i>Экспертный</span>
+        <span><i class="sw bg-ent"></i>Развлекательный</span>
+        <span><i class="sw bg-oth"></i>Тип не указан / обзорный</span>
+      </div>
+      <div class="chart" id="c-ladder"></div>
+    </div>
+    <div class="prose">
+      <h3>Три уровня результата</h3>
+      <p>Распределение просмотров резко асимметрично. Типичный ролик остаётся в коридоре 300–600. Выход за коридор в 3–5 раз обеспечивают ролики с Андреем в кадре и конкретикой: «Видео носит исключительно…» (3,1 тыс.), «Если у вас есть квартира…» (2,3 тыс.), «Лестница за 1&nbsp;000&nbsp;000&nbsp;₽» (1,8 тыс.), «Вопрос-ответ» (1,5 тыс.). Выход на два-три порядка — единичные хиты.</p>
+      <p>Тема денег сама по себе результата не гарантирует: «Сколько стоит ремонт?» и «Сэкономить клиенту миллион» набрали ≈460 просмотров при 71 тыс. у «Цены за м²». Решает подача.</p>
+      <p class="est"><b>Гипотеза для проверки серией.</b> Результат определяется сочетанием трёх факторов: конкретная цифра в первых секундах, персона основателя в кадре, практическая польза для зрителя, который планирует ремонт.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3. TRIALS ================= -->
+<section class="sec" id="trials">
+  <header>
+    <h2><span class="no">3</span>Пробные публикации: одно видео — разный результат</h2>
+    <p class="intro">Часть роликов публиковалась в пробном режиме несколько раз одним и тем же видео с интервалом 8–10 часов. Точки — версии публикации; справа — отношение лучшей версии к худшей.</p>
+  </header>
+  <div class="duo">
+    <div class="panel">
+      <div class="legend">
+        <span><i class="sw bg-exp"></i>Экспертный</span>
+        <span><i class="sw bg-ent"></i>Развлекательный</span>
+        <span><i class="sw bg-oth"></i>Обзорный</span>
+      </div>
+      <div class="chart" id="c-trials"></div>
+    </div>
+    <div class="prose">
+      <h3>Разброс ×1,9–6,6, медиана ×2,7</h3>
+      <p>Идентичное видео в зависимости от времени выкладки получает в 2–7 раз больше или меньше просмотров. Единичная публикация не является валидным тестом темы или формата. Отклонение в 2–3 раза — норма, а не провал.</p>
+      <p>Для сравнения форматов требуется серия из нескольких роликов и сравнение медиан, а не лучших значений.</p>
+      <p>Версии «Сколько стоит ремонт?» с 13 и 0 просмотрами согласуются с гипотезой, что алгоритм распознал частые одинаковые выкладки как повтор и почти не показал их. Многократная публикация одного файла несёт риск для охвата. Тестировать следует разные первые кадры, обложки и заголовки при одном содержании.</p>
+      <p class="est"><b>Ограничение.</b> Выборка — 6 роликов, 15 версий. Вывод о масштабе разброса надёжен, количественная оценка влияния времени выкладки — нет.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 4. AUDIENCE ================= -->
+<section class="sec" id="audience">
+  <header>
+    <h2><span class="no">4</span>Портрет аудитории</h2>
+    <p class="intro">Данные по текущей базе подписчиков на момент выгрузки (4&nbsp;404), без разбивки по периодам.</p>
+  </header>
+  <div class="aud">
+    <div class="panel">
+      <div><h3>География</h3><p class="sub" style="font-size:12px;color:var(--muted)">Доля подписчиков, %; выделено локальное ядро — Воронеж и Новая Усмань</p></div>
+      <div class="chart" id="c-geo"></div>
+    </div>
+    <div class="panel">
+      <div><h3>Возраст</h3><p class="sub" style="font-size:12px;color:var(--muted)">Доля подписчиков, %; прочие возрастные группы в отчёте не детализированы</p></div>
+      <div class="chart" id="c-age"></div>
+    </div>
+    <div class="panel">
+      <div><h3>Пол</h3><p class="sub" style="font-size:12px;color:var(--muted)">Доля подписчиков, %</p></div>
+      <div class="split" role="img" aria-label="Женщины 79,6%, мужчины 20,4%" style="height:14px;margin-top:2px">
+        <span class="bg-acc" style="flex:79.6"></span><span class="bg-oth" style="flex:20.4"></span>
+      </div>
+      <div class="split-legend">
+        <span><i class="sw bg-acc"></i>Женщины <b>79,6%</b> · ≈3,5 тыс.</span>
+        <span><i class="sw bg-oth"></i>Мужчины <b>20,4%</b> · ≈0,9 тыс.</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div><h3>Активность по часам, МСК</h3><p class="sub" style="font-size:12px;color:var(--muted)">Качественная оценка из отчёта: основная активность и пик</p></div>
+      <div class="legend">
+        <span><i class="sw bg-hi"></i>Пик 18:00–21:00</span>
+        <span><i class="sw bg-lo"></i>Основная 09:00–18:00</span>
+        <span><i class="sw bg-off"></i>Низкая</span>
+      </div>
+      <div class="chart" id="c-hours"></div>
+    </div>
+  </div>
+  <div class="duo even">
+    <div class="prose">
+      <h3>Ядро — женщины 25–44 лет</h3>
+      <p>79,6% подписчиков — женщины, 77,8% — в возрасте 25–44 лет. Эта группа чаще всего принимает решения по ремонту и интерьеру, поэтому состав базы соответствует профилю заказчика студии.</p>
+      <p>Локальное ядро (Новая Усмань и Воронеж) — 27,9% базы, ≈1,2 тыс. подписчиков. Это основной пул потенциальных заказчиков. В исходном отчёте доля оценена как «около трети»; по сумме долей она составляет немногим более четверти.</p>
+    </div>
+    <div class="prose">
+      <h3>Нетипичная география и окно публикаций</h3>
+      <p>Доля Читы (8,4%, ≈370 подписчиков) для регионального сервиса нетипична. Вероятные причины — вирусный охват отдельного ролика или разовый источник трафика; требуется проверка. Нецелевая география размывает статистику и снижает долю потенциальных клиентов в базе.</p>
+      <p>Пик активности 18:00–21:00 МСК формирует аудитория московского часового пояса, то есть локальное ядро. Для Читы (МСК+6) это ночь, её вечер приходится на 12:00–15:00 МСК. Вечерний слот публикаций работает на целевую аудиторию.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 5. RISKS ================= -->
+<section class="sec" id="risks">
+  <header>
+    <h2><span class="no">5</span>Риски и ограничения</h2>
+    <p class="intro">Уровень риска оценивается по влиянию на ключевую цель аккаунта — поток заявок от локальной аудитории.</p>
+  </header>
+  <ul class="risks">
+    <li class="risk">
+      <span class="sev high"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 11.5 11H.5Z"/></svg>Высокий</span>
+      <h3>Концентрация результата в двух роликах</h3>
+      <p><b>Факт.</b> Накопленные просмотры двух хитов (≈401 тыс.) превышают все просмотры Reels за период; прирост подписчиков сосредоточен в двух днях. Устойчивого формата выше коридора 300–600 нет.</p>
+      <p><b>Мера.</b> Серийный формат и оценка по медиане серии, а не по лучшему ролику.</p>
+    </li>
+    <li class="risk">
+      <span class="sev high"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 11.5 11H.5Z"/></svg>Высокий</span>
+      <h3>Нет данных о воронке после подписки</h3>
+      <p><b>Факт.</b> Отчёт завершается подписками. Обращения в директ, заявки и договоры не учитываются, поэтому экономический эффект контента не измерен.</p>
+      <p><b>Мера.</b> Учёт обращений и заявок с указанием ролика-источника с октября 2026.</p>
+    </li>
+    <li class="risk">
+      <span class="sev high"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 11.5 11H.5Z"/></svg>Высокий</span>
+      <h3>Охват нецелевой аудитории</h3>
+      <p><b>Факт.</b> 98,9% зрителей не подписаны; география зрителей хитов неизвестна; 8,4% базы — Чита. Для локального сервиса вирусный охват за пределами региона не конвертируется в заказы.</p>
+      <p><b>Мера.</b> Сверить географию зрителей хитов; усилить локальные маркеры в роликах — объекты, районы, цены по Воронежу.</p>
+    </li>
+    <li class="risk">
+      <span class="sev mid"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .8 11.2 6 6 11.2.8 6Z"/></svg>Средний</span>
+      <h3>Волатильность алгоритма и повторные выкладки</h3>
+      <p><b>Факт.</b> Одно видео даёт разброс ×1,9–6,6; повторы получили 13 и 0 просмотров.</p>
+      <p><b>Мера.</b> Отказ от идентичных повторов; тест разных первых кадров и обложек; публикация 18:00–21:00 МСК.</p>
+    </li>
+    <li class="risk">
+      <span class="sev mid"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .8 11.2 6 6 11.2.8 6Z"/></svg>Средний</span>
+      <h3>Зависимость от основателя в кадре</h3>
+      <p><b>Факт.</b> Ролики выше коридора и лидеры по подпискам построены на Андрее. Его недоступность прерывает единственный работающий формат.</p>
+      <p><b>Мера.</b> Запас отснятых роликов на 3–4 недели; второй эксперт в кадре (прораб, дизайнер).</p>
+    </li>
+    <li class="risk">
+      <span class="sev mid"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .8 11.2 6 6 11.2.8 6Z"/></svg>Средний</span>
+      <h3>Платформенный и регуляторный риск</h3>
+      <p><b>Факт.</b> Доступ к Instagram в РФ ограничен с 14.03.2022, Meta признана экстремистской организацией. С 01.09.2025 запрещено размещение рекламы на ресурсах запрещённых организаций: масштабировать удачные ролики платным продвижением нельзя.</p>
+      <p><b>Мера.</b> Дублировать экспертный формат на российских площадках (VK Клипы, Telegram) и в карточках на картографических сервисах.</p>
+    </li>
+    <li class="risk">
+      <span class="sev mid"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .8 11.2 6 6 11.2.8 6Z"/></svg>Средний</span>
+      <h3>Ограничения данных и методики</h3>
+      <p><b>Факт.</b> Два наблюдения не устанавливают тренд. Данные по роликам накопленные; счётчик подписок ролика не учитывает отписки; часть значений округлена в выгрузке.</p>
+      <p><b>Мера.</b> Ежемесячный снимок статистики роликов на дату окончания периода и единый реестр публикаций.</p>
+    </li>
+  </ul>
+</section>
+
+<!-- ================= 6. PLAN ================= -->
+<section class="sec" id="plan">
+  <header>
+    <h2><span class="no">6</span>Рекомендации и ориентиры на период 06.09–06.10</h2>
+    <p class="intro">Меры упорядочены по приоритету. Целевые значения предварительные и требуют согласования; их назначение — зафиксировать базовую линию для следующего отчёта.</p>
+  </header>
+  <div class="tscroll">
+    <table class="t left" style="min-width:860px">
+      <thead><tr><th>№</th><th>Мера</th><th>Обоснование по данным</th><th>Метрика контроля</th><th>Ориентир</th></tr></thead>
+      <tbody>
+        <tr><td class="pri">1</td><td>Серия «Экономика ремонта с Андреем»: 2 ролика в неделю, запас записей на 3–4 недели</td><td>«Цена за м²»: 1,9 подписки и 0,9 комментария на 1&nbsp;000 просмотров; лидеры периода 1 также экспертные (+4, +3)</td><td>Медиана подписок на 1&nbsp;000 просмотров и медиана просмотров по серии</td><td>≥1,0 подписки на 1&nbsp;000; медиана &gt;600</td></tr>
+        <tr><td class="pri">2</td><td>Разобрать 64 комментария под «Цена за м²», ответить на вопросы о стоимости, перевести в директ</td><td>Вопросы о цене — ближайший к заявке сигнал</td><td>Диалоги и заявки из комментариев</td><td>Ответ на 100% вопросов в течение 24 ч</td></tr>
+        <tr><td class="pri">3</td><td>Учёт воронки: обращения в директ → заявки → договоры с указанием ролика-источника</td><td>Данных после подписки нет</td><td>Обращения, заявки, конверсия</td><td>Базовая линия — октябрь 2026</td></tr>
+        <tr><td class="pri">4</td><td>Публикация 18:00–21:00 МСК; вместо повторов одного файла — варианты первых кадров и обложек</td><td>Разброс ×1,9–6,6 у одинаковых видео; 13 и 0 просмотров у повторов</td><td>Доля роликов выше 600 просмотров</td><td>Рост к периоду 2</td></tr>
+        <tr><td class="pri">5</td><td>Развлекательные ролики как вход в воронку: закреплённый комментарий и финальный кадр со ссылкой на экспертный ролик</td><td>Плитка: 7,3 отправки на 1&nbsp;000 просмотров при малом числе подписок</td><td>Подписки на 1&nbsp;000 просмотров у развлекательных роликов</td><td>Рост к текущему уровню</td></tr>
+        <tr><td class="pri">6</td><td>Проверить происхождение читинской аудитории и географию зрителей хитов; усилить локальные маркеры</td><td>Локальное ядро — 27,9%; Чита — 8,4%</td><td>Доля Воронежа и Новой Усмани</td><td>≥30%</td></tr>
+        <tr><td class="pri">7</td><td>Ежемесячный снимок статистики роликов на дату окончания периода, единый реестр публикаций</td><td>Данные «Контента» накопленные, сравнение периодов по роликам искажено</td><td>Наличие реестра</td><td>Ежемесячно с 06.10.2026</td></tr>
+        <tr><td class="pri">8</td><td>Дублирование экспертного формата на российских площадках</td><td>Регуляторные ограничения Instagram в РФ, запрет рекламы</td><td>Доля обращений не из Instagram</td><td>Фиксировать с октября 2026</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+
+
+</div>
+<div id="tip" hidden></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- formatting ---------- */
+const nf0=new Intl.NumberFormat('ru-RU',{maximumFractionDigits:0});
+const nf1=new Intl.NumberFormat('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1});
+const nf2=new Intl.NumberFormat('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
+const f0=v=>nf0.format(v), f1=v=>nf1.format(v), f2=v=>nf2.format(v);
+const trim=s=>s.replace(/,0$/,'');
+const fK=v=>v>=1e6?trim(f1(v/1e6))+' млн':v>=1e4?f0(v/1e3)+' тыс.':v>=1e3?trim(f1(v/1e3))+' тыс.':f0(v);
+const sgn=v=>(v>0?'+':v<0?'−':'')+f0(Math.abs(v));
+
+/* ---------- svg helpers ---------- */
+const NS='http://www.w3.org/2000/svg';
+function S(tag,attrs,parent){const e=document.createElementNS(NS,tag);if(attrs)for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function T(parent,x,y,str,cls,anchor){const t=S('text',{x:x,y:y,class:cls||'t2'},parent);if(anchor)t.setAttribute('text-anchor',anchor);t.textContent=str;return t;}
+const mctx=document.createElement('canvas').getContext('2d');
+function tw(s,px,wt){mctx.font=(wt||400)+' '+(px||12)+'px "Golos Text", system-ui, sans-serif';return mctx.measureText(s).width;}
+function svgFor(root,w,h,label){root.replaceChildren();return S('svg',{width:w,height:h,viewBox:'0 0 '+w+' '+h,role:'img','aria-label':label||''},root);}
+function hbarPath(x0,x1,y,h,r){
+  const w=Math.abs(x1-x0); if(w<0.5) return '';
+  r=Math.min(r==null?4:r,w,h/2);
+  if(x1>=x0) return 'M'+x0+','+y+'H'+(x1-r)+'Q'+x1+','+y+' '+x1+','+(y+r)+'V'+(y+h-r)+'Q'+x1+','+(y+h)+' '+(x1-r)+','+(y+h)+'H'+x0+'Z';
+  return 'M'+x0+','+y+'H'+(x1+r)+'Q'+x1+','+y+' '+x1+','+(y+r)+'V'+(y+h-r)+'Q'+x1+','+(y+h)+' '+(x1+r)+','+(y+h)+'H'+x0+'Z';
+}
+const px=v=>Math.round(v)+.5;
+
+/* ---------- tooltip ---------- */
+const tip=document.getElementById('tip');
+function place(x,y){const w=tip.offsetWidth,h=tip.offsetHeight;let L=x+14,Tp=y-h-12;if(L+w>innerWidth-8)L=Math.max(8,x-w-14);if(Tp<8)Tp=y+18;tip.style.left=L+'px';tip.style.top=Tp+'px';}
+function hide(){tip.hidden=true;}
+function bindTip(node,title,rows){
+  node.setAttribute('tabindex','0');
+  node.setAttribute('class',(node.getAttribute('class')||'')+' hit');
+  node.setAttribute('aria-label',title+': '+rows.map(r=>r.l+' '+r.v).join('; '));
+  function show(x,y){
+    tip.replaceChildren();
+    const h=document.createElement('div');h.className='tt';h.textContent=title;tip.appendChild(h);
+    rows.forEach(r=>{const d=document.createElement('div');d.className='tr';
+      if(r.k){const k=document.createElement('i');k.className='tk';k.style.background='var('+r.k+')';d.appendChild(k);}
+      const b=document.createElement('b');b.textContent=r.v;const s=document.createElement('span');s.textContent=r.l;d.append(b,s);tip.appendChild(d);});
+    tip.hidden=false;place(x,y);
+  }
+  node.addEventListener('pointerenter',e=>show(e.clientX,e.clientY));
+  node.addEventListener('pointermove',e=>place(e.clientX,e.clientY));
+  node.addEventListener('pointerleave',hide);
+  node.addEventListener('focus',()=>{const r=node.getBoundingClientRect();show(r.left+r.width/2,r.top+8);});
+  node.addEventListener('blur',hide);
+}
+addEventListener('scroll',hide,{passive:true});
+
+/* ---------- generic horizontal bar ---------- */
+function hbar(root,o){
+  const W=Math.floor(root.clientWidth); if(!W) return;
+  const narrow=W<(o.narrowAt||380);
+  const rows=o.rows, base=o.base==null?o.min:o.base;
+  const labW=narrow?0:Math.min(Math.max.apply(null,rows.map(r=>tw(r.l,12.5,500)))+14,W*0.42);
+  const valW=Math.max.apply(null,rows.map(r=>tw(o.vf(r),12,600)))+10;
+  const barH=o.barH||14, rowH=(o.rowH||30)+(narrow?16:0);
+  const top=o.ref!=null?20:4, axisH=o.ticks?20:4;
+  const H=top+rows.length*rowH+axisH;
+  const x0=labW, x1=W-valW-(o.valCol?4:0);
+  const sx=v=>x0+(v-o.min)/(o.max-o.min)*(x1-x0);
+  const svg=svgFor(root,W,H,o.aria);
+  const yEnd=top+rows.length*rowH;
+  if(o.ticks) o.ticks.forEach(t=>{const x=px(sx(t));S('line',{x1:x,x2:x,y1:top-2,y2:yEnd,class:'l-grid'},svg);T(svg,x,H-5,o.tf?o.tf(t):f0(t),'t3','middle');});
+  const bx=px(sx(base));S('line',{x1:bx,x2:bx,y1:top-2,y2:yEnd,class:'l-axis'},svg);
+  if(o.ref!=null){const x=px(sx(o.ref));S('line',{x1:x,x2:x,y1:top-8,y2:yEnd,class:'l-ref'},svg);T(svg,x+4,top-8,o.refLabel,'t3');}
+  rows.forEach((r,i)=>{
+    const y=top+i*rowH, lab=narrow?16:0, by=y+lab+(rowH-lab-barH)/2;
+    const g=S('g',null,svg);
+    if(narrow) T(g,0,y+13,r.l,'t1 halo'); else T(g,x0-10,by+barH/2+4,r.l,'t1','end');
+    const xb=sx(base), xe=sx(r.v);
+    const d=hbarPath(xb,xe,by,barH,4);
+    if(d) S('path',{d:d,class:'mark '+(r.cls||'f-acc')},g);
+    else S('rect',{x:xb-1,y:by,width:2,height:barH,class:'mark '+(r.cls||'f-acc')},g);
+    if(o.valCol) T(g,W,by+barH/2+4,o.vf(r),'tv','end');
+    else T(g,Math.max(xe,xb)+6,by+barH/2+4,o.vf(r),'tv','start');
+    S('rect',{x:0,y:y,width:W,height:rowH,class:'hitbox'},g);
+    bindTip(g,r.tt||r.l,r.tip||[{v:o.vf(r),l:''}]);
+  });
+}
+
+/* ---------- 1. ratio chart ---------- */
+function drawIndex(root){
+  const R=[
+    {l:'Зрители',a:9974,b:277443,fa:f0,fb:f0},
+    {l:'Просмотры Reels',a:15000,b:375000,fa:fK,fb:fK},
+    {l:'Просмотры, всего',a:16751,b:376977,fa:f0,fb:f0},
+    {l:'Взаимодействия',a:223,b:4980,fa:f0,fb:v=>'≈'+f0(v)},
+    {l:'Вовлечённость',a:223/16751*100,b:4980/376977*100,fa:v=>f2(v)+'%',fb:v=>f2(v)+'%'},
+    {l:'Просмотры постов',a:1600,b:1100,fa:fK,fb:fK}
+  ].map(r=>{const v=r.b/r.a;return {l:r.l,v:v,cls:v>1.05?'f-pos':v<0.95?'f-neg':'f-flat',
+    tip:[{v:r.fb(r.b),l:'06.08–06.09'},{v:r.fa(r.a),l:'06.07–06.08'},{v:'×'+f1(v),l:'кратность'}]};});
+  hbar(root,{rows:R,min:0,max:30,ticks:[0,10,20,30],tf:t=>'×'+t,ref:1,refLabel:'×1',
+    vf:r=>'×'+f1(r.v),barH:14,rowH:30,narrowAt:300,aria:'Кратность изменения показателей: зрители ×27,8; Reels ×25; просмотры ×22,5; взаимодействия ×22,3; вовлечённость ×1,0; посты ×0,7'});
+}
+
+/* ---------- 2. net followers ---------- */
+function drawNet(root){
+  const R=[
+    {l:'06.07–06.08',v:-16,p:'−0,4%',cls:'f-neg'},
+    {l:'06.08–06.09',v:69,p:'+1,6%',cls:'f-pos'}
+  ].map(r=>Object.assign(r,{tip:[{v:sgn(r.v),l:'подписчиков'},{v:r.p,l:'к базе на начало периода'}]}));
+  hbar(root,{rows:R,min:-20,max:80,base:0,ticks:[-20,0,20,40,60,80],tf:t=>t<0?'−'+Math.abs(t):String(t),
+    vf:r=>sgn(r.v)+' · '+r.p,valCol:true,barH:16,rowH:36,narrowAt:340,
+    aria:'Чистый прирост подписчиков: 06.07–06.08 минус 16; 06.08–06.09 плюс 69'});
+}
+
+/* ---------- 3. per-1000 pairs ---------- */
+function drawPairs(root){
+  const rows=[
+    {l:'Отправки',a:2400/330,b:157/71,s:'развл. ×3,3',aa:'2,4 тыс.',ba:'157'},
+    {l:'Лайки',a:1500/330,b:462/71,s:'эксп. ×1,4',aa:'1,5 тыс.',ba:'462'},
+    {l:'Комментарии',a:12/330,b:64/71,s:'эксп. ×24,8',aa:'12',ba:'64'},
+    {l:'Репосты',a:19/330,b:16/71,s:'эксп. ×3,9',aa:'19',ba:'16'},
+    {l:'Подписки',a:null,b:138/71,s:'только эксп.',aa:'немного',ba:'138+'}
+  ];
+  const W=Math.floor(root.clientWidth); if(!W) return;
+  const narrow=W<300;
+  const fv=v=>v==null?'н/д':(v<0.1?f2(v):f1(v));
+  const labW=narrow?0:Math.min(Math.max.apply(null,rows.map(r=>Math.max(tw(r.l,12.5,500),tw(r.s,11))))+14,W*0.4);
+  const valW=Math.max.apply(null,rows.map(r=>Math.max(tw(fv(r.a),12,600),tw(fv(r.b),12,600))))+10;
+  const barH=10,gap=2,pairH=barH*2+gap,lab=narrow?30:0,rowH=lab+Math.max(pairH,32)+10;
+  const H=rows.length*rowH;
+  const x0=labW,x1=W-valW;
+  const svg=svgFor(root,W,H,'Действия на 1000 просмотров: развлекательный ролик против экспертного');
+  S('line',{x1:px(x0),x2:px(x0),y1:0,y2:H-6,class:'l-axis'},svg);
+  rows.forEach((r,i)=>{
+    const y=i*rowH, by=y+lab+(rowH-lab-pairH)/2-2;
+    const g=S('g',null,svg);
+    if(narrow){T(g,0,y+13,r.l,'t1');T(g,0,y+27,r.s,'t3');}
+    else{T(g,x0-10,by+pairH/2-1,r.l,'t1','end');T(g,x0-10,by+pairH/2+13,r.s,'t3','end');}
+    const m=Math.max(r.a||0,r.b);
+    const sx=v=>x0+v/m*(x1-x0);
+    if(r.a==null){T(g,x0+6,by+barH-1,'немного · н/д','t3');}
+    else{S('path',{d:hbarPath(x0,sx(r.a),by,barH,4),class:'mark f-ent'},g);T(g,sx(r.a)+6,by+barH-1,fv(r.a),'tv');}
+    S('path',{d:hbarPath(x0,sx(r.b),by+barH+gap,barH,4),class:'mark f-exp'},g);
+    T(g,sx(r.b)+6,by+barH*2+gap-1,fv(r.b),'tv');
+    S('rect',{x:0,y:y,width:W,height:rowH,class:'hitbox'},g);
+    bindTip(g,r.l+' на 1 000 просмотров',[
+      {v:fv(r.a),l:'развлекательный (всего '+r.aa+')',k:'--s-ent'},
+      {v:fv(r.b),l:'экспертный (всего '+r.ba+')',k:'--s-exp'}]);
+  });
+}
+
+/* ---------- 4. ladder (log dot plot) ---------- */
+const TYPE={exp:{c:'f-exp',n:'экспертный',k:'--s-exp'},ent:{c:'f-ent',n:'развлекательный',k:'--s-ent'},oth:{c:'f-oth',n:'тип не указан',k:'--s-other'},rev:{c:'f-oth',n:'обзорный',k:'--s-other'}};
+function drawLadder(root){
+  const rows=[
+    {l:'«Чтобы не оказаться „тем самым“…»',g:'плитка',v:330000,t:'ent'},
+    {l:'«Цена услуг за квадратный метр»',v:71000,t:'exp'},
+    {l:'«Видео носит исключительно…»',g:'Андрей в кадре',v:3100,t:'oth'},
+    {l:'«Если у вас есть квартира…»',g:'Андрей в кадре',v:2300,t:'oth'},
+    {l:'«Лестница за 1 000 000 ₽»',g:'Андрей в кадре',v:1800,t:'oth'},
+    {l:'«Маньяк уже не так страшен…»',g:'проба',v:1700,t:'ent'},
+    {l:'«Делимся с вами…»',g:'проба',v:1600,t:'rev'},
+    {l:'«Вопрос-ответ»',g:'с основателем',v:1500,t:'exp'},
+    {l:'«Если кратко — всё на нас…»',g:'проба',v:546,t:'exp'},
+    {l:'«На объекте нужен?…»',g:'проба',v:501,t:'ent'},
+    {l:'«Один из тех случаев…»',g:'проба',v:486,t:'exp'},
+    {l:'«Сколько стоит ремонт?…»',g:'проба',v:467,t:'exp'},
+    {l:'«Сэкономить клиенту миллион»',g:'≈',v:460,t:'oth'}
+  ];
+  const W=Math.floor(root.clientWidth); if(!W) return;
+  const narrow=W<560;
+  const lw=r=>tw(r.l,12.5,500)+(r.g?tw('  '+r.g,11):0);
+  const labW=narrow?0:Math.min(Math.max.apply(null,rows.map(lw))+16,W*0.5);
+  const rowH=narrow?40:26, top=22, axisH=22;
+  const H=top+rows.length*rowH+axisH;
+  const x0=labW+8, x1=W-60;
+  const lg=Math.log10, sx=v=>x0+(lg(v)-2)/(lg(5e5)-2)*(x1-x0);
+  const svg=svgFor(root,W,H,'Просмотры роликов на логарифмической шкале');
+  const yEnd=top+rows.length*rowH;
+  S('rect',{x:sx(300),y:top-4,width:sx(600)-sx(300),height:yEnd-top+4,class:'f-band'},svg);
+  T(svg,(sx(300)+sx(600))/2,top-8,'база 300–600','t3','middle');
+  [[100,'100'],[1e3,'1 тыс.'],[1e4,'10 тыс.'],[1e5,'100 тыс.']].forEach(t=>{
+    const x=px(sx(t[0]));S('line',{x1:x,x2:x,y1:top-4,y2:yEnd,class:'l-grid'},svg);T(svg,x,H-5,t[1],'t3','middle');});
+  rows.forEach((r,i)=>{
+    const y=top+i*rowH, cy=narrow?y+rowH-11:y+rowH/2;
+    const g=S('g',null,svg);
+    S('line',{x1:x0,x2:x1,y1:px(cy),y2:px(cy),class:'l-grid'},g);
+    const tt=S('text',{x:narrow?0:x0-12,y:narrow?y+13:cy+4,class:'t1'},g);
+    if(!narrow) tt.setAttribute('text-anchor','end');
+    const a=S('tspan',null,tt);a.textContent=r.l;
+    if(r.g&&r.g!=='≈'){const b=S('tspan',{class:'t3'},tt);b.textContent='  '+r.g;}
+    const cx=sx(r.v);
+    S('circle',{cx:cx,cy:cy,r:5,class:'mark ring '+TYPE[r.t].c},g);
+    T(g,cx+10,cy+4,(r.g==='≈'?'≈':'')+fK(r.v),'tv');
+    S('rect',{x:0,y:y,width:W,height:rowH,class:'hitbox'},g);
+    bindTip(g,r.l,[{v:(r.g==='≈'?'≈':'')+f0(r.v),l:'просмотров',k:TYPE[r.t].k},{v:TYPE[r.t].n,l:r.g&&r.g!=='≈'?r.g:''}]);
+  });
+}
+
+/* ---------- 5. trials (range dots) ---------- */
+function drawTrials(root){
+  const rows=[
+    {l:'«Маньяк уже не так страшен…»',t:'ent',v:[1700,258],r:'×6,6'},
+    {l:'«Если кратко — всё на нас…»',t:'exp',v:[546,137,114],r:'×4,8'},
+    {l:'«Один из тех случаев…»',t:'exp',v:[486,178],r:'×2,7',n:'с отзывом клиента'},
+    {l:'«На объекте нужен?…»',t:'ent',v:[501,298,195],r:'×2,6'},
+    {l:'«Делимся с вами…»',t:'rev',v:[1600,832],r:'×1,9'},
+    {l:'«Сколько стоит ремонт?…»',t:'exp',v:[467,13,0],r:'—',n:'аномалия'}
+  ];
+  const W=Math.floor(root.clientWidth); if(!W) return;
+  const narrow=W<560;
+  const sub=r=>'версии: '+r.v.map(f0).join(' / ')+(r.n?' · '+r.n:'');
+  const labW=narrow?0:Math.min(Math.max.apply(null,rows.map(r=>Math.max(tw(r.l,12.5,500),tw(sub(r),11))))+16,W*0.48);
+  const rowH=narrow?54:40, top=22, axisH=22, rW=46;
+  const H=top+rows.length*rowH+axisH;
+  const x0=labW+10, x1=W-rW-8;
+  const sx=v=>x0+v/1800*(x1-x0);
+  const svg=svgFor(root,W,H,'Просмотры версий пробных публикаций');
+  const yEnd=top+rows.length*rowH;
+  S('rect',{x:sx(300),y:top-4,width:sx(600)-sx(300),height:yEnd-top+4,class:'f-band'},svg);
+  T(svg,(sx(300)+sx(600))/2,top-8,'база 300–600','t3','middle');
+  [0,500,1000,1500].forEach(t=>{const x=px(sx(t));S('line',{x1:x,x2:x,y1:top-4,y2:yEnd,class:t===0?'l-axis':'l-grid'},svg);T(svg,x,H-5,f0(t),'t3','middle');});
+  T(svg,W,top-8,'лучш./худш.','t3','end');
+  rows.forEach((r,i)=>{
+    const y=top+i*rowH, cy=narrow?y+rowH-13:y+rowH/2;
+    const g=S('g',null,svg);
+    if(narrow){T(g,0,y+13,r.l,'t1');T(g,0,y+27,sub(r),'t3');}
+    else{T(g,x0-14,cy-2,r.l,'t1','end');T(g,x0-14,cy+12,sub(r),'t3','end');}
+    const mn=Math.min.apply(null,r.v),mx=Math.max.apply(null,r.v);
+    S('line',{x1:sx(mn),x2:sx(mx),y1:cy,y2:cy,class:'l-range'},g);
+    r.v.slice().sort((a,b)=>a-b).forEach(v=>S('circle',{cx:sx(v),cy:cy,r:5,class:'mark ring '+TYPE[r.t].c},g));
+    T(g,W,cy+4,r.r,'tv','end');
+    S('rect',{x:0,y:y,width:W,height:rowH,class:'hitbox'},g);
+    bindTip(g,r.l,r.v.map((v,j)=>({v:f0(v),l:'версия '+(j+1),k:TYPE[r.t].k})).concat([{v:r.r,l:'лучшая / худшая'}]));
+  });
+}
+
+/* ---------- 6. audience ---------- */
+function drawGeo(root){
+  const R=[
+    {l:'Новая Усмань',v:14.8,cls:'f-acc'},
+    {l:'Воронеж',v:13.1,cls:'f-acc'},
+    {l:'Чита',v:8.4,cls:'f-oth'},
+    {l:'Волжский',v:4.9,cls:'f-oth'},
+    {l:'Москва',v:2.9,cls:'f-oth'},
+    {l:'Прочие',v:55.9,cls:'f-oth'}
+  ].map(r=>Object.assign(r,{tip:[{v:f1(r.v)+'%',l:'≈'+f0(r.v/100*4404)+' подписчиков'}]}));
+  hbar(root,{rows:R,min:0,max:60,ticks:[0,20,40,60],tf:t=>t+'%',vf:r=>f1(r.v)+'%',barH:12,rowH:26,narrowAt:280,aria:'География подписчиков'});
+}
+function drawAge(root){
+  const R=[
+    {l:'25–34 года',v:44.3,cls:'f-acc'},
+    {l:'35–44 года',v:33.5,cls:'f-acc'},
+    {l:'Прочие группы',v:22.2,cls:'f-oth'}
+  ].map(r=>Object.assign(r,{tip:[{v:f1(r.v)+'%',l:'≈'+f0(r.v/100*4404)+' подписчиков'}]}));
+  hbar(root,{rows:R,min:0,max:50,ticks:[0,25,50],tf:t=>t+'%',vf:r=>f1(r.v)+'%',barH:12,rowH:28,narrowAt:280,aria:'Возраст подписчиков'});
+}
+function drawHours(root){
+  const W=Math.floor(root.clientWidth); if(!W) return;
+  const top=30,cellH=26,H=top+cellH+22;
+  const cw=W/24;
+  const svg=svgFor(root,W,H,'Активность аудитории по часам МСК: основная 9–21, пик 18–21');
+  for(let i=0;i<24;i++){
+    const cls=i>=18&&i<21?'f-hi':(i>=9&&i<21?'f-lo':'f-off');
+    const lvl=i>=18&&i<21?'пик':(i>=9&&i<21?'основная':'низкая');
+    const g=S('g',null,svg);
+    S('rect',{x:i*cw+1,y:top,width:Math.max(cw-2,1),height:cellH,rx:2,class:'mark '+cls},g);
+    S('rect',{x:i*cw,y:top-2,width:cw,height:cellH+4,class:'hitbox'},g);
+    const hh=n=>String(n).padStart(2,'0')+':00';
+    bindTip(g,hh(i)+'–'+hh(i+1)+' МСК',[{v:lvl,l:'активность'}].concat(i>=12&&i<15?[{v:hh(i+6)+'–'+hh(i+7),l:'по времени Читы'}]:[]));
+  }
+  for(let i=0;i<=24;i+=3){T(svg,i===0?0:i===24?W:i*cw,H-4,String(i).padStart(2,'0'),'t3',i===0?'start':i===24?'end':'middle');}
+  function brk(a,b,label){const xa=a*cw+1,xb=b*cw-1,y=top-7;S('path',{d:'M'+xa+','+(y+4)+'V'+y+'H'+xb+'V'+(y+4),class:'l-brk'},svg);T(svg,(xa+xb)/2,y-5,label,'t3','middle');}
+  brk(12,15,'вечер Читы');
+  brk(18,21,'пик');
+}
+
+/* ---------- render & resize ---------- */
+const charts=[['c-index',drawIndex],['c-net',drawNet],['c-pairs',drawPairs],['c-ladder',drawLadder],['c-trials',drawTrials],['c-geo',drawGeo],['c-age',drawAge],['c-hours',drawHours]]
+  .map(p=>({el:document.getElementById(p[0]),fn:p[1],w:0})).filter(c=>c.el);
+function render(force){charts.forEach(c=>{const w=Math.floor(c.el.clientWidth);if(force||w!==c.w){c.w=w;try{c.fn(c.el);}catch(e){console.error(e);}}});}
+render(true);
+let raf=0;
+if('ResizeObserver' in window){const ro=new ResizeObserver(()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>render(false));});charts.forEach(c=>ro.observe(c.el));}
+else addEventListener('resize',()=>render(false));
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>render(true));
+})();
+</script>
+</body>
+</html>

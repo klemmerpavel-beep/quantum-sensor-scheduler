@@ -3,3 +3,4 @@ orbita-kit/graphify-out/.graphify_*
 orbita-kit/graphify-out/cache/
 orbita-kit/graphify-out/converted/
 __pycache__/
+reports/*/src/deck.html
