@@ -105,6 +105,7 @@ header.top {
 .tab:focus-visible { outline-offset: -2px; }
 .today { align-self: center; white-space: nowrap; color: var(--text-2); }
 .today b { color: var(--text-1); font-weight: 500; }
+.today .edn { display: block; font-size: var(--fs-12); color: var(--b-action-fg); text-align: right; }
 .iconbtn {
   align-self: center; width: 36px; height: 36px; display: inline-grid; place-items: center; border-radius: var(--radius-2);
   border: 1px solid var(--border); background: var(--surface); color: var(--text-2); transition: border-color var(--dur), background-color var(--dur);
@@ -1104,7 +1105,32 @@ const Engine = (() => {
     return { text: out.join("\n").trim(), counts: [s1.length, s2.length, s3.length], lists: [s1, s2, s3] };
   }
 
-  return { build, agenda, dn, fmt, iso, parseISO, todayLocal, remainText, plural, STATUSES, CLS, ACTIVE, calendar };
+  /**
+   * Проверка правок из хранилища браузера [Р-70]: остаются только работы из данных,
+   * статусы словаря, документ закрытия со строковыми полями и датой ISO, комментарий-строка (≤ 2000 знаков).
+   * Повреждённое или чужое содержимое хранилища не должно ломать расчёт.
+   */
+  function sanitizeEdits(seed, raw) {
+    const out = {}, dropped = [];
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return { edits: out, dropped: raw == null ? [] : ["*"] };
+    const nums = new Set(seed.items.filter((i) => i.kind !== "section").map((i) => i.num));
+    const str = (v, n) => (typeof v === "string" ? v.slice(0, n) : "");
+    Object.keys(raw).forEach((num) => {
+      const e = raw[num];
+      if (!nums.has(num) || !e || typeof e !== "object") { dropped.push(num); return; }
+      const r = {};
+      if (typeof e.status === "string" && STATUSES.includes(e.status)) r.status = e.status;
+      if (e.closeDoc && typeof e.closeDoc === "object" && r.status === "Закрыто") {
+        const d = parseISO(str(e.closeDoc.date, 10));
+        r.closeDoc = { name: str(e.closeDoc.name, 500), letter: str(e.closeDoc.letter, 100), date: d != null ? iso(d) : "" };
+      }
+      if (typeof e.comment === "string" && e.comment.trim()) r.comment = e.comment.slice(0, 2000);
+      if (Object.keys(r).length) out[num] = r; else dropped.push(num);
+    });
+    return { edits: out, dropped };
+  }
+
+  return { build, agenda, sanitizeEdits, dn, fmt, iso, parseISO, todayLocal, remainText, plural, STATUSES, CLS, ACTIVE, calendar };
 })();
 if (typeof module !== "undefined") module.exports = Engine;
 
@@ -1172,7 +1198,15 @@ if (typeof module !== "undefined") module.exports = Engine;
 
   // ── Состояние
   let edits = {};
-  if (!readonly) { try { edits = JSON.parse(store.get(C.STORAGE_KEY) || "{}") || {}; } catch (e) { edits = {}; } }
+  if (!readonly) {
+    let raw = null;
+    try { raw = JSON.parse(store.get(C.STORAGE_KEY) || "{}"); } catch (e) { raw = []; }
+    const chk = E.sanitizeEdits(SEED, raw);
+    edits = chk.edits;
+    if (chk.dropped.length) notices.push("Часть сохранённых отметок не распознана и не применена; исходные данные не затронуты.");
+  }
+  // Дата редакции отметок «Важного» [Р-70]: при расчёте на другую дату отметки могут быть устаревшими
+  const EDITION = E.parseISO(SEED.project.demo_today);
   const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, agendaFmt: "talk", helpOpen: false, returnFocus: null };
   let M;
   const saveEdits = () => { if (!readonly) store.set(C.STORAGE_KEY, JSON.stringify(edits)); };
@@ -1269,7 +1303,7 @@ if (typeof module !== "undefined") module.exports = Engine;
       <div class="brand"><span class="logo" aria-hidden="true"></span><span class="bt"><b>CRM</b><span class="sub">Квантовый сенсор ИИМ ЯМГ (Электроприбор)</span></span></div>
       <nav class="tabs" role="tablist" aria-label="Режимы отображения">${tabs}</nav>
       <div class="spacer"></div>
-      <div class="today" title="${todayFromLink ? "Дата задана параметром ссылки" : "Текущая дата"}">на <b class="mono">${fmt(T)}</b></div>
+      <div class="today" title="${todayFromLink ? "Дата задана параметром ссылки" : "Текущая дата"}">на <b class="mono">${fmt(T)}</b>${EDITION != null && T !== EDITION ? `<span class="edn" title="Статусы — по вкладке «Важное» на ${fmt(EDITION)}; сроки и просрочка считаются на ${fmt(T)}">отметки на ${fmt(EDITION)}</span>` : ""}</div>
       <button class="iconbtn help" data-act="help" data-k="help" aria-label="Как читать страницу" title="Как читать страницу">${ico("help")}</button>
       <button class="iconbtn print" data-act="print" data-k="print" aria-label="Печать текущего режима" title="Печать">${ico("printer")}</button>
       <button class="iconbtn theme" data-act="theme" data-k="theme" aria-label="${theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"}" title="${theme === "dark" ? "Светлая тема" : "Тёмная тема"}">${ico(theme === "dark" ? "sun" : "moon")}</button>
@@ -1438,7 +1472,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     if (VARIANT === "path") return viewSummaryPath();
     const hl = headline();
     return `<div class="page">
-      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><span class="asof">на ${fmt(T)}</span></section>
+      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><span class="asof">на ${fmt(T)}${EDITION != null && T !== EDITION ? ` · отметки на ${fmt(EDITION)}` : ""}</span></section>
       <section class="kpis" aria-label="Ключевые показатели">${kpiTiles()}</section>
       <section class="card" aria-labelledby="h-tl"><h2 id="h-tl">Сроки этапа<span class="spacer"></span><button class="btn link" data-act="go-ms" data-k="tl-open">Все вехи ${ico("arrow")}</button></h2>${stageTimeline()}</section>
       <div class="cols">
@@ -1454,7 +1488,7 @@ if (typeof module !== "undefined") module.exports = Engine;
   function viewSummaryPath() {
     const hl = headline();
     return `<div class="page">
-      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><span class="asof">на ${fmt(T)}</span></section>
+      <section class="hero" aria-labelledby="h-main"><h1 id="h-main">${esc(hl.h)}</h1><span class="asof">на ${fmt(T)}${EDITION != null && T !== EDITION ? ` · отметки на ${fmt(EDITION)}` : ""}</span></section>
       <section class="card" aria-labelledby="h-ch"><h2 id="h-ch">Путь к демонстрации лабораторного образца ${chainPill()}<span class="spacer"></span><button class="btn link" data-act="go-chain" data-k="ch-open">Подробно на графике ${ico("arrow")}</button></h2>${pathSteps(true)}${pathNotes()}</section>
       <section class="kpis" aria-label="Ключевые показатели">${kpiTiles()}</section>
       <div class="cols">
