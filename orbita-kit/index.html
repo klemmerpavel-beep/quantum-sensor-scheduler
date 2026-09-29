@@ -908,12 +908,16 @@ const Engine = (() => {
   function calendar(holidays) {
     const H = new Set(holidays.map(dn));
     const isWork = (n) => { const w = new Date(n * DAY).getUTCDay(); return w !== 0 && w !== 6 && !H.has(n); };
+    // Накопленное число рабочих дней на 2020–2035 годы: wd за O(1) вместо перебора дней [Р-72]
+    const C0 = dn("2019-12-31"), C1 = dn("2035-12-31"), cum = new Int32Array(C1 - C0 + 1);
+    for (let x = C0 + 1; x <= C1; x++) cum[x - C0] = cum[x - C0 - 1] + (isWork(x) ? 1 : 0);
     /** Рабочие дни в интервале (a; b] со знаком [Р-47]. */
     const wd = (a, b) => {
       if (a === b) return 0;
       const lo = Math.min(a, b), hi = Math.max(a, b);
       let c = 0;
-      for (let x = lo + 1; x <= hi; x++) if (isWork(x)) c++;
+      if (lo >= C0 && hi <= C1) c = cum[hi - C0] - cum[lo - C0];
+      else for (let x = lo + 1; x <= hi; x++) if (isWork(x)) c++;
       return a < b ? c : -c;
     };
     /** Сдвиг на k рабочих дней (k может быть ≤ 0). */

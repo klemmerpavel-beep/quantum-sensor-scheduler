@@ -26,6 +26,13 @@ test("Календарь: рабочие дни в интервале (a; b] с�
   assert.strictEqual(cal.shift(E.dn("2026-12-30"), 1), E.dn("2027-01-11"));
 });
 
+test("Календарь: быстрый подсчёт совпадает с перебором дней на 2020–2036 годах [Р-72]", () => {
+  const cal = E.calendar(C.HOLIDAYS);
+  const slow = (a, b) => { let c = 0; const lo = Math.min(a, b), hi = Math.max(a, b); for (let x = lo + 1; x <= hi; x++) if (cal.isWork(x)) c++; return a < b ? c : a === b ? 0 : -c; };
+  const pts = ["2019-12-31", "2020-01-01", "2026-09-28", "2026-12-31", "2027-01-11", "2035-12-31", "2036-06-01"].map(E.dn);
+  for (const a of pts) for (const b of pts) assert.strictEqual(cal.wd(a, b), slow(a, b), `${E.iso(a)} → ${E.iso(b)}`);
+});
+
 // ── Модель на дату редакции
 const M = E.build(SEED, C, {}, T0);
 test("Состав: 66 работ, 47 обязательств перед Заказчиком, 4 раздела", () => {
