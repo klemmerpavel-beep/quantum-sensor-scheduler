@@ -10,8 +10,12 @@ const ACCEPTED = new Set(["target-size"]);
   const b = await chromium.launch(); const agg = new Map();
   for (const th of ["light", "dark"]) for (const v of ["summary", "gantt", "focus", "board", "milestones"]) for (const extra of ["", "open"]) {
     const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+    // «Статусы» + open: окно «Отметки в этом браузере» в состоянии подтверждения сброса (Р-71)
+    const marks = v === "board" && extra === "open";
+    if (marks) await p.addInitScript(() => { try { localStorage.setItem("orbita.ymg-iim.s1.edits.v1", JSON.stringify({ "2.1.7": { status: "Закрыто", closeDoc: { name: "Акт", letter: "", date: "2026-09-28" } }, "2.1.5": { comment: "Ответ до 02.10" } })); } catch (e) {} });
     await p.goto(`file://${ROOT}/versions/v1-panel.html?view=${v}&today=2026-09-28&theme=${th}`); await p.waitForTimeout(300);
-    if (extra === "open") { await p.locator("[data-open]:visible").first().click(); if (v === "focus") { await p.keyboard.press("Escape"); await p.click('[data-k="agenda"]'); } }
+    if (marks) { await p.click('[data-k="marks"]'); await p.click('[data-k="mk-reset"]'); }
+    else if (extra === "open") { await p.locator("[data-open]:visible").first().click(); if (v === "focus") { await p.keyboard.press("Escape"); await p.click('[data-k="agenda"]'); } }
     await p.addScriptTag({ content: AXE });
     const r = await p.evaluate(async () => (await axe.run(document, { runOnly: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa", "best-practice"] })).violations.map((x) => [x.id, x.impact, x.nodes.length, x.nodes.slice(0, 2).map((n) => n.target.join(" ") + " :: " + (n.failureSummary || "").split("\n")[1]).join(" || ")]));
     r.forEach(([id, imp, n, ex]) => { const k = id; const e = agg.get(k) || { imp, n: 0, where: new Set(), ex }; e.n += n; e.where.add(`${th}/${v}${extra ? "+" + extra : ""}`); agg.set(k, e); });

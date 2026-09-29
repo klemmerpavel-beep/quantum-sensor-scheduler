@@ -286,6 +286,31 @@ function stressPage() {
     await ctx.close();
   }
 
+  // 15. Отметки в этом браузере: список относительно редакции, текст для письма, сброс только после подтверждения (Р-71)
+  {
+    const { ctx, page, errs } = await open(V1, "today=2026-09-28");
+    await page.click('[data-k="tab-gantt"]');
+    await page.click('tr[data-open="2.1.7"]');
+    await page.click('[data-k="st-Закрыто"]');
+    await page.fill('[data-k="cf-letter"]', "12-34");
+    await page.click('[data-k="cf-do"]');
+    await page.click('[data-k="p-close"]');
+    await page.click('[data-k="marks"]');
+    const text = await page.inputValue("#mk-text");
+    const rows = await page.$$eval(".mk-tbl tbody tr", (e) => e.length);
+    await page.click('[data-k="mk-reset"]');
+    const askFocus = await page.evaluate(() => document.activeElement.dataset.k);
+    await page.keyboard.press("Escape");
+    const kept = await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("orbita.ymg-iim.s1.edits.v1") || "{}")).length);
+    const back = await page.evaluate(() => document.activeElement.dataset.k);
+    await page.click('[data-k="marks"]');
+    await page.click('[data-k="mk-reset"]');
+    await page.click('[data-k="mk-reset-do"]');
+    const left = await page.evaluate(() => [localStorage.getItem("orbita.ymg-iim.s1.edits.v1"), !!document.querySelector('[data-k="marks"]'), window.__orbita.model.by["2.1.7"].closed]);
+    ok("Отметки в этом браузере: список, текст для письма, сброс после подтверждения", rows === 1 && /Закупка материалов и оборудования \(п\. 2\.1\.7\): статус «[^»]+» → «Закрыто»; документ: .+№ 12-34 от 28\.09\.2026\./.test(text) && askFocus === "mk-reset-no" && kept === 1 && back === "marks" && left[0] === "{}" && !left[1] && !left[2] && !errs.length, text.split("\n")[3]);
+    await ctx.close();
+  }
+
   // 10. Согласованность чисел между режимами (итоги не расходятся)
   {
     const { ctx, page, errs } = await open(V1, "today=2026-09-28");

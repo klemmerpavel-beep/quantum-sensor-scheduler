@@ -1,4 +1,4 @@
-  /* Окна: повестка оперативки в двух форматах, справка «Как читать страницу» [Р-62, Р-65]. */
+  /* Окна: повестка оперативки в двух форматах, отметки в этом браузере, справка «Как читать страницу» [Р-62, Р-65, Р-71]. */
   // ── Повестка [Р-62]: «для обсуждения» — наименования без номеров; «для письма Исполнителю» — формат Р-33 с п. N
   function agendaTalk(a) {
     const why = (i, sec) => {
@@ -37,6 +37,40 @@
       <div class="mftr"><span class="note" id="ag-status" role="status"></span><button class="btn" data-act="print" data-k="ag-print">${ico("printer")} Печать</button><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></div></div></div>`;
   }
 
+  // ── Отметки в этом браузере [Р-71]: что изменено относительно редакции, текст для письма, сброс с подтверждением
+  function marksList() {
+    const base = E.build(SEED, C, {}, T);
+    return SEED.items.filter((s) => edits[s.num]).map((s) => ({ num: s.num, e: edits[s.num], was: base.by[s.num], now: M.by[s.num] }));
+  }
+  function marksText(list) {
+    const out = [`Отметки по этапу 1 ОКР «ЯМГ-ИИМ» к редакции План-графика и вкладки «Важное» на ${fmt(EDITION)}`, `Сформировано ${fmt(E.todayLocal())}`, ""];
+    list.forEach((m, k) => {
+      const t = [m.e.status && m.e.status !== m.was.status ? `статус «${m.was.status}» → «${m.now.status}»` : "статус без изменений"];
+      const cd = m.e.closeDoc;
+      if (cd) t.push(cd.name ? `документ: ${cd.name}${cd.letter ? `, № ${cd.letter}` : ""}${cd.date ? ` от ${fmt(E.dn(cd.date))}` : ""}` : "без подтверждающего документа");
+      if (m.e.comment) t.push(`комментарий: ${m.e.comment}`);
+      out.push(`${k + 1}. ${title(m.now)} (п. ${m.num}): ${t.join("; ")}.`);
+    });
+    return out.join("\n");
+  }
+  function renderMarks() {
+    if (!S.marksOpen) return "";
+    const list = marksList(), n = list.length;
+    const docCell = (m) => { const cd = m.e.closeDoc; return cd ? (cd.name ? `${esc(cd.name)}${cd.letter ? `, № ${esc(cd.letter)}` : ""}${cd.date ? `, ${fmt(E.dn(cd.date))}` : ""}` : `<span class="muted">без документа</span>`) : ""; };
+    const rows = list.map((m) => `<tr><td><button class="btn link" data-act="marks-open" data-num="${m.num}" data-k="mk-${m.num}">${esc(title(m.now))}</button></td><td data-l="По данным">${status(m.was, false)}</td><td data-l="Отметка">${m.e.status && m.e.status !== m.was.status ? status(m.now, false) : `<span class="muted">без изменений</span>`}</td><td data-l="Документ, комментарий">${docCell(m)}${m.e.comment ? `<div class="mk-c">${esc(m.e.comment)}</div>` : ""}</td></tr>`).join("");
+    const confirm = S.marksConfirm && n
+      ? `<div class="warnbox mk-confirm" role="alert">${ico("alert")}<span>Будут удалены ${n} ${pl(n, "отметка", "отметки", "отметок")} в этом браузере. Исходные данные План-графика не изменятся. Отменить удаление нельзя.</span></div>`
+      : "";
+    const foot = S.marksConfirm && n
+      ? `<button class="btn danger" data-act="marks-reset" data-k="mk-reset-do">Удалить отметки</button><button class="btn" data-act="marks-cancel" data-k="mk-reset-no">Отмена</button>`
+      : `${n ? `<button class="btn" data-act="marks-ask" data-k="mk-reset">${ico("reset")} Сбросить все</button><button class="btn primary" data-act="copy-marks" data-k="mk-copy">${ico("copy")} Скопировать текст</button>` : ""}<button class="btn${n ? "" : " primary"}" data-act="close-marks" data-k="mk-close">Закрыть</button>`;
+    return `<div class="modal-back" data-act="close-marks-bg"><div class="modal marks" role="dialog" aria-modal="true" aria-labelledby="mk-title">
+      <div class="mhdr"><div class="mh"><h2 id="mk-title">Отметки в этом браузере</h2><p class="note">Изменения относительно редакции на ${fmt(EDITION)}. Другие пользователи их не видят.</p></div><button class="iconbtn" data-act="close-marks" data-k="mk-x" aria-label="Закрыть">${ico("x")}</button></div>
+      <div class="mk-body">${n ? `<table class="mk-tbl"><thead><tr><th scope="col">Работа</th><th scope="col">По данным</th><th scope="col">Отметка</th><th scope="col">Документ, комментарий</th></tr></thead><tbody>${rows}</tbody></table>
+      <label class="sr" for="mk-text">Текст для письма</label><textarea id="mk-text" readonly data-k="mk-text" rows="${Math.min(n + 4, 10)}">${esc(marksText(list))}</textarea>` : `<p class="muted">Отметок нет: показаны исходные данные.</p>`}${confirm}</div>
+      <div class="mftr"><span class="note" id="mk-status" role="status"></span>${foot}</div></div></div>`;
+  }
+
   // ── Справка «Как читать страницу» [Р-65]
   function renderHelp() {
     if (!S.helpOpen) return "";
@@ -69,7 +103,7 @@
           <li><b>Статусы</b> — работы по колонкам статусов. <b>Вехи</b> — ключевые даты этапа и загрузка по дням.</li>
           <li>Нажатие на работу открывает карточку: официальное наименование, номер пункта, ответственность, документы, комментарий.</li></ul></section>
         <section><h3>Отметки</h3><ul>
-          <li>Смена статуса и комментарии сохраняются только в этом браузере и не видны другим. Исходные данные План-графика не меняются; «Сбросить отметки» в подвале возвращает исходное состояние.</li></ul></section>
+          <li>Смена статуса и комментарии сохраняются только в этом браузере и не видны другим. Исходные данные План-графика не меняются; кнопка «Отметки» в подвале показывает их список, даёт текст для письма и сброс.</li></ul></section>
       </div>
       <div class="mftr"><button class="btn primary" data-act="close-help" data-k="hp-close">Понятно</button></div></div></div>`;
   }

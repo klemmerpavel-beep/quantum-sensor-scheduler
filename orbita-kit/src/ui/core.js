@@ -66,7 +66,7 @@
   }
   // Дата редакции отметок «Важного» [Р-70]: при расчёте на другую дату отметки могут быть устаревшими
   const EDITION = E.parseISO(SEED.project.demo_today);
-  const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, agendaFmt: "talk", helpOpen: false, returnFocus: null };
+  const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, agendaFmt: "talk", helpOpen: false, marksOpen: false, marksConfirm: false, returnFocus: null };
   let M;
   const saveEdits = () => { if (!readonly) store.set(C.STORAGE_KEY, JSON.stringify(edits)); };
   const recompute = () => { M = E.build(SEED, C, edits, T); };

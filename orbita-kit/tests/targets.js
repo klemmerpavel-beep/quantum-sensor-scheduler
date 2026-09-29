@@ -13,6 +13,7 @@ const ROOT = path.resolve(__dirname, "..");
     await p.goto(`file://${ROOT}/versions/${ver}.html?view=${v}&today=2026-09-28`, { waitUntil: "load" });
     await p.waitForTimeout(300);
     if (v === "focus") { await p.click('[data-k="f-2.1.7"]'); await p.click('[data-k="st-Закрыто"]'); }
+    if (v === "board") { await p.evaluate(() => { try { localStorage.setItem("orbita.ymg-iim.s1.edits.v1", JSON.stringify({ "2.1.7": { status: "Закрыто" }, "2.1.5": { comment: "Ответ до 02.10" } })); } catch (e) {} }); await p.reload(); await p.click('[data-k="marks"]'); }
     const r = await p.evaluate(() => [...document.querySelectorAll("button, a, select, input, textarea, summary, [tabindex='0']")]
       .filter((e) => e.offsetParent !== null && getComputedStyle(e).visibility !== "hidden")
       .map((e) => { const b = e.getBoundingClientRect(); return [e.dataset.k || e.className || e.tagName, Math.round(b.height), Math.round(b.width)]; })

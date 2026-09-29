@@ -12,8 +12,8 @@
     catch (err) { console.error(err); main = `<div class="empty" role="alert"><p>Не удалось построить отображение. Обновите страницу; если ошибка повторится, сообщите руководителю проекта.</p></div>`; }
     root.innerHTML = `<a class="skip" href="#main">Перейти к содержанию</a>${renderHeader()}${renderBanners()}
       <main id="main" tabindex="-1" class="v-${view}"><div class="tabpanel" role="tabpanel" aria-labelledby="tab-${view}">${main}</div></main>
-      <footer class="foot"><span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span title="${esc(C.HOLIDAYS_NOTE)}">Рабочие дни — по производственному календарю РФ, включая переносы 2026–2027 годов.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="reset-all" data-k="reset-all">Сбросить отметки (${Object.keys(edits).length})</button>` : ""}</footer>
-      ${renderPanel()}${renderAgenda()}${renderHelp()}`;
+      <footer class="foot"><span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span title="${esc(C.HOLIDAYS_NOTE)}">Рабочие дни — по производственному календарю РФ, включая переносы 2026–2027 годов.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="marks" data-k="marks">Отметки в этом браузере: ${Object.keys(edits).length}</button>` : ""}</footer>
+      ${renderPanel()}${renderAgenda()}${renderMarks()}${renderHelp()}`;
     scrollers.forEach(([cls, t, l]) => { const e = document.getElementsByClassName(cls)[0]; if (e) { e.scrollTop = t; e.scrollLeft = l; } });
     syncUrl();
     if (fk) { const el = root.querySelector(`[data-k="${CSS.escape(fk)}"]`); if (el) { el.focus({ preventScroll: true }); if (sel && "setSelectionRange" in el) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* не текстовое поле */ } } }
@@ -33,6 +33,7 @@
   }
   function openItem(num, from) { S.returnFocus = from && from.getAttribute("data-k"); S.selected = num; S.closeForm = null; render(); const h = document.getElementById("p-title"); if (h) h.focus(); }
   function closePanel() { S.selected = null; S.closeForm = null; render(); if (S.returnFocus) { const el = root.querySelector(`[data-k="${CSS.escape(S.returnFocus)}"]`); if (el) el.focus(); } }
+  function closeMarks() { S.marksOpen = false; S.marksConfirm = false; render(); const b = document.querySelector('[data-k="marks"]'); if (b) b.focus(); }
   function setEdit(num, patch) {
     edits[num] = Object.assign({}, edits[num] || {}, patch);
     Object.keys(edits[num]).forEach((k) => { if (edits[num][k] === undefined) delete edits[num][k]; });
@@ -90,7 +91,18 @@
       S.closeForm = null; return render();
     }
     if (a === "reset-one") { delete edits[S.selected]; saveEdits(); S.closeForm = null; return render(); }
-    if (a === "reset-all") { edits = {}; saveEdits(); S.closeForm = null; return render(); }
+    if (a === "marks") { S.marksOpen = true; S.marksConfirm = false; render(); const c = document.querySelector('[data-k="mk-copy"],[data-k="mk-close"]'); if (c) c.focus(); return; }
+    if (a === "close-marks" || (a === "close-marks-bg" && ev.target === t)) return closeMarks();
+    if (a === "marks-open") { const n = t.dataset.num; S.marksOpen = false; return openItem(n, root.querySelector('[data-k="marks"]')); }
+    if (a === "marks-ask" || a === "marks-cancel") { S.marksConfirm = a === "marks-ask"; render(); const b = document.querySelector(`[data-k="${a === "marks-ask" ? "mk-reset-no" : "mk-reset"}"]`); if (b) b.focus(); return; }
+    if (a === "marks-reset") { edits = {}; saveEdits(); S.closeForm = null; S.marksOpen = false; S.marksConfirm = false; render(); const m = document.getElementById("main"); if (m) m.focus(); return; }
+    if (a === "copy-marks") {
+      const ta = document.getElementById("mk-text"), st = document.getElementById("mk-status");
+      const done = () => { st.textContent = "Текст скопирован."; };
+      const manual = () => { ta.focus(); ta.select(); st.textContent = "Автоматическое копирование недоступно: текст выделен, скопируйте его вручную."; };
+      try { navigator.clipboard.writeText(ta.value).then(done, manual); } catch (e) { manual(); }
+      return;
+    }
     if (a === "agenda") { S.agendaOpen = true; render(); const c = document.querySelector('[data-k="ag-copy"]'); if (c) c.focus(); return; }
     if (a === "close-agenda" || (a === "close-agenda-bg" && ev.target === t)) { S.agendaOpen = false; render(); const b = document.querySelector('[data-k="agenda"]'); if (b) b.focus(); return; }
     if (a === "ag-fmt") { S.agendaFmt = t.dataset.fmt; render(); const b = document.querySelector(`[data-k="ag-${t.dataset.fmt === "letter" ? "letter" : "talk"}"]`); if (b) b.focus(); return; }
@@ -126,10 +138,11 @@
     if (ev.key === "Escape") {
       if (S.helpOpen) { S.helpOpen = false; render(); const b = document.querySelector('[data-k="help"]'); if (b) b.focus(); return; }
       if (S.agendaOpen) { S.agendaOpen = false; render(); const b = document.querySelector('[data-k="agenda"]'); if (b) b.focus(); return; }
+      if (S.marksOpen) return closeMarks();
       if (S.selected) closePanel();
       return;
     }
-    if (ev.key === "Tab" && (S.agendaOpen || S.helpOpen)) {
+    if (ev.key === "Tab" && (S.agendaOpen || S.helpOpen || S.marksOpen)) {
       const m = document.querySelector(".modal"); if (!m) return;
       const f = [...m.querySelectorAll("button, textarea")], first = f[0], last = f[f.length - 1];
       if (ev.shiftKey && document.activeElement === first) { last.focus(); ev.preventDefault(); }
@@ -145,7 +158,7 @@
   if (q.has("who") && !orgKey) { const w = q.get("who"); if (OWNER_F[w]) S.filters.owner = w; else notices.push("Параметр who не распознан, отбор по участнику не применён."); }
   if (q.has("sec")) { const c = q.get("sec"); if (["1", "2.1", "2.2", "3"].includes(c)) S.filters.section = c; else notices.push("Параметр sec не распознан, отбор по разделу не применён."); }
   let rz = 0;
-  window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ((view === "summary" || view === "milestones") && !S.agendaOpen) render(); }, 150); });
+  window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ((view === "summary" || view === "milestones") && !S.agendaOpen && !S.marksOpen) render(); }, 150); });
 
   if (!SEED || !Array.isArray(SEED.items) || !SEED.items.length) { root.innerHTML = `<div class="empty" role="alert"><p>Данные План-графика не загружены. Страница не может построить отображение. Обратитесь к руководителю проекта.</p></div>`; return; }
   render();

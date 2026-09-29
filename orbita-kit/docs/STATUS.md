@@ -1,4 +1,4 @@
-# Состояние работ на 29.09.2026 · выпуск 1.2.1
+# Состояние работ на 29.09.2026 · выпуск 1.3.0
 
 ## Где лежит результат
 
@@ -9,14 +9,14 @@
 | Файл для внутреннего контура | `orbita-kit/dist/crm-ymg-iim-stage1-offline.html` |
 | Сценарий показа | `orbita-kit/docs/DEMO.md` |
 | Устройство | `orbita-kit/docs/ARCHITECTURE.md` |
-| Свод решений | `orbita-kit/docs/DECISIONS.md` (Р-01…Р-70) |
+| Свод решений | `orbita-kit/docs/DECISIONS.md` (Р-01…Р-71) |
 | Журнал изменений | `orbita-kit/CHANGELOG.md` |
 
 ## Как продолжить
 
 1. Правки вносятся в `orbita-kit/src/`: `ui/*.js` — интерфейс (10 модулей), `engine.js` — расчёт, `config.js` — краткие наименования и календарь, `style.css` — оформление. Устройство — `docs/ARCHITECTURE.md`.
 2. Сборка: `python3 orbita-kit/tools/build.py`.
-3. Проверки: `bash orbita-kit/tools/check.sh` — данные, сверка, сборка, 14 проверок расчёта, 33 поведенческих, доступность, латиница, контраст, снимки.
+3. Проверки: `bash orbita-kit/tools/check.sh` — данные, сверка, сборка, 14 проверок расчёта, 34 поведенческих, доступность, латиница, контраст, снимки.
 4. Публикация: `bash orbita-kit/tools/publish.sh`.
 
 ## Открытые вопросы (`docs/QUESTIONS.md`)
