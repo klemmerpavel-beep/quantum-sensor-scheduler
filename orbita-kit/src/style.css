@@ -296,7 +296,7 @@ header.top {
 .step.done .dot { background: var(--st-closed); border-color: var(--st-closed); color: var(--surface); }
 .step.late .dot { background: var(--st-overdue); border-color: var(--st-overdue); color: var(--surface); }
 .step.soon .dot { border-color: var(--st-action); color: var(--b-action-fg); }
-.step .lbl { margin-top: var(--sp-1); font-size: var(--fs-13); font-weight: 500; line-height: var(--lh-snug); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.step .lbl { padding: 0 var(--sp-1); hyphens: auto; margin-top: var(--sp-1); font-size: var(--fs-13); font-weight: 500; line-height: var(--lh-snug); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .step .d { font-size: var(--fs-12); color: var(--text-2); }
 .step.late .d { color: var(--b-overdue-fg); font-weight: 500; }
 .step.soon .d { color: var(--b-action-fg); }
@@ -328,7 +328,8 @@ table.gantt { border-collapse: separate; border-spacing: 0; table-layout: fixed;
 .gantt th, .gantt td { height: var(--row-gantt); padding: 0 var(--sp-2); border-bottom: 1px solid var(--surface-3); text-align: left; vertical-align: middle; font-weight: 400; line-height: var(--lh-tight); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gantt th:first-child, .gantt td:first-child { padding-left: var(--sp-4); }
 .gantt thead th { position: sticky; top: 0; z-index: 3; height: var(--axis-h); background: var(--surface); color: var(--text-3); font-size: var(--fs-12); font-weight: 500; border-bottom: 1px solid var(--border); }
-.gantt col.c-name { width: 272px; } .gantt col.c-own { width: 200px; } .gantt col.c-due { width: 172px; } .gantt col.c-st { width: 156px; }
+.gantt col.c-name { width: 272px; } .gantt col.c-own { width: 184px; } .gantt col.c-due { width: 164px; } .gantt col.c-st { width: 196px; }
+.gantt td.stg { padding-right: var(--sp-3); }
 .gantt tbody tr { cursor: pointer; }
 .gantt tbody tr:hover td { background: var(--surface-2); }
 .gantt tr.sec td { background: var(--surface-2); font-weight: 600; border-bottom-color: var(--border); }
@@ -565,9 +566,17 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   header.top { gap: var(--sp-3); padding: 0 var(--sp-3); }
   .today { display: none; }
   .hero .asof { display: block; }
-  .tab { padding: 0 var(--sp-2h); }
-  .tab::after { left: 12px; right: 12px; }
-  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tab { padding: 0 var(--sp-2h); flex: none; }
+  .tab::after { left: 12px; right: 12px; bottom: 0; }
+  .brand { flex: none; }
+  .tabs { flex: 0 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs.more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+  .kpis:not(.col) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .kpis:not(.col) > * { grid-column: span 2; }
+  .kpis:not(.col) > :nth-child(n+4):nth-last-child(-n+2) { grid-column: span 3; }
+  .gstrip .kpi .sub { grid-column: 1 / -1; }
+  .path.big .step .lbl { font-size: var(--fs-12); -webkit-line-clamp: 4; }
   .cols { grid-template-columns: minmax(0, 1fr); }
   .card > .slist { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .frow, .fhead { grid-template-columns: minmax(0, 1fr) 96px 176px 220px; }
@@ -599,7 +608,9 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   .seg button { flex: 1 1 auto; padding: 0 var(--sp-2); font-size: var(--fs-13); }
   .skip { display: inline-flex; align-items: center; }
   .page { padding: var(--sp-4) var(--sp-3) var(--sp-5); gap: var(--sp-3); }
-  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpis:not(.col) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpis:not(.col) > *, .kpis:not(.col) > :nth-child(n+4):nth-last-child(-n+2) { grid-column: auto; }
+  .kpis:not(.col) > :last-child:nth-child(odd), .gstrip > :last-child:nth-child(odd) { grid-column: 1 / -1; }
   .card > .slist { grid-template-columns: minmax(0, 1fr); }
   .bt .sub { display: block; font-size: var(--fs-12); }
   .brand { padding: var(--sp-1) 0; min-width: 0; white-space: normal; }
@@ -663,23 +674,6 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   .ms-scroll { display: none; }
   .ms-mlist { display: block; }
   .ms-pick { display: none; }
-  .cols.even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-.mlist3 { list-style: none; margin: 0 calc(-1 * var(--sp-2)); padding: 0; }
-.mlist3 li + li .mrow { border-top: 1px solid var(--surface-3); }
-.mrow {
-  width: 100%; display: grid; grid-template-columns: 120px minmax(0, 1fr) auto; gap: var(--sp-3); align-items: center; min-height: 52px;
-  padding: var(--sp-2); text-align: left; border: 0; background: transparent; border-radius: var(--radius-2); transition: background-color var(--dur);
-}
-.mrow:hover { background: var(--surface-2); }
-.mrow .md { display: flex; align-items: center; gap: var(--sp-2h); }
-.mrow .dia { width: 10px; height: 10px; transform: rotate(45deg); border: 2px solid var(--text-1); background: var(--surface); flex: none; }
-.mrow.past .dia { background: var(--text-1); }
-.mrow .mt { display: grid; gap: var(--sp-0); font-weight: 500; }
-.mrow .mw { font-weight: 400; font-size: var(--fs-12); color: var(--text-3); }
-.mrow .mr { font-size: var(--fs-13); color: var(--text-2); text-align: right; }
-.mrow.past { color: var(--text-2); }
-.mrow.next { background: var(--accent-soft); }
-.mrow.next .mw { color: var(--accent); font-weight: 600; }
   .ms-mlist { margin-top: var(--sp-3); }
   .lrow { grid-template-columns: minmax(0, 1fr) auto; }
   .lrow:has(> .t) { grid-template-columns: minmax(0, 1fr); gap: var(--sp-1h); }
@@ -697,7 +691,7 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   .modal .mftr { padding: 0 var(--sp-3) var(--sp-3); flex-wrap: wrap; }
   .hbody { padding: var(--sp-2) var(--sp-3) var(--sp-3); }
   .modal .mp { font-size: var(--fs-12); }
-  .stseg { flex-wrap: nowrap; overflow-x: auto; margin: var(--sp-1) calc(-1 * var(--sp-3)) 0; padding: var(--sp-0) var(--sp-3); scrollbar-width: none; }
+  .stseg { flex-wrap: wrap; }
   .stseg button { flex: none; }
   footer.foot { padding: var(--sp-3); }
 }
@@ -740,6 +734,14 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   .gwrap, .board, .stl-scroll, .ms-scroll { overflow: visible; height: auto; }
   .gantt thead { display: table-header-group; }
   .gantt tr { break-inside: avoid; }
+  /* Печать «Графика работ»: таблица по ширине листа A4, наименования без сокращения [Р-73] */
+  table.gantt { min-width: 0 !important; font-size: 10px; }
+  .gantt col.c-name { width: 23%; } .gantt col.c-own { width: 13%; } .gantt col.c-due { width: 9%; } .gantt col.c-st { width: 14%; }
+  .gantt td:first-child, .gantt th:first-child { padding-left: var(--sp-1); white-space: normal; }
+  .gantt td.due .due-t { display: none; }
+  .gantt td.stg { white-space: normal; }
+  .gantt .nm .t { white-space: normal; overflow: visible; }
+  .gantt td.stg .st { flex-wrap: wrap; }
   .board { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); }
   footer.foot { border-top: 1px solid #c8ced6; padding: 3mm 0; }
   /* Широкая раскладка на листе A4 (ширина листа попадает под правила ≤ 1100 px) */

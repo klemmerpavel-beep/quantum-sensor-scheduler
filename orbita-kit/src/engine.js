@@ -236,9 +236,9 @@ const Engine = (() => {
       list.forEach((i, k) => out.push(`${k + 1}. ${line(i)}`));
       out.push("");
     };
-    sec("1. Просрочено", s1);
-    sec("2. Контрольная дата прошла", s2);
-    sec("3. Срок в ближайшие 14 дней", s3);
+    sec("I. Просрочено", s1);
+    sec("II. Контрольная дата прошла", s2);
+    sec("III. Срок в ближайшие 14 дней", s3);
     return { text: out.join("\n").trim(), counts: [s1.length, s2.length, s3.length], lists: [s1, s2, s3] };
   }
 

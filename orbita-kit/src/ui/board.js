@@ -7,8 +7,8 @@
     const n = (f) => list.filter(f).length;
     const g = { closed: n((i) => i.cls === "closed"), progress: n((i) => i.cls === "progress"), action: n((i) => i.cls === "action"), future: n((i) => i.cls === "future") };
     const od = n((i) => i.overdue), inh = n((i) => i.src === "inherited");
-    const lead = `${list.length} ${pl(list.length, "работа", "работы", "работ")}: выполнено ${g.closed}, в работе ${g.progress}, требуют действия ${g.action}, не начато ${g.future}. Просрочено ${od}${inh ? `; у ${inh} статус взят по группе` : ""}.`;
-    const words = { closed: "выполнено", progress: "в работе", action: "требуют действия", future: "не начато" };
+    const lead = `${list.length} ${pl(list.length, "работа", "работы", "работ")}: выполнено ${g.closed}, в работе и подготовке ${g.progress}, требуют действия ${g.action}, не начато ${g.future}. Просрочено ${od}${inh ? `; у ${inh} статус взят по группе` : ""}.`;
+    const words = { closed: "выполнено", progress: "в работе и подготовке", action: "требуют действия", future: "не начато" };
     const dist = `<div class="dist" role="img" aria-label="${esc(lead)}">${["closed", "progress", "action", "future"].filter((c) => g[c]).map((c) => `<span class="dseg ${c}" style="flex-grow:${g[c]}" title="${words[c]}: ${g[c]}">${g[c] / list.length >= 0.1 ? `<b>${g[c]}</b> ${words[c]}` : `<b>${g[c]}</b>`}</span>`).join("")}</div>`;
     h += `<div class="bhead">${pageHead("h-board", "Статусы", esc(lead), dist)}</div><div class="board">`;
     E.STATUSES.forEach((st) => {

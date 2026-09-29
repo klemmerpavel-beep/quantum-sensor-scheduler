@@ -16,7 +16,7 @@
       return t.length ? ` [${t.join("; ")}]` : "";
     };
     const out = [`Повестка оперативки по этапу 1 ОКР «ЯМГ-ИИМ» на ${fmt(T)}`, "Вопросы к Исполнителю — АО «Концерн «ЦНИИ «Электроприбор»", ""];
-    ["1. Просрочено", "2. Контрольная дата прошла", "3. Срок в ближайшие 14 дней"].forEach((h, k) => {
+    ["I. Просрочено", "II. Контрольная дата прошла", "III. Срок в ближайшие 14 дней"].forEach((h, k) => {
       out.push(h);
       if (!a.lists[k].length) out.push("— вопросов нет");
       a.lists[k].forEach((i, n) => { const c = i.comment || i.s.status_mark || ""; out.push(`${n + 1}. ${title(i)} — ${why(i, k)}${c ? `. ${c}` : ""}${note(i)}`); });
@@ -43,7 +43,7 @@
     return SEED.items.filter((s) => edits[s.num]).map((s) => ({ num: s.num, e: edits[s.num], was: base.by[s.num], now: M.by[s.num] }));
   }
   function marksText(list) {
-    const out = [`Отметки по этапу 1 ОКР «ЯМГ-ИИМ» к редакции План-графика и вкладки «Важное» на ${fmt(EDITION)}`, `Сформировано ${fmt(E.todayLocal())}`, ""];
+    const out = [`Отметки по этапу 1 ОКР «ЯМГ-ИИМ» к редакции План-графика и вкладки «Важное» на ${fmt(EDITION)}`, `Состояние на ${fmt(T)}`, ""];
     list.forEach((m, k) => {
       const t = [m.e.status && m.e.status !== m.was.status ? `статус «${m.was.status}» → «${m.now.status}»` : "статус без изменений"];
       const cd = m.e.closeDoc;

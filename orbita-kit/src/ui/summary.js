@@ -57,7 +57,7 @@
       return `<li><button class="orow${key === "ep" ? " main" : ""}" data-act="go-owner" data-owner="${key}" data-k="own-${key}">
         <span class="t">${esc(name)}<span class="role">${role}</span></span><span class="n">выполнено ${cl} из ${l.length}${od ? ` · <span class="bad-t">просрочено ${od}</span>` : ""}</span>
         <span class="prog" role="img" aria-label="Выполнено ${cl} из ${l.length}"><i style="width:${(cl / l.length) * 100}%"></i></span>
-        <span class="nx">${nx ? `${nextWord} <span class="mono">${fmt(nx.due)}</span> — ${esc(title(nx))}` : old ? `предстоящих сроков нет; дольше всех просрочено — ${esc(title(old))} (срок <span class="mono">${fmt(old.due)}</span>)` : "открытых обязательств нет"}</span></button></li>`;
+        <span class="nx" title="${esc(nx ? `${nextWord} ${fmt(nx.due)} — ${title(nx)}` : old ? `дольше всех просрочено — ${title(old)} (срок ${fmt(old.due)})` : "")}">${nx ? `${nextWord} <span class="mono">${fmt(nx.due)}</span> — ${esc(title(nx))}` : old ? `предстоящих сроков нет; дольше всех просрочено — ${esc(title(old))} (срок <span class="mono">${fmt(old.due)}</span>)` : "открытых обязательств нет"}</span></button></li>`;
     };
     const B = M.base;
     return `<ul class="olist">${row("ep", "Электроприбор", "Исполнитель", B.filter((i) => resp(i) === EP), "ближайший срок")}</ul>
@@ -93,7 +93,7 @@
         const word = st === "late" ? `просрочено на ${days(i.overdueDays)}` : st === "soon" ? (i.remain === 0 ? "срок сегодня" : `через ${days(i.remain)}`) : stepWord[st];
         return `<li class="step ${st}">${link}<button class="dot" data-open="${n}" data-k="cn-${n}" aria-label="${esc(title(i))}: ${word}, срок ${fmt(i.due)}">${st === "done" ? ico("check") : st === "late" ? "!" : k + 1}</button>
         <span class="lbl" title="${nameAttr(i)}">${esc(title(i))}</span>
-        <span class="d"><span class="mono">${fmt(i.due)}</span> · ${word} · ${esc(ownersText(i))}</span></li>`;
+        <span class="d" title="${esc(`${fmt(i.due)} · ${word} · ${ownersText(i)}`)}"><span class="mono">${fmt(i.due)}</span> · ${word} · ${esc(ownersText(i))}</span></li>`;
       }
       const link = w ? `<span class="link ${w.state}" aria-hidden="true"></span>` : "";
       return `<li class="step ${st}">${link}<button class="dot" data-open="${n}" data-k="cn-${n}" aria-label="${esc(title(i))}: ${stepWord[st]}, срок ${fmt(i.due)}">${st === "done" ? ico("check") : st === "late" ? "!" : k + 1}</button>

@@ -55,7 +55,7 @@
         <td><div class="nm lv${i.level}">${canCol ? `<button class="chev" data-toggle="${i.num}" aria-expanded="${exp}" aria-label="${exp ? "Свернуть" : "Развернуть"}: ${esc(title(i))}" data-k="tg-${i.num}">${ico("chev")}</button>` : `<span class="chev-sp"></span>`}<span class="t" title="${nameAttr(i)}">${esc(title(i))}</span>${i.kind === "group" && !ctx ? `<span class="cnt">${i.progress.closed}/${i.progress.total}</span>` : ""}</div></td>
         ${sec ? `<td colspan="3" class="secsum">${secSum(i.num)}</td>` : `<td class="own">${ownersCell(i)}</td>
         <td class="due"><span class="mono">${fmt(i.due)}</span>${ctx ? "" : dueWords(i, true)}</td>
-        <td>${ctx ? "" : status(i)}</td>`}
+        <td class="stg">${ctx ? "" : status(i)}</td>`}
         <td class="tlcell"><span class="sr">${esc(ganttSr(i))}</span><div aria-hidden="true" class="tlin">${ctx ? "" : barCell(i)}</div></td></tr>`;
     });
     const strip = VARIANT === "registry" && !orgKey ? `<section class="gstrip" aria-label="Ключевые показатели">${kpiTiles()}</section>` : "";

@@ -27,11 +27,12 @@ function stressPage() {
   const b = await chromium.launch({ proxy });
   async function open(file, query, opts = {}) {
     const ctx = await b.newContext({ viewport: opts.viewport || { width: 1440, height: 900 }, ignoreHTTPSErrors: true });
-    await useFontCache(ctx);
+    // opts.systemFont — без Google Fonts, как в сборке для внутреннего контура
+    if (opts.systemFont) await ctx.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort()); else await useFontCache(ctx);
     if (opts.init) await ctx.addInitScript(opts.init);
     const page = await ctx.newPage();
     const errs = [];
-    page.on("console", (m) => m.type() === "error" && errs.push(m.text()));
+    page.on("console", (m) => m.type() === "error" && !(opts.systemFont && /ERR_FAILED|Failed to load resource/.test(m.text())) && errs.push(m.text()));
     page.on("pageerror", (e) => errs.push("PAGEERROR " + e.message));
     await page.goto(`file://${file}?${query}`, { waitUntil: "load" });
     await page.waitForTimeout(700);
@@ -346,6 +347,18 @@ function stressPage() {
     const bad = Object.entries(r).filter(([, v]) => !v).map(([k]) => k);
     ok("Проверка кода: собственные ключи справочников, ссылка на раздел, диапазон даты, нажатие после комментария, дата документа, Escape в форме", !bad.length && !errs.length, bad.join(", ") || "8 сверок");
     await ctx.close();
+  }
+
+  // 17. Вёрстка без горизонтальной прокрутки: 1024 px с системным шрифтом, 390 px — все режимы и три версии (Р-73)
+  {
+    const bad = [];
+    for (const ver of ["v1-panel", "v2-registry", "v3-path"]) for (const [w, sys] of [[1024, true], [390, false]]) for (const v of ["summary", "gantt", "focus", "board", "milestones"]) {
+      const { ctx, page, errs } = await open(path.join(ROOT, `versions/${ver}.html`), `today=2026-09-28&view=${v}`, { viewport: { width: w, height: 900 }, systemFont: sys });
+      const o = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      if (o > 0 || errs.length) bad.push(`${ver} ${v} ${w}: ${o}${errs.length ? " " + errs[0] : ""}`);
+      await ctx.close();
+    }
+    ok("Вёрстка без горизонтальной прокрутки: 1024 px (системный шрифт) и 390 px, 3 версии × 5 режимов", !bad.length, bad.slice(0, 3).join("; ") || "30 страниц");
   }
 
   // 10. Согласованность чисел между режимами (итоги не расходятся)

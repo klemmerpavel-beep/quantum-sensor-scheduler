@@ -14,6 +14,12 @@
       <main id="main" tabindex="-1" class="v-${view}"><div class="tabpanel" role="tabpanel" aria-labelledby="tab-${view}">${main}</div></main>
       <footer class="foot">${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="marks" data-k="marks">Отметки в этом браузере: ${Object.keys(edits).length}</button>` : ""}<span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span title="${esc(C.HOLIDAYS_NOTE)}">Рабочие дни — по производственному календарю РФ, включая переносы 2026–2027 годов.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}</footer>
       ${renderPanel()}${renderAgenda()}${renderMarks()}${renderHelp()}`;
+    const tb = root.querySelector(".tabs"), cur = tb && tb.querySelector('[aria-selected="true"]');
+    if (tb) {
+      if (cur && (cur.offsetLeft + cur.offsetWidth > tb.scrollLeft + tb.clientWidth || cur.offsetLeft < tb.scrollLeft)) tb.scrollLeft = cur.offsetLeft - 8;
+      const upd = () => tb.classList.toggle("more", tb.scrollLeft + tb.clientWidth < tb.scrollWidth - 2);
+      upd(); tb.addEventListener("scroll", upd, { passive: true });
+    }
     scrollers.forEach(([cls, t, l]) => { const e = document.getElementsByClassName(cls)[0]; if (e) { e.scrollTop = t; e.scrollLeft = l; } });
     syncUrl();
     if (fk) { const el = root.querySelector(`[data-k="${CSS.escape(fk)}"]`); if (el) { el.focus({ preventScroll: true }); if (sel && "setSelectionRange" in el) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* не текстовое поле */ } } }
