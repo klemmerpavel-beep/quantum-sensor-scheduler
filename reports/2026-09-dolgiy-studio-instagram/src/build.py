@@ -11,7 +11,10 @@ HERE = Path(__file__).resolve().parent
 OUT = HERE.parent
 CSS_URL = ("https://fonts.googleapis.com/css2?family=Geologica:wght@500;600;700"
            "&family=Golos+Text:wght@400;500;600;700&display=swap")
-UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120 Safari/537.36"}
+# Полный UA современного браузера обязателен: иначе Google Fonts отдаёт TTF без разбиения
+# на подмножества (cyrillic/latin) и встраивание не находит ни одного начертания.
+UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) Chrome/120.0 Safari/537.36"}
 
 
 def fetch(url):
@@ -28,6 +31,8 @@ def embedded_fonts():
         if url not in cache:
             cache[url] = "data:font/woff2;base64," + base64.b64encode(fetch(url)).decode()
         faces.append(block.replace(url, cache[url]))
+    if not faces:
+        raise SystemExit("Google Fonts не вернул начертаний cyrillic/latin — шрифты не встроены")
     return "\n".join(faces)
 
 
