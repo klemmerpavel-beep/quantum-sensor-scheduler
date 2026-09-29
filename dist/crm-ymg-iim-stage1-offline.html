@@ -142,6 +142,7 @@ header.top {
 .btn:hover { border-color: var(--border-strong); }
 .btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .btn.primary:hover { border-color: var(--text-1); }
+.btn.danger { background: var(--b-overdue-bg); color: var(--b-overdue-fg); border-color: var(--b-overdue-fg); }
 .btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
 .btn.ghost:hover { background: var(--surface-3); color: var(--text-1); }
 .btn.link { height: auto; min-height: 28px; border-color: transparent; background: transparent; color: var(--accent); padding: 0; font-weight: 500; }
@@ -711,6 +712,24 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
 }
 .ag-print { display: none; }
 .modal.help { width: min(880px, 100%); }
+/* Отметки в этом браузере [Р-71] */
+.modal.marks { width: min(960px, 100%); }
+.mk-body { overflow-y: auto; padding: var(--sp-2) var(--sp-4) var(--sp-3); display: grid; gap: var(--sp-3); }
+.mk-tbl { width: 100%; border-collapse: collapse; font-size: var(--fs-13); }
+.mk-tbl th { text-align: left; font-weight: 500; color: var(--text-2); font-size: var(--fs-12); padding: var(--sp-1h) var(--sp-2); border-bottom: 1px solid var(--border); }
+.mk-tbl td { padding: var(--sp-2) var(--sp-2); border-bottom: 1px solid var(--border); vertical-align: top; }
+.mk-tbl td .btn.link { text-align: left; white-space: normal; }
+.mk-c { color: var(--text-2); margin-top: var(--sp-1); white-space: pre-wrap; overflow-wrap: anywhere; }
+.modal.marks textarea { margin: 0; min-height: 0; }
+@media (max-width: 720px) {
+  .mk-body { padding: var(--sp-2) var(--sp-3) var(--sp-3); }
+  .mk-tbl thead { display: none; }
+  .mk-tbl, .mk-tbl tbody, .mk-tbl tr, .mk-tbl td { display: block; }
+  .mk-tbl tr { padding: var(--sp-2) 0; border-bottom: 1px solid var(--border); }
+  .mk-tbl td { border: 0; padding: var(--sp-0) 0; }
+  .mk-tbl td:empty { display: none; }
+  .mk-tbl td[data-l]::before { content: attr(data-l) ": "; color: var(--text-2); font-size: var(--fs-12); }
+}
 .hbody { overflow-y: auto; padding: var(--sp-2) var(--sp-4) var(--sp-3); display: grid; gap: var(--sp-4); font-size: var(--fs-14); line-height: var(--lh-body); }
 .hbody h3 { font-size: var(--fs-14); font-weight: 600; margin-bottom: var(--sp-1h); }
 .hbody ul { margin: 0; padding-left: 18px; display: grid; gap: var(--sp-1); color: var(--text-2); }
@@ -976,7 +995,7 @@ const Engine = (() => {
       if (i.closed) {
         const cd = i.edit && i.edit.closeDoc;
         i.closeDate = cd ? dn(cd.date) : i.closedDate;
-        i.noReq = cd ? !(cd.name && cd.name.trim()) : (i.src === "mark" && i.closedDate == null);
+        i.noReq = cd ? !(cd.name && cd.name.trim()) : i.src === "edit" || (i.src === "mark" && i.closedDate == null);
       }
       i.horizon = i.closed ? "closed" : i.remain < 0 ? "overdue" : i.remain <= 14 ? "h14" : i.remain <= 30 ? "h30" : i.remain <= 60 ? "h60" : "later";
       i.inBase = !isSub(i) || (i.kind === "task" && i.dueCust != null);
@@ -1007,7 +1026,7 @@ const Engine = (() => {
       toDemo: dn("2026-11-30") - T,
       toEnd: dn(seed.project.stage_end) - T,
     };
-    kpi.pct = Math.round((kpi.closed / kpi.base) * 100);
+    kpi.pct = kpi.base ? Math.round((kpi.closed / kpi.base) * 100) : 0;
 
     // Прогресс разделов [SPEC 4.6]
     const sectionOf = (i) => { const p = i.num.split("."); return p[0] === "2" ? p.slice(0, 2).join(".") : p[0]; };
@@ -1171,15 +1190,18 @@ if (typeof module !== "undefined") module.exports = Engine;
 
   // ── Параметры ссылки [SPEC §3]
   const q = new URLSearchParams(location.search);
+  /** Только собственные ключи справочника: ?who=__proto__ и подобные не совпадают со встроенными свойствами [Р-72]. */
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   const notices = [];
   let T = E.todayLocal(), todayFromLink = false;
   if (q.has("today")) {
     const t = E.parseISO(q.get("today"));
-    if (t != null) { T = t; todayFromLink = true; } else notices.push("Параметр today не распознан, использована текущая дата.");
+    if (t != null && t >= E.dn("2020-01-01") && t <= E.dn("2035-12-31")) { T = t; todayFromLink = true; }
+    else notices.push(t != null ? "Параметр today вне допустимого диапазона 01.01.2020–31.12.2035, использована текущая дата." : "Параметр today не распознан, использована текущая дата.");
   }
   let orgKey = null, orgName = null;
   if (q.has("org")) {
-    if (C.ORGS[q.get("org")]) { orgKey = q.get("org"); orgName = C.ORGS[orgKey]; }
+    if (own(C.ORGS, q.get("org"))) { orgKey = q.get("org"); orgName = C.ORGS[orgKey]; }
     else notices.push("Параметр org не распознан: открыто полное представление только для просмотра.");
   }
   // Режим для руководства: ?view=exec (первый экран) или ?exec=1 (сохраняется при смене вкладки) [Р-67]
@@ -1207,7 +1229,7 @@ if (typeof module !== "undefined") module.exports = Engine;
   }
   // Дата редакции отметок «Важного» [Р-70]: при расчёте на другую дату отметки могут быть устаревшими
   const EDITION = E.parseISO(SEED.project.demo_today);
-  const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, agendaFmt: "talk", helpOpen: false, returnFocus: null };
+  const S = { filters: { owner: "", section: "", search: "" }, slice: "all", collapsed: new Set(), selected: null, closeForm: null, msDate: null, lanes: { later: false, closed: false }, agendaOpen: false, agendaFmt: "talk", helpOpen: false, marksOpen: false, marksConfirm: false, returnFocus: null };
   let M;
   const saveEdits = () => { if (!readonly) store.set(C.STORAGE_KEY, JSON.stringify(edits)); };
   const recompute = () => { M = E.build(SEED, C, edits, T); };
@@ -1265,7 +1287,7 @@ if (typeof module !== "undefined") module.exports = Engine;
   const sectionOf = (num) => { const p = num.split("."); return p[0] === "2" ? p.slice(0, 2).join(".") : p[0]; };
   const matchesFilters = (i) => {
     const f = S.filters;
-    if (f.owner && OWNER_F[f.owner] && !OWNER_F[f.owner](i)) return false;
+    if (f.owner && own(OWNER_F, f.owner) && !OWNER_F[f.owner](i)) return false;
     if (f.section && sectionOf(i.num) !== f.section) return false;
     if (f.search) {
       const s = f.search.toLowerCase().trim();
@@ -1430,7 +1452,7 @@ if (typeof module !== "undefined") module.exports = Engine;
   function sectionsBlock() {
     return `<ul class="slist">${M.sections.map((s) => `<li><button class="srow" data-act="go-section" data-sec="${s.num}" data-k="sec-${s.num}">
       <span class="t">${esc(C.SHORT[s.num] || s.name)}</span><span class="n">${s.closed} из ${s.total}${s.overdue ? ` · <span class="bad-t">просрочено ${s.overdue}</span>` : ""}</span>
-      <span class="prog" role="img" aria-label="Выполнено ${s.closed} из ${s.total}"><i style="width:${(s.closed / s.total) * 100}%"></i></span></button></li>`).join("")}</ul>`;
+      <span class="prog" role="img" aria-label="Выполнено ${s.closed} из ${s.total}"><i style="width:${s.total ? (s.closed / s.total) * 100 : 0}%"></i></span></button></li>`).join("")}</ul>`;
   }
   const stepState = (i) => (i.closed ? "done" : i.overdue ? "late" : i.soon ? "soon" : "plan");
   const stepWord = { done: "выполнено", late: "просрочено", soon: "срок близко", plan: "по плану" };
@@ -1525,7 +1547,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     const g = i.kind === "group";
     h += `<span class="bar ${i.cls}${g ? " group" : ""}${chain ? " chain" : ""}" style="left:${l}%;width:${w}%">`;
     if (derW && !g) h += `<span class="der" style="width:${(derW / w) * 100}%"></span>`;
-    if (g) h += `<span class="gp" style="width:${(i.progress.closed / i.progress.total) * 100}%"></span>`;
+    if (g) h += `<span class="gp" style="width:${i.progress.total ? (i.progress.closed / i.progress.total) * 100 : 0}%"></span>`;
     if (i.closed) h += `<span class="ok">${ico("check")}</span>`;
     h += `</span>`;
     if (i.overdue) h += `<span class="od" style="left:${r}%;width:${Math.max(xp(T) - r, 0.3)}%"></span>`;
@@ -1704,8 +1726,9 @@ if (typeof module !== "undefined") module.exports = Engine;
           h += `<div class="form"><b>Подтверждающий документ</b>
             <label>Наименование документа<input data-cf="name" data-k="cf-name" value="${esc(f.name)}"></label>
             <div class="row2"><label>№ письма<input data-cf="letter" data-k="cf-letter" value="${esc(f.letter)}"></label>
-            <label>Дата (ДД.ММ.ГГГГ)<input inputmode="numeric" data-cf="date" data-k="cf-date" value="${esc(f.date)}" aria-invalid="${f.dateBad ? "true" : "false"}"></label></div>
+            <label>Дата (ДД.ММ.ГГГГ)<input inputmode="numeric" data-cf="date" data-k="cf-date" value="${esc(f.date)}" aria-invalid="${f.dateBad || f.dateLate ? "true" : "false"}"></label></div>
             ${f.dateBad ? `<span class="due-t bad" role="alert">Укажите дату в формате ДД.ММ.ГГГГ, например ${fmt(T)}.</span>` : ""}
+            ${f.dateLate ? `<span class="due-t bad" role="alert">Дата документа не может быть позже ${fmt(T)}.</span>` : ""}
             ${noName ? `<div class="warnbox" role="alert">${ico("alert")}<span>Работа будет отмечена выполненной без подтверждающего документа.</span></div>` : ""}
             <div class="actions"><button class="btn primary" data-act="do-close" data-k="cf-do">${noName ? "Закрыть без документа" : "Отметить выполненной"}</button><button class="btn" data-act="cancel-close" data-k="cf-cancel">Отменить</button></div></div>`;
         }
@@ -1741,7 +1764,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     return h + `</div></div>`;
   }
 
-  /* Окна: повестка оперативки в двух форматах, справка «Как читать страницу» [Р-62, Р-65]. */
+  /* Окна: повестка оперативки в двух форматах, отметки в этом браузере, справка «Как читать страницу» [Р-62, Р-65, Р-71]. */
   // ── Повестка [Р-62]: «для обсуждения» — наименования без номеров; «для письма Исполнителю» — формат Р-33 с п. N
   function agendaTalk(a) {
     const why = (i, sec) => {
@@ -1780,6 +1803,40 @@ if (typeof module !== "undefined") module.exports = Engine;
       <div class="mftr"><span class="note" id="ag-status" role="status"></span><button class="btn" data-act="print" data-k="ag-print">${ico("printer")} Печать</button><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></div></div></div>`;
   }
 
+  // ── Отметки в этом браузере [Р-71]: что изменено относительно редакции, текст для письма, сброс с подтверждением
+  function marksList() {
+    const base = E.build(SEED, C, {}, T);
+    return SEED.items.filter((s) => edits[s.num]).map((s) => ({ num: s.num, e: edits[s.num], was: base.by[s.num], now: M.by[s.num] }));
+  }
+  function marksText(list) {
+    const out = [`Отметки по этапу 1 ОКР «ЯМГ-ИИМ» к редакции План-графика и вкладки «Важное» на ${fmt(EDITION)}`, `Сформировано ${fmt(E.todayLocal())}`, ""];
+    list.forEach((m, k) => {
+      const t = [m.e.status && m.e.status !== m.was.status ? `статус «${m.was.status}» → «${m.now.status}»` : "статус без изменений"];
+      const cd = m.e.closeDoc;
+      if (cd) t.push(cd.name ? `документ: ${cd.name}${cd.letter ? `, № ${cd.letter}` : ""}${cd.date ? ` от ${fmt(E.dn(cd.date))}` : ""}` : "без подтверждающего документа");
+      if (m.e.comment) t.push(`комментарий: ${m.e.comment}`);
+      out.push(`${k + 1}. ${title(m.now)} (п. ${m.num}): ${t.join("; ")}.`);
+    });
+    return out.join("\n");
+  }
+  function renderMarks() {
+    if (!S.marksOpen) return "";
+    const list = marksList(), n = list.length;
+    const docCell = (m) => { const cd = m.e.closeDoc; return cd ? (cd.name ? `${esc(cd.name)}${cd.letter ? `, № ${esc(cd.letter)}` : ""}${cd.date ? `, ${fmt(E.dn(cd.date))}` : ""}` : `<span class="muted">без документа</span>`) : ""; };
+    const rows = list.map((m) => `<tr><td><button class="btn link" data-act="marks-open" data-num="${m.num}" data-k="mk-${m.num}">${esc(title(m.now))}</button></td><td data-l="По данным">${status(m.was, false)}</td><td data-l="Отметка">${m.e.status && m.e.status !== m.was.status ? status(m.now, false) : `<span class="muted">без изменений</span>`}</td><td data-l="Документ, комментарий">${docCell(m)}${m.e.comment ? `<div class="mk-c">${esc(m.e.comment)}</div>` : ""}</td></tr>`).join("");
+    const confirm = S.marksConfirm && n
+      ? `<div class="warnbox mk-confirm" role="alert">${ico("alert")}<span>Будут удалены ${n} ${pl(n, "отметка", "отметки", "отметок")} в этом браузере. Исходные данные План-графика не изменятся. Отменить удаление нельзя.</span></div>`
+      : "";
+    const foot = S.marksConfirm && n
+      ? `<button class="btn danger" data-act="marks-reset" data-k="mk-reset-do">Удалить отметки</button><button class="btn" data-act="marks-cancel" data-k="mk-reset-no">Отмена</button>`
+      : `${n ? `<button class="btn" data-act="marks-ask" data-k="mk-reset">${ico("reset")} Сбросить все</button><button class="btn primary" data-act="copy-marks" data-k="mk-copy">${ico("copy")} Скопировать текст</button>` : ""}<button class="btn${n ? "" : " primary"}" data-act="close-marks" data-k="mk-close">Закрыть</button>`;
+    return `<div class="modal-back" data-act="close-marks-bg"><div class="modal marks" role="dialog" aria-modal="true" aria-labelledby="mk-title">
+      <div class="mhdr"><div class="mh"><h2 id="mk-title">Отметки в этом браузере</h2><p class="note">Изменения относительно редакции на ${fmt(EDITION)}. Другие пользователи их не видят.</p></div><button class="iconbtn" data-act="close-marks" data-k="mk-x" aria-label="Закрыть">${ico("x")}</button></div>
+      <div class="mk-body">${n ? `<table class="mk-tbl"><thead><tr><th scope="col">Работа</th><th scope="col">По данным</th><th scope="col">Отметка</th><th scope="col">Документ, комментарий</th></tr></thead><tbody>${rows}</tbody></table>
+      <label class="sr" for="mk-text">Текст для письма</label><textarea id="mk-text" readonly data-k="mk-text" rows="${Math.min(n + 4, 10)}">${esc(marksText(list))}</textarea>` : `<p class="muted">Отметок нет: показаны исходные данные.</p>`}${confirm}</div>
+      <div class="mftr"><span class="note" id="mk-status" role="status"></span>${foot}</div></div></div>`;
+  }
+
   // ── Справка «Как читать страницу» [Р-65]
   function renderHelp() {
     if (!S.helpOpen) return "";
@@ -1812,7 +1869,7 @@ if (typeof module !== "undefined") module.exports = Engine;
           <li><b>Статусы</b> — работы по колонкам статусов. <b>Вехи</b> — ключевые даты этапа и загрузка по дням.</li>
           <li>Нажатие на работу открывает карточку: официальное наименование, номер пункта, ответственность, документы, комментарий.</li></ul></section>
         <section><h3>Отметки</h3><ul>
-          <li>Смена статуса и комментарии сохраняются только в этом браузере и не видны другим. Исходные данные План-графика не меняются; «Сбросить отметки» в подвале возвращает исходное состояние.</li></ul></section>
+          <li>Смена статуса и комментарии сохраняются только в этом браузере и не видны другим. Исходные данные План-графика не меняются; кнопка «Отметки» в подвале показывает их список, даёт текст для письма и сброс.</li></ul></section>
       </div>
       <div class="mftr"><button class="btn primary" data-act="close-help" data-k="hp-close">Понятно</button></div></div></div>`;
   }
@@ -1831,8 +1888,8 @@ if (typeof module !== "undefined") module.exports = Engine;
     catch (err) { console.error(err); main = `<div class="empty" role="alert"><p>Не удалось построить отображение. Обновите страницу; если ошибка повторится, сообщите руководителю проекта.</p></div>`; }
     root.innerHTML = `<a class="skip" href="#main">Перейти к содержанию</a>${renderHeader()}${renderBanners()}
       <main id="main" tabindex="-1" class="v-${view}"><div class="tabpanel" role="tabpanel" aria-labelledby="tab-${view}">${main}</div></main>
-      <footer class="foot"><span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span title="${esc(C.HOLIDAYS_NOTE)}">Рабочие дни — по производственному календарю РФ, включая переносы 2026–2027 годов.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="reset-all" data-k="reset-all">Сбросить отметки (${Object.keys(edits).length})</button>` : ""}</footer>
-      ${renderPanel()}${renderAgenda()}${renderHelp()}`;
+      <footer class="foot">${!readonly && Object.keys(edits).length ? `<button class="btn link" data-act="marks" data-k="marks">Отметки в этом браузере: ${Object.keys(edits).length}</button>` : ""}<span>Источник — План-график этапа 1 и вкладка «Важное», редакция на 28.09.2026.</span><span title="${esc(C.HOLIDAYS_NOTE)}">Рабочие дни — по производственному календарю РФ, включая переносы 2026–2027 годов.</span>${!store.ok ? "<span>Отметки хранятся только до перезагрузки страницы.</span>" : ""}</footer>
+      ${renderPanel()}${renderAgenda()}${renderMarks()}${renderHelp()}`;
     scrollers.forEach(([cls, t, l]) => { const e = document.getElementsByClassName(cls)[0]; if (e) { e.scrollTop = t; e.scrollLeft = l; } });
     syncUrl();
     if (fk) { const el = root.querySelector(`[data-k="${CSS.escape(fk)}"]`); if (el) { el.focus({ preventScroll: true }); if (sel && "setSelectionRange" in el) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* не текстовое поле */ } } }
@@ -1852,6 +1909,7 @@ if (typeof module !== "undefined") module.exports = Engine;
   }
   function openItem(num, from) { S.returnFocus = from && from.getAttribute("data-k"); S.selected = num; S.closeForm = null; render(); const h = document.getElementById("p-title"); if (h) h.focus(); }
   function closePanel() { S.selected = null; S.closeForm = null; render(); if (S.returnFocus) { const el = root.querySelector(`[data-k="${CSS.escape(S.returnFocus)}"]`); if (el) el.focus(); } }
+  function closeMarks() { S.marksOpen = false; S.marksConfirm = false; render(); const b = document.querySelector('[data-k="marks"]'); if (b) b.focus(); }
   function setEdit(num, patch) {
     edits[num] = Object.assign({}, edits[num] || {}, patch);
     Object.keys(edits[num]).forEach((k) => { if (edits[num][k] === undefined) delete edits[num][k]; });
@@ -1904,12 +1962,24 @@ if (typeof module !== "undefined") module.exports = Engine;
     if (a === "do-close") {
       const f = S.closeForm, m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(f.date.trim());
       const iso = m && E.parseISO(`${m[3]}-${m[2]}-${m[1]}`) != null ? `${m[3]}-${m[2]}-${m[1]}` : null;
-      if (!iso) { f.dateBad = true; render(); const d = document.querySelector('[data-k="cf-date"]'); if (d) d.focus(); return; }
+      f.dateLate = !!iso && E.dn(iso) > T;
+      if (!iso || f.dateLate) { f.dateBad = !iso; render(); const d = document.querySelector('[data-k="cf-date"]'); if (d) d.focus(); return; }
       setEdit(f.num, { status: "Закрыто", closeDoc: { name: f.name.trim(), letter: f.letter.trim(), date: iso } });
       S.closeForm = null; return render();
     }
     if (a === "reset-one") { delete edits[S.selected]; saveEdits(); S.closeForm = null; return render(); }
-    if (a === "reset-all") { edits = {}; saveEdits(); S.closeForm = null; return render(); }
+    if (a === "marks") { S.marksOpen = true; S.marksConfirm = false; render(); const c = document.querySelector('[data-k="mk-copy"],[data-k="mk-close"]'); if (c) c.focus(); return; }
+    if (a === "close-marks" || (a === "close-marks-bg" && ev.target === t)) return closeMarks();
+    if (a === "marks-open") { const n = t.dataset.num; S.marksOpen = false; return openItem(n, root.querySelector('[data-k="marks"]')); }
+    if (a === "marks-ask" || a === "marks-cancel") { S.marksConfirm = a === "marks-ask"; render(); const b = document.querySelector(`[data-k="${a === "marks-ask" ? "mk-reset-no" : "mk-reset"}"]`); if (b) b.focus(); return; }
+    if (a === "marks-reset") { edits = {}; saveEdits(); S.closeForm = null; S.marksOpen = false; S.marksConfirm = false; render(); const m = document.getElementById("main"); if (m) m.focus(); return; }
+    if (a === "copy-marks") {
+      const ta = document.getElementById("mk-text"), st = document.getElementById("mk-status");
+      const done = () => { st.textContent = "Текст скопирован."; };
+      const manual = () => { ta.focus(); ta.select(); st.textContent = "Автоматическое копирование недоступно: текст выделен, скопируйте его вручную."; };
+      try { navigator.clipboard.writeText(ta.value).then(done, manual); } catch (e) { manual(); }
+      return;
+    }
     if (a === "agenda") { S.agendaOpen = true; render(); const c = document.querySelector('[data-k="ag-copy"]'); if (c) c.focus(); return; }
     if (a === "close-agenda" || (a === "close-agenda-bg" && ev.target === t)) { S.agendaOpen = false; render(); const b = document.querySelector('[data-k="agenda"]'); if (b) b.focus(); return; }
     if (a === "ag-fmt") { S.agendaFmt = t.dataset.fmt; render(); const b = document.querySelector(`[data-k="ag-${t.dataset.fmt === "letter" ? "letter" : "talk"}"]`); if (b) b.focus(); return; }
@@ -1924,10 +1994,22 @@ if (typeof module !== "undefined") module.exports = Engine;
     const t = ev.target;
     if (t.dataset.f) { S.filters[t.dataset.f] = t.value; render(); }
     else if (t.dataset.cf) { S.closeForm[t.dataset.cf] = t.value; if (t.dataset.cf === "name") render(); }
-    else if (t.dataset.comment) setEdit(t.dataset.comment, { comment: t.value || undefined });
+    else if (t.dataset.comment) setEdit(t.dataset.comment, { comment: t.value.trim() ? t.value : undefined });
   });
   root.addEventListener("change", (ev) => { if (ev.target.dataset.mspick !== undefined) { S.msDate = Number(ev.target.value); render(); } });
-  root.addEventListener("change", (ev) => { if (ev.target.dataset.comment) render(); });
+  // Комментарий: перерисовка после ухода из поля. Если поле покинуто нажатием мыши, перерисовка ждёт завершения нажатия,
+  // иначе кнопка под указателем заменяется до события click и нажатие теряется [Р-72].
+  let pointerDown = false;
+  document.addEventListener("pointerdown", () => { pointerDown = true; }, true);
+  document.addEventListener("pointerup", () => { pointerDown = false; }, true);
+  root.addEventListener("change", (ev) => {
+    if (!ev.target.dataset.comment) return;
+    if (!pointerDown) return render();
+    let done = false;
+    const later = () => { if (done) return; done = true; document.removeEventListener("pointerup", later, true); setTimeout(render, 0); };
+    document.addEventListener("pointerup", later, true);
+    setTimeout(later, 1500);
+  });
   root.addEventListener("toggle", (ev) => { const d = ev.target; if (d.dataset && d.dataset.lane in S.lanes) S.lanes[d.dataset.lane] = d.open; }, true);
   root.addEventListener("keydown", (ev) => {
     const t = ev.target;
@@ -1945,10 +2027,14 @@ if (typeof module !== "undefined") module.exports = Engine;
     if (ev.key === "Escape") {
       if (S.helpOpen) { S.helpOpen = false; render(); const b = document.querySelector('[data-k="help"]'); if (b) b.focus(); return; }
       if (S.agendaOpen) { S.agendaOpen = false; render(); const b = document.querySelector('[data-k="agenda"]'); if (b) b.focus(); return; }
+      if (S.marksOpen) return closeMarks();
+      // Escape в форме закрытия отменяет только форму; в полях ввода карточку не закрывает [Р-72]
+      if (S.closeForm) { S.closeForm = null; render(); const b = document.querySelector('[data-k="st-Закрыто"]'); if (b) b.focus(); return; }
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
       if (S.selected) closePanel();
       return;
     }
-    if (ev.key === "Tab" && (S.agendaOpen || S.helpOpen)) {
+    if (ev.key === "Tab" && (S.agendaOpen || S.helpOpen || S.marksOpen)) {
       const m = document.querySelector(".modal"); if (!m) return;
       const f = [...m.querySelectorAll("button, textarea")], first = f[0], last = f[f.length - 1];
       if (ev.shiftKey && document.activeElement === first) { last.focus(); ev.preventDefault(); }
@@ -1960,11 +2046,11 @@ if (typeof module !== "undefined") module.exports = Engine;
   window.addEventListener("beforeprint", () => { document.documentElement.setAttribute("data-theme", "light"); });
   window.addEventListener("afterprint", () => { document.documentElement.setAttribute("data-theme", theme); });
   // Параметры item, who, sec [Р-66]
-  if (q.has("item")) { const n = q.get("item"); if (SEED.items.some((i) => i.num === n && i.kind !== "section")) S.selected = n; else notices.push("Параметр item не распознан: работа с таким номером не найдена."); }
-  if (q.has("who") && !orgKey) { const w = q.get("who"); if (OWNER_F[w]) S.filters.owner = w; else notices.push("Параметр who не распознан, отбор по участнику не применён."); }
+  if (q.has("item")) { const n = q.get("item"); if (SEED.items.some((i) => i.num === n)) S.selected = n; else notices.push("Параметр item не распознан: работа с таким номером не найдена."); }
+  if (q.has("who") && !orgKey) { const w = q.get("who"); if (own(OWNER_F, w)) S.filters.owner = w; else notices.push("Параметр who не распознан, отбор по участнику не применён."); }
   if (q.has("sec")) { const c = q.get("sec"); if (["1", "2.1", "2.2", "3"].includes(c)) S.filters.section = c; else notices.push("Параметр sec не распознан, отбор по разделу не применён."); }
   let rz = 0;
-  window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ((view === "summary" || view === "milestones") && !S.agendaOpen) render(); }, 150); });
+  window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ((view === "summary" || view === "milestones") && !S.agendaOpen && !S.marksOpen) render(); }, 150); });
 
   if (!SEED || !Array.isArray(SEED.items) || !SEED.items.length) { root.innerHTML = `<div class="empty" role="alert"><p>Данные План-графика не загружены. Страница не может построить отображение. Обратитесь к руководителю проекта.</p></div>`; return; }
   render();
