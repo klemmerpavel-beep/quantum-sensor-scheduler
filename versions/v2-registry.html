@@ -96,12 +96,15 @@ header.top {
 .bt { display: grid; line-height: var(--lh-tight); }
 .bt b { font-size: var(--fs-16); font-weight: 600; letter-spacing: 0.04em; padding-bottom: 3px; border-bottom: 1px solid var(--border-strong); justify-self: stretch; }
 .bt .sub { font-size: var(--fs-12); color: var(--text-2); padding-top: 3px; }
-.tabs { display: flex; align-items: stretch; gap: var(--sp-1); }
+.tabs { display: flex; align-items: stretch; gap: var(--sp-1); flex: 0 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs.more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+.brand, .tab { flex: none; }
 .tab {
   position: relative; padding: 0 var(--sp-3); border: 0; background: transparent;
   color: var(--text-2); font-weight: 500; white-space: nowrap; transition: color var(--dur);
 }
-.tab::after { content: ""; position: absolute; left: var(--sp-3); right: var(--sp-3); bottom: -1px; height: 2px; border-radius: 2px 2px 0 0; background: transparent; }
+.tab::after { content: ""; position: absolute; left: var(--sp-3); right: var(--sp-3); bottom: 0; height: 2px; border-radius: 2px 2px 0 0; background: transparent; }
 .tab:hover { color: var(--text-1); }
 .tab[aria-selected="true"] { color: var(--accent); font-weight: 600; }
 .tab[aria-selected="true"]::after { background: var(--accent); }
@@ -163,7 +166,9 @@ header.top {
 .st-note { font-weight: 400; color: var(--text-3); font-size: var(--fs-12); margin-left: var(--sp-0); white-space: nowrap; }
 .due-t { color: var(--text-2); white-space: nowrap; }
 .due-t.bad, .bad-t { color: var(--b-overdue-fg); font-weight: 500; }
-.due-t.warn { color: var(--b-action-fg); font-weight: 500; }
+.due-t.warn, .warn-t { color: var(--b-action-fg); font-weight: 500; }
+.note.warnnote { color: var(--b-action-fg); }
+.a-m .due-t { white-space: normal; }
 .tag { display: inline-flex; align-items: center; height: 22px; padding: 0 var(--sp-2); border-radius: 11px; background: var(--accent-soft); color: var(--accent); font-size: var(--fs-12); font-weight: 500; white-space: nowrap; }
 .pill { display: inline-flex; align-items: center; height: 24px; padding: 0 var(--sp-2h); border-radius: 12px; font-size: var(--fs-12); font-weight: 600; white-space: nowrap; }
 .pill.eroding { background: var(--b-action-bg); color: var(--b-action-fg); }
@@ -250,6 +255,7 @@ header.top {
 .srow .t { font-weight: 500; }
 .srow .n { color: var(--text-2); font-size: var(--fs-13); white-space: nowrap; }
 .srow .prog { grid-column: 1 / -1; }
+.srow .nx { grid-column: 1 / -1; font-size: var(--fs-13); margin-top: calc(-1 * var(--sp-1h)); }
 .card > .slist { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-1) var(--sp-5); }
 .prog { display: block; height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; }
 .prog i { display: block; height: 100%; background: var(--st-closed); border-radius: 3px; }
@@ -281,6 +287,8 @@ header.top {
 .stl-bar i { display: block; border-radius: 2px; }
 .stl-bar i.closed { background: var(--st-closed); }
 .stl-bar i.overdue { background: var(--st-overdue); }
+/* Срок прошёл после даты отметок, выполнение не подтверждено [Р-74] */
+.stl-bar i.unconf, .lg.unconf-s { background: repeating-linear-gradient(45deg, var(--st-action) 0 2px, transparent 2px 6px); box-shadow: inset 0 0 0 1px var(--st-action); }
 .stl-bar i.open { background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--border-strong); }
 .stl-bar b { font-size: var(--fs-12); font-weight: 600; color: var(--text-2); text-align: center; line-height: 1; margin-top: var(--sp-0); }
 .stl-ms { position: absolute; top: 106px; width: 14px; height: 14px; margin-left: -7px; transform: rotate(45deg); background: var(--surface); border: 2px solid var(--text-1); z-index: 1; }
@@ -308,6 +316,8 @@ header.top {
 .step.done .dot { background: var(--st-closed); border-color: var(--st-closed); color: var(--surface); }
 .step.late .dot { background: var(--st-overdue); border-color: var(--st-overdue); color: var(--surface); }
 .step.soon .dot { border-color: var(--st-action); color: var(--b-action-fg); }
+.step.unconf .dot { border-color: var(--st-action); border-style: dashed; color: var(--b-action-fg); }
+.step.unconf .d { color: var(--b-action-fg); }
 .step .lbl { padding: 0 var(--sp-1); hyphens: auto; margin-top: var(--sp-1); font-size: var(--fs-13); font-weight: 500; line-height: var(--lh-snug); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .step .d { font-size: var(--fs-12); color: var(--text-2); }
 .step.late .d { color: var(--b-overdue-fg); font-weight: 500; }
@@ -347,7 +357,7 @@ table.gantt { border-collapse: separate; border-spacing: 0; table-layout: fixed;
 .gantt tr.sec td { background: var(--surface-2); font-weight: 600; border-bottom-color: var(--border); }
 .gantt tr.grp td:first-child { font-weight: 500; }
 .gantt td.secsum { font-weight: 400; font-size: var(--fs-12); color: var(--text-2); }
-.secsum .ss { margin-right: var(--sp-3); }
+.secsum .ss, .secsum .bad-t { margin-right: var(--sp-3); }
 .gantt tr.sel td { background: var(--accent-soft); }
 .gantt tr:focus-visible { outline-offset: -2px; }
 .gantt td.own { color: var(--text-2); }
@@ -384,6 +394,8 @@ table.gantt { border-collapse: separate; border-spacing: 0; table-layout: fixed;
 .bar.group.closed { background: var(--st-closed); }
 .bar.group .gp { position: absolute; left: 0; top: 0; bottom: 0; background: var(--st-closed); border-radius: 3px; }
 .secspan { position: absolute; top: 50%; height: 2px; margin-top: -1px; background: var(--border-strong); }
+.od.unc { background: repeating-linear-gradient(45deg, var(--st-action) 0 2px, transparent 2px 6px); border-color: var(--st-action); }
+.lg.unconf { background: repeating-linear-gradient(45deg, var(--st-action) 0 2px, transparent 2px 6px); border: 1px solid var(--st-action); }
 .od { position: absolute; top: 50%; height: 12px; margin-top: -6px; background: repeating-linear-gradient(45deg, var(--st-overdue) 0 2px, transparent 2px 6px); border: 1px solid var(--st-overdue); border-radius: 0 3px 3px 0; }
 .ctl { position: absolute; top: 50%; width: 2px; height: 20px; margin-top: -10px; background: var(--text-1); }
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) var(--sp-4); font-size: var(--fs-12); color: var(--text-2); }
@@ -442,7 +454,8 @@ button.frow:hover { background: var(--surface-2); }
 .frow .d { color: var(--text-2); }
 .frow .dw { font-size: var(--fs-13); }
 .frow .stc { display: flex; flex-wrap: wrap; gap: var(--sp-0) var(--sp-2); align-items: center; font-size: var(--fs-13); }
-.frow .stc .due-t { white-space: normal; font-size: var(--fs-12); }
+.frow .stc .due-t, .frow .dw .due-t { white-space: normal; }
+.frow .stc .due-t { font-size: var(--fs-12); }
 
 /* ── Статусы (доска) */
 .board { flex: 1; min-height: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(176px, 1fr); gap: var(--sp-2h); padding: var(--sp-4); overflow-x: auto; }
@@ -462,6 +475,7 @@ button.frow:hover { background: var(--surface-2); }
 .bcard .r { display: flex; gap: var(--sp-1) var(--sp-2); flex-wrap: wrap; align-items: center; font-size: var(--fs-12); color: var(--text-2); }
 .bcard .st-note { margin: 0; white-space: normal; }
 .bcard.late { box-shadow: inset 3px 0 0 var(--st-overdue), var(--shadow-1); }
+.bcard.unc { box-shadow: inset 3px 0 0 var(--st-action), var(--shadow-1); }
 
 /* ── Вехи */
 .list { list-style: none; margin: 0; padding: 0; }
@@ -486,6 +500,7 @@ button.lrow:hover { background: var(--surface-2); }
 .ms-cl i { display: block; height: 8px; border-radius: 2px; }
 .ms-cl i.closed { background: var(--st-closed); } .ms-cl i.progress { background: var(--st-progress); } .ms-cl i.action { background: var(--st-action); }
 .ms-cl i.future { background: var(--surface-3); border: 1px solid var(--border-strong); } .ms-cl i.overdue { background: var(--st-overdue); }
+.ms-cl i.unconf { background: repeating-linear-gradient(45deg, var(--st-action) 0 2px, transparent 2px 6px); border: 1px solid var(--st-action); }
 .ms-cl[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 3px; }
 .ms-cn { position: absolute; font-size: var(--fs-12); font-weight: 600; transform: translateX(-50%); white-space: nowrap; color: var(--text-2); }
 .ms-today { position: absolute; top: 0; height: 150px; width: 2px; margin-left: -1px; background: var(--accent); z-index: 2; }
@@ -505,6 +520,8 @@ button.lrow:hover { background: var(--surface-2); }
 .mrow .mt { display: grid; gap: var(--sp-0); font-weight: 500; }
 .mrow .mw { font-weight: 400; font-size: var(--fs-12); color: var(--text-3); }
 .mrow .mr { font-size: var(--fs-13); color: var(--text-2); text-align: right; }
+.mrow .mrx { display: block; }
+.mrow .mrx > span { white-space: nowrap; }
 .mrow.past { color: var(--text-2); }
 .mrow.next { background: var(--accent-soft); }
 .mrow.next .mw { color: var(--accent); font-weight: 600; }
@@ -578,12 +595,8 @@ footer.foot { padding: var(--sp-3) var(--sp-5); color: var(--text-3); font-size:
   header.top { gap: var(--sp-3); padding: 0 var(--sp-3); }
   .today { display: none; }
   .hero .asof { display: block; }
-  .tab { padding: 0 var(--sp-2h); flex: none; }
-  .tab::after { left: 12px; right: 12px; bottom: 0; }
-  .brand { flex: none; }
-  .tabs { flex: 0 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tabs.more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+  .tab { padding: 0 var(--sp-2h); }
+  .tab::after { left: 12px; right: 12px; }
   .kpis:not(.col) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .kpis:not(.col) > * { grid-column: span 2; }
   .kpis:not(.col) > :nth-child(n+4):nth-last-child(-n+2) { grid-column: span 3; }
@@ -951,6 +964,8 @@ const Engine = (() => {
    */
   function build(seed, cfg, edits, T) {
     const cal = calendar(cfg.HOLIDAYS);
+    // Дата отметок «Важного» [Р-74]: о работах со сроком после неё данные о выполнении отсутствуют
+    const ED = seed.project && seed.project.demo_today ? dn(seed.project.demo_today) : null;
     const items = seed.items.map((s, idx) => ({
       s, idx, num: s.num, kind: s.kind, level: s.level, parent: s.parent, name: s.name,
       owners: s.owners, start: dn(s.start), due: dn(s.due), dueCust: dn(s.due_to_customer),
@@ -996,8 +1011,13 @@ const Engine = (() => {
       i.cls = CLS[i.status];
       i.closed = i.status === "Закрыто";
       i.remain = i.due - T;
-      i.overdue = !i.closed && i.due < T;
+      // Срок прошёл после даты отметок, а отметка взята из данных — выполнение не подтверждено [Р-74].
+      // Отметка пользователя (в том числе статус группы, унаследованный подпозицией) считается подтверждением.
+      const userMark = i.src === "edit" || (i.src === "inherited" && by[i.inheritedFrom].src === "edit");
+      i.unconf = !i.closed && i.due < T && ED != null && T > ED && i.due >= ED && !userMark;
+      i.overdue = !i.closed && i.due < T && !i.unconf;
       i.overdueDays = i.overdue ? T - i.due : 0;
+      i.lapsedDays = i.unconf ? T - i.due : 0;
       i.soon = !i.closed && i.remain >= 0 && i.remain <= 7;
       i.ctrlPassed = !i.closed && i.ctrl != null && i.ctrl < T;
       i.ctrlDays = i.ctrlPassed ? T - i.ctrl : 0;
@@ -1014,6 +1034,7 @@ const Engine = (() => {
       if (g.kind !== "group") return;
       g.progress = { closed: g.children.filter((c) => c.closed).length, total: g.children.length };
       g.overdueSubs = g.children.filter((c) => c.overdue && !c.inBase).map((c) => c.num);
+      g.unconfSubs = g.children.filter((c) => c.unconf && !c.inBase).map((c) => c.num);
     });
 
     const work = items.filter((i) => i.kind !== "section");
@@ -1028,6 +1049,7 @@ const Engine = (() => {
       reached: reached.length,
       reachedClosed: reached.filter((i) => i.closed).length,
       overdue: base.filter((i) => i.overdue).length,
+      unconf: base.filter((i) => i.unconf).length,
       early: base.filter((i) => i.closed && i.due >= T).length,
       ctrlPassed: base.filter((i) => i.ctrlPassed).length,
       active: base.filter((i) => ACTIVE.has(i.status)).length,
@@ -1041,7 +1063,7 @@ const Engine = (() => {
     const sectionOf = (i) => { const p = i.num.split("."); return p[0] === "2" ? p.slice(0, 2).join(".") : p[0]; };
     const sections = ["1", "2.1", "2.2", "3"].map((sn) => {
       const list = base.filter((i) => sectionOf(i) === sn);
-      return { num: sn, name: by[sn].name, total: list.length, closed: list.filter((i) => i.closed).length, overdue: list.filter((i) => i.overdue).length };
+      return { num: sn, name: by[sn].name, total: list.length, closed: list.filter((i) => i.closed).length, overdue: list.filter((i) => i.overdue).length, unconf: list.filter((i) => i.unconf).length };
     });
 
     // Окна цепочки [Р-47, SPEC 4.7]
@@ -1097,16 +1119,17 @@ const Engine = (() => {
       open.filter((i) => inChain(i) && i.overdue).sort((a, b) => b.overdueDays - a.overdueDays || ord(a, b)).map((i) => [i, "chain-overdue"]),
       open.filter((i) => inChain(i) && i.soon).sort((a, b) => a.remain - b.remain || ord(a, b)).map((i) => [i, "chain-soon"]),
       open.filter((i) => !inChain(i) && i.inBase && i.overdue).sort((a, b) => b.overdueDays - a.overdueDays || ord(a, b)).map((i) => [i, "overdue"]),
+      open.filter((i) => i.inBase && i.unconf).sort((a, b) => a.due - b.due || ord(a, b)).map((i) => [i, "unconf"]),
       open.filter((i) => !inChain(i) && i.inBase && i.ctrlPassed).sort((a, b) => b.ctrlDays - a.ctrlDays || ord(a, b)).map((i) => [i, "ctrl"]),
       open.filter((i) => !inChain(i) && i.inBase && i.soon).sort((a, b) => a.remain - b.remain || ord(a, b)).map((i) => [i, "soon"]),
     ];
     const seen = new Set(), top5 = [];
     cats.flat().forEach(([i, why]) => { if (top5.length < 5 && !seen.has(i.num)) { seen.add(i.num); top5.push({ item: i, why }); } });
 
-    return { items, by, work, base, kpi, sections, chainNums, chainSet, chainWindows, feeder, chainState, F, cal, T, top5 };
+    return { items, by, work, base, kpi, sections, chainNums, chainSet, chainWindows, feeder, chainState, F, cal, T, ED, top5 };
   }
 
-  /** Текст повестки [SPEC 6, Р-33, Р-50]. */
+  /** Текст повестки [SPEC 6, Р-33, Р-50, Р-74]. */
   function agenda(M) {
     const line = (i) => {
       let c = i.comment || i.s.status_mark || "";
@@ -1118,19 +1141,27 @@ const Engine = (() => {
     const base = M.base.filter((i) => !i.closed);
     const groupWithSubs = (i) => i.kind === "group" && i.overdueSubs.length;
     const s1 = base.filter((i) => i.overdue || groupWithSubs(i));
-    const s2 = base.filter((i) => !s1.includes(i) && i.ctrlPassed);
-    const s3 = base.filter((i) => !s1.includes(i) && !s2.includes(i) && i.remain >= 0 && i.remain <= 14);
+    const su = base.filter((i) => !s1.includes(i) && i.unconf);
+    const s2 = base.filter((i) => !s1.includes(i) && !su.includes(i) && i.ctrlPassed);
+    const s3 = base.filter((i) => !s1.includes(i) && !su.includes(i) && !s2.includes(i) && i.remain >= 0 && i.remain <= 14);
+    // Раздел «Подтвердить выполнение» — только при расчёте на дату позже даты отметок [Р-74]
+    const late = M.ED != null && M.T > M.ED;
+    const sections = [
+      { key: "overdue", title: "Просрочено", list: s1 },
+      ...(late ? [{ key: "unconf", title: `Срок прошёл после ${fmt(M.ED)} — подтвердить выполнение`, list: su }] : []),
+      { key: "ctrl", title: "Контрольная дата прошла", list: s2 },
+      { key: "soon", title: "Срок в ближайшие 14 дней", list: s3 },
+    ];
+    const ROMAN = ["I", "II", "III", "IV"];
+    sections.forEach((x, k) => { x.head = `${ROMAN[k]}. ${x.title}`; });
     const out = [`Повестка оперативки по этапу 1 ОКР «ЯМГ-ИИМ» на ${fmt(M.T)}`, ""];
-    const sec = (title, list) => {
-      out.push(title);
-      if (!list.length) out.push("— позиций нет");
-      list.forEach((i, k) => out.push(`${k + 1}. ${line(i)}`));
+    sections.forEach((x) => {
+      out.push(x.head);
+      if (!x.list.length) out.push("— позиций нет");
+      x.list.forEach((i, k) => out.push(`${k + 1}. ${line(i)}`));
       out.push("");
-    };
-    sec("I. Просрочено", s1);
-    sec("II. Контрольная дата прошла", s2);
-    sec("III. Срок в ближайшие 14 дней", s3);
-    return { text: out.join("\n").trim(), counts: [s1.length, s2.length, s3.length], lists: [s1, s2, s3] };
+    });
+    return { text: out.join("\n").trim(), sections, counts: [s1.length, s2.length, s3.length], lists: [s1, s2, s3], unconf: su };
   }
 
   /**
@@ -1283,12 +1314,15 @@ if (typeof module !== "undefined") module.exports = Engine;
     if (withNote && i.src === "inherited") note = "по группе";
     else if (withNote && i.src === "derived") note = "расчётный";
     if (withNote && i.closed && i.noReq) note = "без документа";
+    if (withNote && i.unconf && EDITION != null) note = `на ${fmt(EDITION).slice(0, 5)}`;
     return `<span class="st st-${i.cls}"><i aria-hidden="true"></i>${esc(i.status)}${note ? `<span class="st-note">· ${note}</span>` : ""}</span>`;
   };
   /** Срок словами: «просрочено на 13 дней», «через 2 дня», «выполнено 04.09.2026». */
   const dueWords = (i, compact) => {
     if (i.closed) return compact ? "" : i.closeDate != null ? `<span class="due-t">выполнено ${fmt(i.closeDate)}</span>` : `<span class="due-t">выполнено, дата не указана</span>`;
     if (i.overdue) return `<span class="due-t bad">${compact ? `−${i.overdueDays} дн.` : `просрочено на ${days(i.overdueDays)}`}</span>`;
+    // Срок прошёл после даты отметок — выполнение не подтверждено [Р-74]
+    if (i.unconf) return `<span class="due-t warn" title="Срок прошёл после ${fmt(EDITION)}; отметки о выполнении нет">${compact ? "не подтв." : "срок прошёл, нет подтверждения"}</span>`;
     if (i.remain === 0) return `<span class="due-t warn">срок сегодня</span>`;
     if (i.soon) return `<span class="due-t warn">${compact ? `через ${i.remain} дн.` : `через ${days(i.remain)}`}</span>`;
     return compact ? "" : `<span class="due-t">через ${days(i.remain)}</span>`;
@@ -1383,7 +1417,9 @@ if (typeof module !== "undefined") module.exports = Engine;
   function headline() {
     const k = M.kpi;
     if (M.work.every((i) => i.closed)) return { h: "Все обязательства этапа 1 выполнены", t: "Просроченных и предстоящих работ нет." };
-    const h = k.overdue ? `Этап 1 идёт с отставанием: ${k.overdue} ${pl(k.overdue, "обязательство просрочено", "обязательства просрочены", "обязательств просрочено")}` : "Этап 1 идёт по графику: просроченных обязательств нет";
+    const h = k.overdue ? `Этап 1 идёт с отставанием: ${k.overdue} ${pl(k.overdue, "обязательство просрочено", "обязательства просрочены", "обязательств просрочено")}`
+      : k.unconf ? `Этап 1: по ${k.unconf} ${pl(k.unconf, "обязательству", "обязательствам", "обязательствам")} срок прошёл, выполнение не подтверждено`
+      : "Этап 1 идёт по графику: просроченных обязательств нет";
     let t = `На ${fmt(T)} выполнено ${k.closed} из ${k.base} обязательств перед Заказчиком.`;
     if (k.toDemo > 0) t += ` До демонстрации лабораторного образца — ${wdays(k.toDemoWd)}.`;
     const w = M.chainWindows.find((x) => x.state === "breach") || M.chainWindows.find((x) => x.state === "eroding");
@@ -1397,7 +1433,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     return [
       tile("closed", "Выполнено", `${k.closed}<small> из ${k.base}</small>`, `${k.pct} %${k.noReq ? ` · ${k.noReq} без документа` : ""}`, "go-board"),
       tile("plan", "План на сегодня", `${k.reachedClosed}<small> из ${k.reached}</small>`, k.early ? `ещё ${k.early} — досрочно` : "", "go-overdue"),
-      tile("overdue", "Просрочено", `${k.overdue}`, "", "go-overdue", k.overdue ? "bad" : ""),
+      tile("overdue", "Просрочено", `${k.overdue}`, k.unconf ? `ещё ${k.unconf} — срок прошёл, нет подтверждения` : "", "go-overdue", k.overdue ? "bad" : ""),
       tile("demo", "До демонстрации образца", k.toDemo >= 0 ? `${k.toDemoWd}<small> ${pl(k.toDemoWd, "рабочий день", "рабочих дня", "рабочих дней")}</small>` : `<small>прошла</small>`, "30.11.2026", "go-chain"),
       tile("end", "До окончания этапа", k.toEnd >= 0 ? `${k.toEnd}<small> ${pl(k.toEnd, "день", "дня", "дней")}</small>` : `<small>этап завершён</small>`, "30.12.2026", "go-ms"),
     ].join("");
@@ -1407,8 +1443,8 @@ if (typeof module !== "undefined") module.exports = Engine;
     const weeks = new Map();
     M.base.forEach((i) => {
       const wd = (new Date(i.due * 86400000).getUTCDay() + 6) % 7, wk = i.due - wd;
-      const w = weeks.get(wk) || { closed: 0, overdue: 0, open: 0, list: [] };
-      w[i.closed ? "closed" : i.overdue ? "overdue" : "open"]++; w.list.push(title(i)); weeks.set(wk, w);
+      const w = weeks.get(wk) || { closed: 0, overdue: 0, unconf: 0, open: 0, list: [] };
+      w[i.closed ? "closed" : i.overdue ? "overdue" : i.unconf ? "unconf" : "open"]++; w.list.push(title(i)); weeks.set(wk, w);
     });
     const max = Math.max(1, ...[...weeks.values()].map((w) => w.list.length));
     const seg = Math.max(4, Math.min(10, Math.floor(96 / max) - 2));
@@ -1416,7 +1452,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     monthStarts().forEach((m) => { h += `<span class="stl-grid" style="left:${xp(m.n)}%"></span>` + (xp(m.n) < 97 ? `<span class="stl-month" style="left:${xp(m.n)}%">${m.label}</span>` : ""); });
     weeks.forEach((w, wk) => {
       const segs = [];
-      ["closed", "overdue", "open"].forEach((c) => { for (let k = 0; k < w[c]; k++) segs.push(`<i class="${c}" style="height:${seg}px"></i>`); });
+      ["closed", "overdue", "unconf", "open"].forEach((c) => { for (let k = 0; k < w[c]; k++) segs.push(`<i class="${c}" style="height:${seg}px"></i>`); });
       h += `<span class="stl-bar" style="left:${xp(wk)}%;width:calc(${xp(wk + 7) - xp(wk)}% - 6px)" title="Неделя с ${fmt(wk)}: ${w.list.length} — ${esc(w.list.join("; "))}">${segs.join("")}${w.list.length >= 3 ? `<b>${w.list.length}</b>` : ""}</span>`;
     });
     h += `<div class="stl-axis"></div>`;
@@ -1424,18 +1460,18 @@ if (typeof module !== "undefined") module.exports = Engine;
     MS.forEach((m) => { h += `<span class="stl-ms${m.n < T ? " past" : ""}" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(m.title)}"></span>`; });
     h += lb.html;
     if (T >= D0 && T <= D1) h += `<div class="stl-today" style="left:${xp(T)}%"><span>сегодня</span></div>`;
-    h += `</div></div><div class="legend stl-leg" aria-hidden="true"><span><i class="lg closed"></i>выполнено</span><span><i class="lg overdue-s"></i>просрочено</span><span><i class="lg future"></i>предстоит</span><span><i class="lg ms"></i>веха</span></div>`;
+    h += `</div></div><div class="legend stl-leg" aria-hidden="true"><span><i class="lg closed"></i>выполнено</span><span><i class="lg overdue-s"></i>просрочено</span>${M.kpi.unconf ? `<span><i class="lg unconf-s"></i>срок прошёл, нет подтверждения</span>` : ""}<span><i class="lg future"></i>предстоит</span><span><i class="lg ms"></i>веха</span></div>`;
     return `<style>.stl{height:${150 + lb.lanes * 22 + 4}px}</style>` + h;
   }
   /** Исполнитель, соисполнители и Заказчик: кто за что отвечает [Р-61]. */
   function ownersBlock() {
     const row = (key, name, role, l, nextWord) => {
       if (!l.length) return "";
-      const cl = l.filter((i) => i.closed).length, od = l.filter((i) => i.overdue).length;
+      const cl = l.filter((i) => i.closed).length, od = l.filter((i) => i.overdue).length, un = l.filter((i) => i.unconf).length;
       const nx = l.filter((i) => !i.closed && i.due >= T).sort((a, b) => a.due - b.due || a.idx - b.idx)[0];
       const old = l.filter((i) => i.overdue).sort((a, b) => a.due - b.due || a.idx - b.idx)[0];
       return `<li><button class="orow${key === "ep" ? " main" : ""}" data-act="go-owner" data-owner="${key}" data-k="own-${key}">
-        <span class="t">${esc(name)}<span class="role">${role}</span></span><span class="n">выполнено ${cl} из ${l.length}${od ? ` · <span class="bad-t">просрочено ${od}</span>` : ""}</span>
+        <span class="t">${esc(name)}<span class="role">${role}</span></span><span class="n">выполнено ${cl} из ${l.length}${od ? ` · <span class="bad-t">просрочено ${od}</span>` : ""}${un ? ` · <span class="warn-t">без подтверждения ${un}</span>` : ""}</span>
         <span class="prog" role="img" aria-label="Выполнено ${cl} из ${l.length}"><i style="width:${(cl / l.length) * 100}%"></i></span>
         <span class="nx" title="${esc(nx ? `${nextWord} ${fmt(nx.due)} — ${title(nx)}` : old ? `дольше всех просрочено — ${title(old)} (срок ${fmt(old.due)})` : "")}">${nx ? `${nextWord} <span class="mono">${fmt(nx.due)}</span> — ${esc(title(nx))}` : old ? `предстоящих сроков нет; дольше всех просрочено — ${esc(title(old))} (срок <span class="mono">${fmt(old.due)}</span>)` : "открытых обязательств нет"}</span></button></li>`;
     };
@@ -1449,6 +1485,7 @@ if (typeof module !== "undefined") module.exports = Engine;
   const reason = (t) => {
     const i = t.item;
     if (t.why === "chain-overdue" || t.why === "overdue") return `<span class="due-t bad">Просрочено на ${days(i.overdueDays)}</span>`;
+    if (t.why === "unconf") return `<span class="due-t warn">Срок прошёл ${days(i.lapsedDays)} назад, нет подтверждения</span>`;
     if (t.why === "ctrl") return `<span class="due-t warn">Контрольная дата прошла ${days(i.ctrlDays)} назад</span>`;
     return `<span class="due-t warn">Срок ${i.remain === 0 ? "сегодня" : `через ${days(i.remain)}`}</span>`;
   };
@@ -1460,17 +1497,17 @@ if (typeof module !== "undefined") module.exports = Engine;
   }
   function sectionsBlock() {
     return `<ul class="slist">${M.sections.map((s) => `<li><button class="srow" data-act="go-section" data-sec="${s.num}" data-k="sec-${s.num}">
-      <span class="t">${esc(C.SHORT[s.num] || s.name)}</span><span class="n">${s.closed} из ${s.total}${s.overdue ? ` · <span class="bad-t">просрочено ${s.overdue}</span>` : ""}</span>
+      <span class="t">${esc(C.SHORT[s.num] || s.name)}</span><span class="n">${s.closed} из ${s.total}</span>${s.overdue || s.unconf ? `<span class="nx">${[s.overdue ? `<span class="bad-t">просрочено ${s.overdue}</span>` : "", s.unconf ? `<span class="warn-t">без подтверждения ${s.unconf}</span>` : ""].filter(Boolean).join(" · ")}</span>` : ""}
       <span class="prog" role="img" aria-label="Выполнено ${s.closed} из ${s.total}"><i style="width:${s.total ? (s.closed / s.total) * 100 : 0}%"></i></span></button></li>`).join("")}</ul>`;
   }
-  const stepState = (i) => (i.closed ? "done" : i.overdue ? "late" : i.soon ? "soon" : "plan");
-  const stepWord = { done: "выполнено", late: "просрочено", soon: "срок близко", plan: "по плану" };
+  const stepState = (i) => (i.closed ? "done" : i.overdue ? "late" : i.unconf ? "unconf" : i.soon ? "soon" : "plan");
+  const stepWord = { done: "выполнено", late: "просрочено", unconf: "нет подтверждения", soon: "срок близко", plan: "по плану" };
   function pathSteps(big, vert) {
     const steps = M.chainNums.map((n, k) => {
       const i = M.by[n], st = stepState(i), w = M.chainWindows[k - 1];
       if (vert) {
         const link = w ? `<span class="link ${w.state}" aria-hidden="true"></span>` : "";
-        const word = st === "late" ? `просрочено на ${days(i.overdueDays)}` : st === "soon" ? (i.remain === 0 ? "срок сегодня" : `через ${days(i.remain)}`) : stepWord[st];
+        const word = st === "late" ? `просрочено на ${days(i.overdueDays)}` : st === "unconf" ? "срок прошёл, нет подтверждения" : st === "soon" ? (i.remain === 0 ? "срок сегодня" : `через ${days(i.remain)}`) : stepWord[st];
         return `<li class="step ${st}">${link}<button class="dot" data-open="${n}" data-k="cn-${n}" aria-label="${esc(title(i))}: ${word}, срок ${fmt(i.due)}">${st === "done" ? ico("check") : st === "late" ? "!" : k + 1}</button>
         <span class="lbl" title="${nameAttr(i)}">${esc(title(i))}</span>
         <span class="d" title="${esc(`${fmt(i.due)} · ${word} · ${ownersText(i)}`)}"><span class="mono">${fmt(i.due)}</span> · ${word} · ${esc(ownersText(i))}</span></li>`;
@@ -1490,6 +1527,8 @@ if (typeof module !== "undefined") module.exports = Engine;
     if (br.length > 2) { const w = br.reduce((a, x) => (depth(x) > depth(a) ? x : a)); notes.push(`Срыв на ${br.length} переходах; наибольший — перед этапом «${title(M.by[w.to])}»: ${wdays(depth(w))}.`); }
     else br.forEach((w) => notes.push(`Срыв перед этапом «${title(M.by[w.to])}»: ${wdays(depth(w))}.`));
     all.filter((w) => w.state === "eroding").forEach((w) => notes.push(`Резерв перед этапом «${title(M.by[w.to])}»: осталось ${w.R} из ${wdays(w.P)}${w.breachFrom ? `; если «${title(M.by[w.from])}» не закрыть, срыв с ${fmt(w.breachFrom)}` : ""}.`));
+    // Расчёт после даты отметок исходит из того, что открытые на эту дату работы не закрыты [Р-74]
+    if (notes.length && M.ED != null && T > M.ED) notes.push(`Оценка — по отметкам на ${fmt(M.ED)}: работы, не закрытые на эту дату, считаются незакрытыми.`);
     if (!notes.length) return "";
     return `<ul class="pnotes">${notes.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`;
   }
@@ -1533,7 +1572,7 @@ if (typeof module !== "undefined") module.exports = Engine;
   // ── ГРАФИК РАБОТ (Гант)
   function ganttRows() {
     const vis = new Set();
-    const pass = (i) => i.kind !== "section" && matchesFilters(i) && (S.slice === "all" || (S.slice === "overdue" && i.overdue) || (S.slice === "chain" && M.chainSet.has(i.num)));
+    const pass = (i) => i.kind !== "section" && matchesFilters(i) && (S.slice === "all" || (S.slice === "overdue" && (i.overdue || i.unconf)) || (S.slice === "chain" && M.chainSet.has(i.num)));
     const filtering = anyFilter() || S.slice !== "all" || orgKey;
     M.items.forEach((i) => { if (filtering ? pass(i) : true) { vis.add(i.num); let p = i.parent; while (p) { vis.add(p); p = M.by[p].parent; } } });
     const hidden = (i) => { let p = i.parent; while (p) { if (S.collapsed.has(p)) return true; p = M.by[p].parent; } return false; };
@@ -1559,22 +1598,22 @@ if (typeof module !== "undefined") module.exports = Engine;
     if (g) h += `<span class="gp" style="width:${i.progress.total ? (i.progress.closed / i.progress.total) * 100 : 0}%"></span>`;
     if (i.closed) h += `<span class="ok">${ico("check")}</span>`;
     h += `</span>`;
-    if (i.overdue) h += `<span class="od" style="left:${r}%;width:${Math.max(xp(T) - r, 0.3)}%"></span>`;
+    if (i.overdue || i.unconf) h += `<span class="od${i.unconf ? " unc" : ""}" style="left:${r}%;width:${Math.max(xp(T) - r, 0.3)}%"></span>`;
     if (i.ctrl != null && !i.closed) h += `<span class="ctl" style="left:${xp(i.ctrl)}%"></span>`;
     return h;
   }
-  const ganttSr = (i) => (i.kind === "section" ? `Раздел, до ${fmt(i.due)}` : `Срок ${fmt(i.due)}; ${i.closed ? "выполнено" : i.overdue ? `просрочено на ${days(i.overdueDays)}` : `через ${days(i.remain)}`}${showChain && M.chainSet.has(i.num) ? "; на пути к демонстрации образца" : ""}`);
+  const ganttSr = (i) => (i.kind === "section" ? `Раздел, до ${fmt(i.due)}` : `Срок ${fmt(i.due)}; ${i.closed ? "выполнено" : i.overdue ? `просрочено на ${days(i.overdueDays)}` : i.unconf ? "срок прошёл, выполнение не подтверждено" : `через ${days(i.remain)}`}${showChain && M.chainSet.has(i.num) ? "; на пути к демонстрации образца" : ""}`);
   /** Итог раздела: выполнено и просрочено по обязательствам перед Заказчиком. */
   function secSum(num) {
     const l = M.base.filter((i) => (num === "2" ? sectionOf(i.num).startsWith("2.") : sectionOf(i.num) === num) && matchesFilters(i));
     if (!l.length) return "";
-    const c = l.filter((i) => i.closed).length, o = l.filter((i) => i.overdue).length;
-    return `<span class="ss">выполнено ${c} из ${l.length}</span>${o ? `<span class="bad-t">просрочено ${o}</span>` : ""}`;
+    const c = l.filter((i) => i.closed).length, o = l.filter((i) => i.overdue).length, u = l.filter((i) => i.unconf).length;
+    return `<span class="ss">выполнено ${c} из ${l.length}</span>${o ? `<span class="bad-t">просрочено ${o}</span>` : ""}${u ? `<span class="warn-t">без подтверждения ${u}</span>` : ""}`;
   }
   function viewGantt() {
     const rows = ganttRows();
-    const nSl = { all: M.work.filter((i) => matchesFilters(i)).length, overdue: M.work.filter((i) => i.overdue && matchesFilters(i)).length, chain: M.chainNums.length };
-    const seg = `<div class="seg" role="group" aria-label="Показать">${[["all", "Все работы"], ["overdue", "Просроченные"]].concat(showChain ? [["chain", "Путь к демонстрации"]] : []).map(([k, t]) => `<button aria-pressed="${S.slice === k}" data-slice="${k}" data-k="sl-${k}">${t}<span class="sc${k === "overdue" && nSl.overdue ? " bad" : ""}">${nSl[k]}</span></button>`).join("")}</div>
+    const nSl = { all: M.work.filter((i) => matchesFilters(i)).length, overdue: M.work.filter((i) => (i.overdue || i.unconf) && matchesFilters(i)).length, chain: M.chainNums.length };
+    const seg = `<div class="seg" role="group" aria-label="Показать">${[["all", "Все работы"], ["overdue", M.work.some((i) => i.unconf) ? "Срок прошёл" : "Просроченные"]].concat(showChain ? [["chain", "Путь к демонстрации"]] : []).map(([k, t]) => `<button aria-pressed="${S.slice === k}" data-slice="${k}" data-k="sl-${k}">${t}<span class="sc${k === "overdue" && nSl.overdue ? " bad" : ""}">${nSl[k]}</span></button>`).join("")}</div>
       ${S.collapsed.size ? `<button class="btn ghost" data-act="expand-all" data-k="exp-all">Развернуть</button>` : `<button class="btn ghost" data-act="collapse-all" data-k="col-all" title="Свернуть до разделов">Свернуть</button>`}`;
     const has = rows.some((i) => i.kind !== "section");
     let body = "";
@@ -1586,7 +1625,7 @@ if (typeof module !== "undefined") module.exports = Engine;
         <td><div class="nm lv${i.level}">${canCol ? `<button class="chev" data-toggle="${i.num}" aria-expanded="${exp}" aria-label="${exp ? "Свернуть" : "Развернуть"}: ${esc(title(i))}" data-k="tg-${i.num}">${ico("chev")}</button>` : `<span class="chev-sp"></span>`}<span class="t" title="${nameAttr(i)}">${esc(title(i))}</span>${i.kind === "group" && !ctx ? `<span class="cnt">${i.progress.closed}/${i.progress.total}</span>` : ""}</div></td>
         ${sec ? `<td colspan="3" class="secsum">${secSum(i.num)}</td>` : `<td class="own">${ownersCell(i)}</td>
         <td class="due"><span class="mono">${fmt(i.due)}</span>${ctx ? "" : dueWords(i, true)}</td>
-        <td class="stg">${ctx ? "" : status(i)}</td>`}
+        <td class="stg">${ctx ? "" : status(i, !i.unconf)}</td>`}
         <td class="tlcell"><span class="sr">${esc(ganttSr(i))}</span><div aria-hidden="true" class="tlin">${ctx ? "" : barCell(i)}</div></td></tr>`;
     });
     const strip = VARIANT === "registry" && !orgKey ? `<section class="gstrip" aria-label="Ключевые показатели">${kpiTiles()}</section>` : "";
@@ -1595,7 +1634,7 @@ if (typeof module !== "undefined") module.exports = Engine;
         <colgroup><col class="c-name"><col class="c-own"><col class="c-due"><col class="c-st"><col></colgroup>
         <thead><tr><th scope="col">Работа</th><th scope="col">Исполнитель</th><th scope="col">Срок</th><th scope="col">Статус</th><th scope="col" class="tlcell">${ganttAxis()}</th></tr></thead>
         <tbody>${body}</tbody></table></div>${mobileList(rows)}
-      <div class="legend gleg" aria-hidden="true"><span><i class="lg closed"></i>выполнено</span><span><i class="lg progress"></i>в работе</span><span><i class="lg action"></i>требует действия</span><span><i class="lg future"></i>не начато</span><span><i class="lg overdue"></i>просрочено</span><span><i class="lg der"></i>начало — расчётное</span><span><i class="lg ctl"></i>контрольная дата</span>${showChain ? '<span><i class="lg chain"></i>путь к демонстрации</span>' : ""}</div>`;
+      <div class="legend gleg" aria-hidden="true"><span><i class="lg closed"></i>выполнено</span><span><i class="lg progress"></i>в работе</span><span><i class="lg action"></i>требует действия</span><span><i class="lg future"></i>не начато</span><span><i class="lg overdue"></i>просрочено</span>${M.work.some((i) => i.unconf) ? `<span><i class="lg unconf"></i>срок прошёл, нет подтверждения</span>` : ""}<span><i class="lg der"></i>начало — расчётное</span><span><i class="lg ctl"></i>контрольная дата</span>${showChain ? '<span><i class="lg chain"></i>путь к демонстрации</span>' : ""}</div>`;
   }
   function mobileList(rows) {
     const items = rows.filter((i) => i.kind !== "section");
@@ -1616,15 +1655,19 @@ if (typeof module !== "undefined") module.exports = Engine;
     const list = M.work.filter((i) => matchesFilters(i));
     const range = { overdue: "", h14: `до ${fmt(T + 14)}`, h30: `${fmt(T + 15)} – ${fmt(T + 30)}`, h60: `${fmt(T + 31)} – ${fmt(T + 60)}`, later: `после ${fmt(T + 60)}`, closed: "" };
     const off = !orgKey && !anyFilter() ? SEED.off_plan_closed : [];
-    const rowsOf = (k) => list.filter((i) => i.horizon === k).sort((a, b) => a.due - b.due || a.idx - b.idx);
+    // В периоде «просрочено» сначала подтверждённая просрочка, затем работы без подтверждения [Р-74]
+    const rowsOf = (k) => list.filter((i) => i.horizon === k).sort((a, b) => (a.unconf - b.unconf) || a.due - b.due || a.idx - b.idx);
+    const unc = list.filter((i) => i.unconf).length;
     const cnt = Object.fromEntries(LANES.map(([k]) => [k, rowsOf(k).length + (k === "closed" ? off.length : 0)]));
     const ctrl = list.filter((i) => i.ctrlPassed).length;
-    const lead = `На ${fmt(T)}: просрочено ${cnt.overdue}, в ближайшие 14 дней — ${cnt.h14}, в течение месяца — ${cnt.h30}, в течение двух месяцев — ${cnt.h60}.${ctrl ? ` У ${ctrl} ${pl(ctrl, "работы", "работ", "работ")} прошла контрольная дата оперативки.` : ""}${anyFilter() ? " Показаны работы по условиям отбора." : ""}`;
-    const strip = `<nav class="hstrip" aria-label="Периоды">${LANES.map(([k, t]) => `<button class="hz ${k}${k === "overdue" && cnt[k] ? " bad" : k === "h14" && cnt[k] ? " warn" : ""}" data-act="go-lane" data-lane="${k}" data-k="hz-${k}"><span class="lbl">${t}</span><span class="val">${cnt[k]}</span>${range[k] ? `<span class="sub">${range[k]}</span>` : ""}</button>`).join("")}</nav>`;
+    const lanes = LANES.map(([k, t]) => [k, k === "overdue" && unc ? "Срок прошёл" : t]);
+    if (unc) range.overdue = `просрочено ${cnt.overdue - unc} · без подтверждения ${unc}`;
+    const lead = `На ${fmt(T)}: просрочено ${cnt.overdue - unc}${unc ? `, срок прошёл без подтверждения — ${unc}` : ""}, в ближайшие 14 дней — ${cnt.h14}, в течение месяца — ${cnt.h30}, в течение двух месяцев — ${cnt.h60}.${ctrl ? ` У ${ctrl} ${pl(ctrl, "работы", "работ", "работ")} прошла контрольная дата оперативки.` : ""}${anyFilter() ? " Показаны работы по условиям отбора." : ""}`;
+    const strip = `<nav class="hstrip" aria-label="Периоды">${lanes.map(([k, t]) => `<button class="hz ${k}${k === "overdue" && cnt[k] - unc ? " bad" : k === "overdue" && unc ? " warn" : k === "h14" && cnt[k] ? " warn" : ""}" data-act="go-lane" data-lane="${k}" data-k="hz-${k}"><span class="lbl">${t}</span><span class="val">${cnt[k]}</span>${range[k] ? `<span class="sub">${range[k]}</span>` : ""}</button>`).join("")}</nav>`;
     const agendaBtn = readonly ? "" : `<button class="btn primary" data-act="agenda" data-k="agenda">${ico("file")} Повестка оперативки</button>`;
     let h = toolbar(agendaBtn) + `<div class="page">` + pageHead("h-focus", "Ближайшие сроки", esc(lead), strip);
     if (!list.length) return h + emptyFiltered() + `</div>`;
-    LANES.forEach(([k, t]) => {
+    lanes.forEach(([k, t]) => {
       const rows = rowsOf(k), offk = k === "closed" ? off : [];
       const open = k === "later" || k === "closed" ? S.lanes[k] : true;
       h += `<details class="lane ${k}" ${open ? "open" : ""} data-lane="${k}"><summary data-k="lane-${k}"><span class="chev">${ico("chev")}</span>${t}<span class="cnt">${rows.length + offk.length}</span></summary>`;
@@ -1647,17 +1690,17 @@ if (typeof module !== "undefined") module.exports = Engine;
     if (!list.length) return h + `<h1 class="sr">Статусы</h1>` + emptyFiltered();
     const n = (f) => list.filter(f).length;
     const g = { closed: n((i) => i.cls === "closed"), progress: n((i) => i.cls === "progress"), action: n((i) => i.cls === "action"), future: n((i) => i.cls === "future") };
-    const od = n((i) => i.overdue), inh = n((i) => i.src === "inherited");
-    const lead = `${list.length} ${pl(list.length, "работа", "работы", "работ")}: выполнено ${g.closed}, в работе и подготовке ${g.progress}, требуют действия ${g.action}, не начато ${g.future}. Просрочено ${od}${inh ? `; у ${inh} статус взят по группе` : ""}.`;
+    const od = n((i) => i.overdue), un = n((i) => i.unconf), inh = n((i) => i.src === "inherited");
+    const lead = `${list.length} ${pl(list.length, "работа", "работы", "работ")}: выполнено ${g.closed}, в работе и подготовке ${g.progress}, требуют действия ${g.action}, не начато ${g.future}. Просрочено ${od}${un ? `; срок прошёл без подтверждения — ${un}` : ""}${inh ? `; у ${inh} статус взят по группе` : ""}.`;
     const words = { closed: "выполнено", progress: "в работе и подготовке", action: "требуют действия", future: "не начато" };
     const dist = `<div class="dist" role="img" aria-label="${esc(lead)}">${["closed", "progress", "action", "future"].filter((c) => g[c]).map((c) => `<span class="dseg ${c}" style="flex-grow:${g[c]}" title="${words[c]}: ${g[c]}">${g[c] / list.length >= 0.1 ? `<b>${g[c]}</b> ${words[c]}` : `<b>${g[c]}</b>`}</span>`).join("")}</div>`;
     h += `<div class="bhead">${pageHead("h-board", "Статусы", esc(lead), dist)}</div><div class="board">`;
     E.STATUSES.forEach((st) => {
-      const cards = list.filter((i) => i.status === st).sort((a, b) => (b.overdue - a.overdue) || a.due - b.due || a.idx - b.idx);
+      const cards = list.filter((i) => i.status === st).sort((a, b) => (b.overdue - a.overdue) || (b.unconf - a.unconf) || a.due - b.due || a.idx - b.idx);
       h += `<section class="col" aria-label="${st}: ${cards.length}"><h2><span class="st st-${E.CLS[st]}"><i aria-hidden="true"></i>${st}</span><span class="cnt">${cards.length}</span></h2><ul>`;
       if (!cards.length) h += `<li class="muted empty-line">Работ нет.</li>`;
       cards.forEach((i) => {
-        h += `<li><button class="bcard${i.overdue ? " late" : ""}" data-open="${i.num}" data-k="b-${i.num}" title="${nameAttr(i)}"><span class="t">${esc(title(i))}</span><span class="o">${esc(ownersText(i))}</span><span class="r"><span class="mono">${fmt(i.due)}</span>${dueWords(i, true)}</span>${i.src === "inherited" ? `<span class="st-note" title="Статус группы «${esc(title(M.by[i.inheritedFrom]))}»">статус по группе</span>` : i.closed && i.noReq ? `<span class="st-note">без подтверждающего документа</span>` : ""}</button></li>`;
+        h += `<li><button class="bcard${i.overdue ? " late" : i.unconf ? " unc" : ""}" data-open="${i.num}" data-k="b-${i.num}" title="${nameAttr(i)}"><span class="t">${esc(title(i))}</span><span class="o">${esc(ownersText(i))}</span><span class="r"><span class="mono">${fmt(i.due)}</span>${dueWords(i, true)}</span>${i.src === "inherited" ? `<span class="st-note" title="Статус группы «${esc(title(M.by[i.inheritedFrom]))}»">статус по группе</span>` : i.closed && i.noReq ? `<span class="st-note">без подтверждающего документа</span>` : ""}</button></li>`;
       });
       h += `</ul></section>`;
     });
@@ -1688,7 +1731,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     h += `<div class="ms-axis"></div>`;
     keys.forEach((d) => {
       const c = clusters.get(d), cl = c.filter((i) => i.closed).length;
-      h += `<button class="ms-cl" style="left:${xp(d)}%" aria-pressed="${S.msDate === d}" data-ms="${d}" data-k="ms-${d}" title="${fmt(d)}: ${c.length}" aria-label="${fmt(d)}: ${c.length} ${pl(c.length, "работа", "работы", "работ")}, выполнено ${cl}">${c.map((i) => `<i class="${i.overdue ? "overdue" : i.cls}"></i>`).join("")}</button>`;
+      h += `<button class="ms-cl" style="left:${xp(d)}%" aria-pressed="${S.msDate === d}" data-ms="${d}" data-k="ms-${d}" title="${fmt(d)}: ${c.length}" aria-label="${fmt(d)}: ${c.length} ${pl(c.length, "работа", "работы", "работ")}, выполнено ${cl}">${c.map((i) => `<i class="${i.overdue ? "overdue" : i.unconf ? "unconf" : i.cls}"></i>`).join("")}</button>`;
       if (c.length >= 5 || c.length === peak) h += `<span class="ms-cn" style="left:${xp(d)}%;bottom:calc(100% - 140px + ${c.length * 10 + 8}px)"><span class="mono">${fmt(d).slice(0, 5)}</span> · ${c.length}</span>`;
     });
     MS.forEach((m) => { h += `<span class="ms-d${m.n < T ? " past" : ""}" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(m.title)}"></span>`; });
@@ -1697,10 +1740,10 @@ if (typeof module !== "undefined") module.exports = Engine;
     h += `</div></div><label class="ms-pick"><span>Выбрать дату</span><select data-mspick data-k="ms-pick">${keys.map((d) => `<option value="${d}" ${S.msDate === d ? "selected" : ""}>${fmt(d)} — ${clusters.get(d).length} ${pl(clusters.get(d).length, "работа", "работы", "работ")}</option>`).join("")}</select></label><div class="ms-mlist"><ul class="list">${keys.map((d) => { const c = clusters.get(d); return `<li><button class="lrow" data-ms="${d}" data-k="msm-${d}" aria-pressed="${S.msDate === d}"><span class="mono">${fmt(d)}</span><span>${c.length} ${pl(c.length, "работа", "работы", "работ")}</span></button></li>`; }).join("")}</ul></div></section>`;
     // Вехи этапа: готовность к каждой вехе
     const rowsMs = MS.map((m) => {
-      const due = M.base.filter((i) => i.due <= m.n && orgMatch(i)), open = due.filter((i) => !i.closed).length, od = due.filter((i) => i.overdue).length;
+      const due = M.base.filter((i) => i.due <= m.n && orgMatch(i)), open = due.filter((i) => !i.closed).length, od = due.filter((i) => i.overdue).length, un = due.filter((i) => i.unconf).length;
       const when = m.n < T ? "пройдена" : m.n === T ? "сегодня" : `через ${days(m.n - T)}`;
       const near = keys.filter((d) => d <= m.n).pop();
-      return `<li><button class="mrow${m.n < T ? " past" : ""}${nx && m.n === nx.n ? " next" : ""}" data-ms="${near ?? ""}" data-k="mr-${m.date}" title="${esc(m.title)}"><span class="md"><span class="dia" aria-hidden="true"></span><span class="mono">${fmt(m.n)}</span></span><span class="mt">${esc(MS_SHORT[m.date] || m.title)}<span class="mw">${when}</span></span><span class="mr">${due.length ? `к вехе выполнено ${due.length - open} из ${due.length}${od ? ` · <span class="bad-t">просрочено ${od}</span>` : ""}` : "обязательств к этой дате нет"}</span></button></li>`;
+      return `<li><button class="mrow${m.n < T ? " past" : ""}${nx && m.n === nx.n ? " next" : ""}" data-ms="${near ?? ""}" data-k="mr-${m.date}" title="${esc(m.title)}"><span class="md"><span class="dia" aria-hidden="true"></span><span class="mono">${fmt(m.n)}</span></span><span class="mt">${esc(MS_SHORT[m.date] || m.title)}<span class="mw">${when}</span></span><span class="mr">${due.length ? `к вехе выполнено ${due.length - open} из ${due.length}${od || un ? `<span class="mrx">${[od ? `<span class="bad-t">просрочено ${od}</span>` : "", un ? `<span class="warn-t">без подтверждения ${un}</span>` : ""].filter(Boolean).join(" · ")}</span>` : ""}` : "обязательств к этой дате нет"}</span></button></li>`;
     }).join("");
     const sel = S.msDate != null ? clusters.get(S.msDate) : null;
     h += `<div class="cols even"><section class="card" aria-labelledby="h-msl"><h2 id="h-msl">Вехи этапа</h2><ul class="mlist3">${rowsMs}</ul></section>`;
@@ -1720,6 +1763,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     if (i.kind === "section") return h + `<p class="muted">Раздел План-графика «${esc(i.name)}». Период ${fmt(i.start)} – ${fmt(i.due)}; даты вычислены по вложенным работам.</p></div></div>`;
     if (!ctx) {
       h += `<section class="pstat"><div class="pline">${status(i)} ${dueWords(i, false)}${i.ctrlPassed ? ` <span class="due-t warn">контрольная дата ${fmt(i.ctrl)} прошла</span>` : ""}</div>`;
+      if (i.unconf) h += `<p class="note warnnote">Срок ${fmt(i.due)} прошёл после даты отметок «Важного» (${fmt(EDITION)}); отметки о выполнении нет.${readonly ? "" : " Уточните у Исполнителя и отметьте статус."}</p>`;
       if (i.src === "inherited") h += `<p class="note">Отдельной отметки нет — показан статус группы «${esc(title(M.by[i.inheritedFrom]))}».</p>`;
       if (i.src === "derived") h += `<p class="note">Статус группы в данных не задан и вычислен по составу работ.</p>`;
       if (i.kind === "group") h += `<p class="note">В составе: выполнено ${i.progress.closed} из ${i.progress.total}.</p>`;
@@ -1752,7 +1796,7 @@ if (typeof module !== "undefined") module.exports = Engine;
       ["Выполнено", i.closed ? (i.closeDate != null ? `<span class="mono">${fmt(i.closeDate)}</span>` : "дата не указана") : null],
     ])}</section>`;
     if (i.parent && M.by[i.parent].kind === "group") { const g = M.by[i.parent]; h += `<section><h3>Входит в группу</h3><button class="btn link" data-open="${g.num}" data-k="pg-${g.num}">${esc(title(g))}</button><span class="muted"> · выполнено ${g.progress.closed} из ${g.progress.total}</span></section>`; }
-    if (i.kind === "group") h += `<section><h3>Состав группы</h3><ul class="plist">${i.children.map((c) => `<li><button data-open="${c.num}" data-k="pc-${c.num}"><span class="t">${esc(title(c))}</span>${status(c, false)}<span class="d">${fmt(c.due)}${c.overdue ? ` · <span class="bad-t">−${c.overdueDays} дн.</span>` : ""}</span></button></li>`).join("")}</ul></section>`;
+    if (i.kind === "group") h += `<section><h3>Состав группы</h3><ul class="plist">${i.children.map((c) => `<li><button data-open="${c.num}" data-k="pc-${c.num}"><span class="t">${esc(title(c))}</span>${status(c, false)}<span class="d">${fmt(c.due)}${c.overdue ? ` · <span class="bad-t">−${c.overdueDays} дн.</span>` : c.unconf ? ` · <span class="warn-t">срок прошёл</span>` : ""}</span></button></li>`).join("")}</ul></section>`;
     h += `<section><h3>Официальное наименование</h3><p>${esc(i.name)}</p></section>`;
     {
       const co = cosOf(i), r = resp(i);
@@ -1776,12 +1820,13 @@ if (typeof module !== "undefined") module.exports = Engine;
   /* Окна: повестка оперативки в двух форматах, отметки в этом браузере, справка «Как читать страницу» [Р-62, Р-65, Р-71]. */
   // ── Повестка [Р-62]: «для обсуждения» — наименования без номеров; «для письма Исполнителю» — формат Р-33 с п. N
   function agendaTalk(a) {
-    const why = (i, sec) => {
-      if (sec === 0) {
+    const why = (i, key) => {
+      if (key === "overdue") {
         if (i.overdue) return `просрочено на ${days(i.overdueDays)} (срок ${fmt(i.due)})`;
         return `просрочены: ${i.overdueSubs.map((n) => title(M.by[n])).join(", ")}`;
       }
-      if (sec === 1) return `контрольная дата ${fmt(i.ctrl)} прошла, срок ${fmt(i.due)}`;
+      if (key === "unconf") return `срок ${fmt(i.due)} прошёл, отметки о выполнении нет — подтвердить`;
+      if (key === "ctrl") return `контрольная дата ${fmt(i.ctrl)} прошла, срок ${fmt(i.due)}`;
       return i.remain === 0 ? "срок сегодня" : `срок ${fmt(i.due)}, через ${days(i.remain)}`;
     };
     const note = (i) => {
@@ -1791,10 +1836,10 @@ if (typeof module !== "undefined") module.exports = Engine;
       return t.length ? ` [${t.join("; ")}]` : "";
     };
     const out = [`Повестка оперативки по этапу 1 ОКР «ЯМГ-ИИМ» на ${fmt(T)}`, "Вопросы к Исполнителю — АО «Концерн «ЦНИИ «Электроприбор»", ""];
-    ["I. Просрочено", "II. Контрольная дата прошла", "III. Срок в ближайшие 14 дней"].forEach((h, k) => {
-      out.push(h);
-      if (!a.lists[k].length) out.push("— вопросов нет");
-      a.lists[k].forEach((i, n) => { const c = i.comment || i.s.status_mark || ""; out.push(`${n + 1}. ${title(i)} — ${why(i, k)}${c ? `. ${c}` : ""}${note(i)}`); });
+    a.sections.forEach((x) => {
+      out.push(x.head);
+      if (!x.list.length) out.push("— вопросов нет");
+      x.list.forEach((i, n) => { const c = i.comment || i.s.status_mark || ""; out.push(`${n + 1}. ${title(i)} — ${why(i, x.key)}${c ? `. ${c}` : ""}${note(i)}`); });
       out.push("");
     });
     return out.join("\n").trim();
@@ -1806,7 +1851,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     const seg = `<div class="seg" role="group" aria-label="Формат повестки"><button aria-pressed="${!letter}" data-act="ag-fmt" data-fmt="talk" data-k="ag-talk">Для обсуждения</button><button aria-pressed="${letter}" data-act="ag-fmt" data-fmt="letter" data-k="ag-letter">Для письма Исполнителю</button></div>`;
     return `<div class="modal-back" data-act="close-agenda-bg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="ag-title">
       <div class="mhdr"><div class="mh"><h2 id="ag-title">Повестка оперативки на ${fmt(T)}</h2><p class="note">Вопросы к Исполнителю — Электроприбору</p></div><button class="iconbtn" data-act="close-agenda" data-k="ag-x" aria-label="Закрыть">${ico("x")}</button></div>
-      <div class="agbar"><div class="agc"><span class="agn bad">${a.counts[0]}</span>просрочено</div><div class="agc"><span class="agn warn">${a.counts[1]}</span>контрольная дата прошла</div><div class="agc"><span class="agn">${a.counts[2]}</span>срок в 14 дней</div><span class="spacer"></span>${seg}</div>
+      <div class="agbar">${a.sections.map((x) => `<div class="agc"><span class="agn${{ overdue: " bad", unconf: " warn", ctrl: " warn" }[x.key] || ""}">${x.list.length}</span>${{ overdue: "просрочено", unconf: "подтвердить выполнение", ctrl: "контрольная дата прошла", soon: "срок в 14 дней" }[x.key]}</div>`).join("")}<span class="spacer"></span>${seg}</div>
       <p class="note mp">Учитываются обязательства перед Заказчиком; просроченные подпозиции — в строке своей группы.</p>
       <label class="sr" for="ag-text">Текст повестки</label><textarea id="ag-text" readonly data-k="ag-text">${esc(text)}</textarea><div class="ag-print" aria-hidden="true">${esc(text)}</div>
       <div class="mftr"><span class="note" id="ag-status" role="status"></span><button class="btn" data-act="print" data-k="ag-print">${ico("printer")} Печать</button><button class="btn primary" data-act="copy-agenda" data-k="ag-copy">${ico("copy")} Скопировать</button><button class="btn" data-act="close-agenda" data-k="ag-close">Закрыть</button></div></div></div>`;
@@ -1865,6 +1910,7 @@ if (typeof module !== "undefined") module.exports = Engine;
           <li>«по группе» — у подпозиции нет своей отметки, показан статус её группы.</li></ul></section>
         <section><h3>Сроки</h3><ul>
           <li><b>Просрочено</b> — срок План-графика прошёл, а работа не закрыта. Считается от даты «на ДД.ММ.ГГГГ» в шапке.</li>
+          <li><b>Срок прошёл, нет подтверждения</b> — срок наступил после даты отметок «Важного» (28.09.2026), а отметки о выполнении нет. Это не подтверждённая просрочка: выполнение нужно уточнить у Исполнителя. Отметка статуса в карточке снимает признак.</li>
           <li><b>Контрольная дата</b> — дата, назначенная на оперативке; её пропуск — повод для вопроса, но не просрочка по договору.</li>
           <li><b>Обязательства перед Заказчиком</b> — 47 из 71 позиций План-графика. Показатели «Сводки» считаются по ним; внутренние подпозиции входят в свою группу.</li></ul></section>
         <section><h3>Путь к демонстрации лабораторного образца</h3><ul>
