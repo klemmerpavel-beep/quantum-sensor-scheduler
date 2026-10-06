@@ -69,6 +69,7 @@ test("Путь к демонстрации: 8 шагов, резерв расх�
 });
 test("Повестка: 4 просрочено, 2 контрольная дата, 2 срок в 14 дней [Р-50, Р-62]", () => {
   assert.deepStrictEqual(E.agenda(M).counts, [4, 2, 2]);
+  assert.deepStrictEqual(E.agenda(M).sections.map((x) => x.key), ["overdue", "ctrl", "soon"]);
   assert.ok(/\(п\. 2\.1\.7\)/.test(E.agenda(M).text));
 });
 
@@ -83,10 +84,27 @@ test("Закрытие без реквизита отмечается «без �
   const M2 = E.build(SEED, C, { "2.1.5": { status: "Закрыто", closeDoc: { name: "", letter: "", date: "2026-09-28" } } }, T0);
   assert.strictEqual(M2.by["2.1.5"].noReq, true);
 });
-test("На 01.03.2027 просрочено 37 из 47, путь — угроза срыва", () => {
+test("На 01.03.2027 срок прошёл у 37 из 47: просрочено 2, без подтверждения 35; путь — угроза срыва [Р-74]", () => {
   const M3 = E.build(SEED, C, {}, E.dn("2027-03-01"));
-  assert.strictEqual(M3.kpi.overdue, 37);
+  assert.strictEqual(M3.kpi.overdue, 2);
+  assert.strictEqual(M3.kpi.overdue + M3.kpi.unconf, 37);
   assert.strictEqual(M3.chainState, "breach");
+});
+test("После даты отметок (06.10.2026): просрочено 2, срок прошёл без подтверждения 6; отметка пользователя подтверждает [Р-74]", () => {
+  const T6 = E.dn("2026-10-06"), M6 = E.build(SEED, C, {}, T6);
+  assert.strictEqual(M6.kpi.overdue, 2);
+  assert.strictEqual(M6.kpi.unconf, 6);
+  assert.deepStrictEqual(M6.base.filter((i) => i.overdue).map((i) => i.num), ["2.1.5", "2.1.7"]);
+  assert.strictEqual(M6.by["2.1.6"].unconf, true);
+  assert.strictEqual(M6.by["2.1.6"].horizon, "overdue");
+  const a = E.agenda(M6);
+  assert.deepStrictEqual(a.sections.map((x) => x.head.split(" ")[0] + x.list.length), ["I.4", "II.4", "III.0", "IV.2"]);
+  assert.ok(/II\. Срок прошёл после 28\.09\.2026 — подтвердить выполнение\n1\. /.test(a.text));
+  const M7 = E.build(SEED, C, { "2.1.6": { status: "На согласовании" } }, T6);
+  assert.strictEqual(M7.by["2.1.6"].unconf, false);
+  assert.strictEqual(M7.by["2.1.6"].overdue, true);
+  // на дату редакции признак не возникает
+  assert.strictEqual(M.work.filter((i) => i.unconf).length, 0);
 });
 test("Исходные данные не изменяются расчётом", () => {
   const before = JSON.stringify(SEED);

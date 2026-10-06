@@ -5,15 +5,19 @@
     const list = M.work.filter((i) => matchesFilters(i));
     const range = { overdue: "", h14: `до ${fmt(T + 14)}`, h30: `${fmt(T + 15)} – ${fmt(T + 30)}`, h60: `${fmt(T + 31)} – ${fmt(T + 60)}`, later: `после ${fmt(T + 60)}`, closed: "" };
     const off = !orgKey && !anyFilter() ? SEED.off_plan_closed : [];
-    const rowsOf = (k) => list.filter((i) => i.horizon === k).sort((a, b) => a.due - b.due || a.idx - b.idx);
+    // В периоде «просрочено» сначала подтверждённая просрочка, затем работы без подтверждения [Р-74]
+    const rowsOf = (k) => list.filter((i) => i.horizon === k).sort((a, b) => (a.unconf - b.unconf) || a.due - b.due || a.idx - b.idx);
+    const unc = list.filter((i) => i.unconf).length;
     const cnt = Object.fromEntries(LANES.map(([k]) => [k, rowsOf(k).length + (k === "closed" ? off.length : 0)]));
     const ctrl = list.filter((i) => i.ctrlPassed).length;
-    const lead = `На ${fmt(T)}: просрочено ${cnt.overdue}, в ближайшие 14 дней — ${cnt.h14}, в течение месяца — ${cnt.h30}, в течение двух месяцев — ${cnt.h60}.${ctrl ? ` У ${ctrl} ${pl(ctrl, "работы", "работ", "работ")} прошла контрольная дата оперативки.` : ""}${anyFilter() ? " Показаны работы по условиям отбора." : ""}`;
-    const strip = `<nav class="hstrip" aria-label="Периоды">${LANES.map(([k, t]) => `<button class="hz ${k}${k === "overdue" && cnt[k] ? " bad" : k === "h14" && cnt[k] ? " warn" : ""}" data-act="go-lane" data-lane="${k}" data-k="hz-${k}"><span class="lbl">${t}</span><span class="val">${cnt[k]}</span>${range[k] ? `<span class="sub">${range[k]}</span>` : ""}</button>`).join("")}</nav>`;
+    const lanes = LANES.map(([k, t]) => [k, k === "overdue" && unc ? "Срок прошёл" : t]);
+    if (unc) range.overdue = `просрочено ${cnt.overdue - unc} · без подтверждения ${unc}`;
+    const lead = `На ${fmt(T)}: просрочено ${cnt.overdue - unc}${unc ? `, срок прошёл без подтверждения — ${unc}` : ""}, в ближайшие 14 дней — ${cnt.h14}, в течение месяца — ${cnt.h30}, в течение двух месяцев — ${cnt.h60}.${ctrl ? ` У ${ctrl} ${pl(ctrl, "работы", "работ", "работ")} прошла контрольная дата оперативки.` : ""}${anyFilter() ? " Показаны работы по условиям отбора." : ""}`;
+    const strip = `<nav class="hstrip" aria-label="Периоды">${lanes.map(([k, t]) => `<button class="hz ${k}${k === "overdue" && cnt[k] - unc ? " bad" : k === "overdue" && unc ? " warn" : k === "h14" && cnt[k] ? " warn" : ""}" data-act="go-lane" data-lane="${k}" data-k="hz-${k}"><span class="lbl">${t}</span><span class="val">${cnt[k]}</span>${range[k] ? `<span class="sub">${range[k]}</span>` : ""}</button>`).join("")}</nav>`;
     const agendaBtn = readonly ? "" : `<button class="btn primary" data-act="agenda" data-k="agenda">${ico("file")} Повестка оперативки</button>`;
     let h = toolbar(agendaBtn) + `<div class="page">` + pageHead("h-focus", "Ближайшие сроки", esc(lead), strip);
     if (!list.length) return h + emptyFiltered() + `</div>`;
-    LANES.forEach(([k, t]) => {
+    lanes.forEach(([k, t]) => {
       const rows = rowsOf(k), offk = k === "closed" ? off : [];
       const open = k === "later" || k === "closed" ? S.lanes[k] : true;
       h += `<details class="lane ${k}" ${open ? "open" : ""} data-lane="${k}"><summary data-k="lane-${k}"><span class="chev">${ico("chev")}</span>${t}<span class="cnt">${rows.length + offk.length}</span></summary>`;

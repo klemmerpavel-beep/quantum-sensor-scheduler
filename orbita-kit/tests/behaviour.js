@@ -121,7 +121,7 @@ function stressPage() {
     await page.screenshot({ path: path.join(OUT, "04_today_2027-03-01_summary.png") });
     await page.click('[data-k="tab-gantt"]');
     await page.screenshot({ path: path.join(OUT, "05_today_2027-03-01_gantt.png") });
-    ok("?today=2027-03-01: просрочено 37 из 47, отрисовка без ошибок", od === "37" && !errs.length, `${od}; ${errs.join("; ")}`);
+    ok("?today=2027-03-01: просрочено 2, срок прошёл без подтверждения у 35, отрисовка без ошибок (Р-74)", od === "2" && !errs.length, `${od}; ${errs.join("; ")}`);
     await ctx.close();
   }
 
@@ -358,7 +358,36 @@ function stressPage() {
       if (o > 0 || errs.length) bad.push(`${ver} ${v} ${w}: ${o}${errs.length ? " " + errs[0] : ""}`);
       await ctx.close();
     }
-    ok("Вёрстка без горизонтальной прокрутки: 1024 px (системный шрифт) и 390 px, 3 версии × 5 режимов", !bad.length, bad.slice(0, 3).join("; ") || "30 страниц");
+    // после даты отметок шапка и «Требует внимания» длиннее (Р-74)
+    for (const [w, sys] of [[1280, true], [390, false]]) for (const v of ["summary", "gantt", "focus", "board", "milestones"]) {
+      const { ctx, page, errs } = await open(V1, `today=2026-10-06&view=${v}`, { viewport: { width: w, height: 900 }, systemFont: sys });
+      const o = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      if (o > 0 || errs.length) bad.push(`06.10 ${v} ${w}: ${o}${errs.length ? " " + errs[0] : ""}`);
+      await ctx.close();
+    }
+    ok("Вёрстка без горизонтальной прокрутки: 1024 px (системный шрифт) и 390 px, 3 версии × 5 режимов; на 06.10.2026 — 1280 и 390 px", !bad.length, bad.slice(0, 3).join("; ") || "40 страниц");
+  }
+
+  // 18. Расчёт после даты отметок: просрочка подтверждённая и без подтверждения разделены (Р-74)
+  {
+    const { ctx, page, errs } = await open(V1, "today=2026-10-06");
+    const r = {};
+    r.h1 = (await page.textContent("#h-main")).includes("2 обязательства просрочены");
+    r.kpi = (await page.textContent('[data-k="kpi-overdue"] .val')).trim() === "2" && (await page.textContent('[data-k="kpi-overdue"] .sub')).includes("ещё 6 — срок прошёл, нет подтверждения");
+    r.note = (await page.textContent(".pnotes")).includes("по отметкам на 28.09.2026");
+    await page.click('[data-k="tab-focus"]');
+    r.lane = (await page.textContent('[data-k="hz-overdue"]')).includes("без подтверждения");
+    await page.click('[data-k="agenda"]');
+    const txt = await page.inputValue("#ag-text");
+    r.agenda = /II\. Срок прошёл после 28\.09\.2026 — подтвердить выполнение/.test(txt) && /IV\. Срок в ближайшие 14 дней/.test(txt);
+    await page.click('[data-k="ag-close"]');
+    await page.goto(`file://${V1}?today=2026-10-06&item=2.1.6`); await page.waitForTimeout(400);
+    r.panel = (await page.textContent(".panel")).includes("прошёл после даты отметок «Важного» (28.09.2026)");
+    await page.click('[data-k="st-На согласовании"]');
+    r.confirm = await page.evaluate(() => window.__orbita.model.by["2.1.6"].overdue && !window.__orbita.model.by["2.1.6"].unconf);
+    const bad = Object.entries(r).filter(([, v]) => !v).map(([k]) => k);
+    ok("После даты отметок: просрочено 2, без подтверждения 6; раздел повестки «подтвердить выполнение»; отметка подтверждает", !bad.length && !errs.length, bad.join(", ") || "7 сверок");
+    await ctx.close();
   }
 
   // 10. Согласованность чисел между режимами (итоги не расходятся)

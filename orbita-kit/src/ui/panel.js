@@ -10,6 +10,7 @@
     if (i.kind === "section") return h + `<p class="muted">Раздел План-графика «${esc(i.name)}». Период ${fmt(i.start)} – ${fmt(i.due)}; даты вычислены по вложенным работам.</p></div></div>`;
     if (!ctx) {
       h += `<section class="pstat"><div class="pline">${status(i)} ${dueWords(i, false)}${i.ctrlPassed ? ` <span class="due-t warn">контрольная дата ${fmt(i.ctrl)} прошла</span>` : ""}</div>`;
+      if (i.unconf) h += `<p class="note warnnote">Срок ${fmt(i.due)} прошёл после даты отметок «Важного» (${fmt(EDITION)}); отметки о выполнении нет.${readonly ? "" : " Уточните у Исполнителя и отметьте статус."}</p>`;
       if (i.src === "inherited") h += `<p class="note">Отдельной отметки нет — показан статус группы «${esc(title(M.by[i.inheritedFrom]))}».</p>`;
       if (i.src === "derived") h += `<p class="note">Статус группы в данных не задан и вычислен по составу работ.</p>`;
       if (i.kind === "group") h += `<p class="note">В составе: выполнено ${i.progress.closed} из ${i.progress.total}.</p>`;
@@ -42,7 +43,7 @@
       ["Выполнено", i.closed ? (i.closeDate != null ? `<span class="mono">${fmt(i.closeDate)}</span>` : "дата не указана") : null],
     ])}</section>`;
     if (i.parent && M.by[i.parent].kind === "group") { const g = M.by[i.parent]; h += `<section><h3>Входит в группу</h3><button class="btn link" data-open="${g.num}" data-k="pg-${g.num}">${esc(title(g))}</button><span class="muted"> · выполнено ${g.progress.closed} из ${g.progress.total}</span></section>`; }
-    if (i.kind === "group") h += `<section><h3>Состав группы</h3><ul class="plist">${i.children.map((c) => `<li><button data-open="${c.num}" data-k="pc-${c.num}"><span class="t">${esc(title(c))}</span>${status(c, false)}<span class="d">${fmt(c.due)}${c.overdue ? ` · <span class="bad-t">−${c.overdueDays} дн.</span>` : ""}</span></button></li>`).join("")}</ul></section>`;
+    if (i.kind === "group") h += `<section><h3>Состав группы</h3><ul class="plist">${i.children.map((c) => `<li><button data-open="${c.num}" data-k="pc-${c.num}"><span class="t">${esc(title(c))}</span>${status(c, false)}<span class="d">${fmt(c.due)}${c.overdue ? ` · <span class="bad-t">−${c.overdueDays} дн.</span>` : c.unconf ? ` · <span class="warn-t">срок прошёл</span>` : ""}</span></button></li>`).join("")}</ul></section>`;
     h += `<section><h3>Официальное наименование</h3><p>${esc(i.name)}</p></section>`;
     {
       const co = cosOf(i), r = resp(i);

@@ -22,7 +22,7 @@
     h += `<div class="ms-axis"></div>`;
     keys.forEach((d) => {
       const c = clusters.get(d), cl = c.filter((i) => i.closed).length;
-      h += `<button class="ms-cl" style="left:${xp(d)}%" aria-pressed="${S.msDate === d}" data-ms="${d}" data-k="ms-${d}" title="${fmt(d)}: ${c.length}" aria-label="${fmt(d)}: ${c.length} ${pl(c.length, "работа", "работы", "работ")}, выполнено ${cl}">${c.map((i) => `<i class="${i.overdue ? "overdue" : i.cls}"></i>`).join("")}</button>`;
+      h += `<button class="ms-cl" style="left:${xp(d)}%" aria-pressed="${S.msDate === d}" data-ms="${d}" data-k="ms-${d}" title="${fmt(d)}: ${c.length}" aria-label="${fmt(d)}: ${c.length} ${pl(c.length, "работа", "работы", "работ")}, выполнено ${cl}">${c.map((i) => `<i class="${i.overdue ? "overdue" : i.unconf ? "unconf" : i.cls}"></i>`).join("")}</button>`;
       if (c.length >= 5 || c.length === peak) h += `<span class="ms-cn" style="left:${xp(d)}%;bottom:calc(100% - 140px + ${c.length * 10 + 8}px)"><span class="mono">${fmt(d).slice(0, 5)}</span> · ${c.length}</span>`;
     });
     MS.forEach((m) => { h += `<span class="ms-d${m.n < T ? " past" : ""}" style="left:${xp(m.n)}%" title="${fmt(m.n)} — ${esc(m.title)}"></span>`; });
@@ -31,10 +31,10 @@
     h += `</div></div><label class="ms-pick"><span>Выбрать дату</span><select data-mspick data-k="ms-pick">${keys.map((d) => `<option value="${d}" ${S.msDate === d ? "selected" : ""}>${fmt(d)} — ${clusters.get(d).length} ${pl(clusters.get(d).length, "работа", "работы", "работ")}</option>`).join("")}</select></label><div class="ms-mlist"><ul class="list">${keys.map((d) => { const c = clusters.get(d); return `<li><button class="lrow" data-ms="${d}" data-k="msm-${d}" aria-pressed="${S.msDate === d}"><span class="mono">${fmt(d)}</span><span>${c.length} ${pl(c.length, "работа", "работы", "работ")}</span></button></li>`; }).join("")}</ul></div></section>`;
     // Вехи этапа: готовность к каждой вехе
     const rowsMs = MS.map((m) => {
-      const due = M.base.filter((i) => i.due <= m.n && orgMatch(i)), open = due.filter((i) => !i.closed).length, od = due.filter((i) => i.overdue).length;
+      const due = M.base.filter((i) => i.due <= m.n && orgMatch(i)), open = due.filter((i) => !i.closed).length, od = due.filter((i) => i.overdue).length, un = due.filter((i) => i.unconf).length;
       const when = m.n < T ? "пройдена" : m.n === T ? "сегодня" : `через ${days(m.n - T)}`;
       const near = keys.filter((d) => d <= m.n).pop();
-      return `<li><button class="mrow${m.n < T ? " past" : ""}${nx && m.n === nx.n ? " next" : ""}" data-ms="${near ?? ""}" data-k="mr-${m.date}" title="${esc(m.title)}"><span class="md"><span class="dia" aria-hidden="true"></span><span class="mono">${fmt(m.n)}</span></span><span class="mt">${esc(MS_SHORT[m.date] || m.title)}<span class="mw">${when}</span></span><span class="mr">${due.length ? `к вехе выполнено ${due.length - open} из ${due.length}${od ? ` · <span class="bad-t">просрочено ${od}</span>` : ""}` : "обязательств к этой дате нет"}</span></button></li>`;
+      return `<li><button class="mrow${m.n < T ? " past" : ""}${nx && m.n === nx.n ? " next" : ""}" data-ms="${near ?? ""}" data-k="mr-${m.date}" title="${esc(m.title)}"><span class="md"><span class="dia" aria-hidden="true"></span><span class="mono">${fmt(m.n)}</span></span><span class="mt">${esc(MS_SHORT[m.date] || m.title)}<span class="mw">${when}</span></span><span class="mr">${due.length ? `к вехе выполнено ${due.length - open} из ${due.length}${od || un ? `<span class="mrx">${[od ? `<span class="bad-t">просрочено ${od}</span>` : "", un ? `<span class="warn-t">без подтверждения ${un}</span>` : ""].filter(Boolean).join(" · ")}</span>` : ""}` : "обязательств к этой дате нет"}</span></button></li>`;
     }).join("");
     const sel = S.msDate != null ? clusters.get(S.msDate) : null;
     h += `<div class="cols even"><section class="card" aria-labelledby="h-msl"><h2 id="h-msl">Вехи этапа</h2><ul class="mlist3">${rowsMs}</ul></section>`;

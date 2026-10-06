@@ -114,12 +114,15 @@
     if (withNote && i.src === "inherited") note = "по группе";
     else if (withNote && i.src === "derived") note = "расчётный";
     if (withNote && i.closed && i.noReq) note = "без документа";
+    if (withNote && i.unconf && EDITION != null) note = `на ${fmt(EDITION).slice(0, 5)}`;
     return `<span class="st st-${i.cls}"><i aria-hidden="true"></i>${esc(i.status)}${note ? `<span class="st-note">· ${note}</span>` : ""}</span>`;
   };
   /** Срок словами: «просрочено на 13 дней», «через 2 дня», «выполнено 04.09.2026». */
   const dueWords = (i, compact) => {
     if (i.closed) return compact ? "" : i.closeDate != null ? `<span class="due-t">выполнено ${fmt(i.closeDate)}</span>` : `<span class="due-t">выполнено, дата не указана</span>`;
     if (i.overdue) return `<span class="due-t bad">${compact ? `−${i.overdueDays} дн.` : `просрочено на ${days(i.overdueDays)}`}</span>`;
+    // Срок прошёл после даты отметок — выполнение не подтверждено [Р-74]
+    if (i.unconf) return `<span class="due-t warn" title="Срок прошёл после ${fmt(EDITION)}; отметки о выполнении нет">${compact ? "не подтв." : "срок прошёл, нет подтверждения"}</span>`;
     if (i.remain === 0) return `<span class="due-t warn">срок сегодня</span>`;
     if (i.soon) return `<span class="due-t warn">${compact ? `через ${i.remain} дн.` : `через ${days(i.remain)}`}</span>`;
     return compact ? "" : `<span class="due-t">через ${days(i.remain)}</span>`;

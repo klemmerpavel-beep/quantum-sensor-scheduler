@@ -60,6 +60,8 @@ const Engine = (() => {
    */
   function build(seed, cfg, edits, T) {
     const cal = calendar(cfg.HOLIDAYS);
+    // Дата отметок «Важного» [Р-74]: о работах со сроком после неё данные о выполнении отсутствуют
+    const ED = seed.project && seed.project.demo_today ? dn(seed.project.demo_today) : null;
     const items = seed.items.map((s, idx) => ({
       s, idx, num: s.num, kind: s.kind, level: s.level, parent: s.parent, name: s.name,
       owners: s.owners, start: dn(s.start), due: dn(s.due), dueCust: dn(s.due_to_customer),
@@ -105,8 +107,13 @@ const Engine = (() => {
       i.cls = CLS[i.status];
       i.closed = i.status === "Закрыто";
       i.remain = i.due - T;
-      i.overdue = !i.closed && i.due < T;
+      // Срок прошёл после даты отметок, а отметка взята из данных — выполнение не подтверждено [Р-74].
+      // Отметка пользователя (в том числе статус группы, унаследованный подпозицией) считается подтверждением.
+      const userMark = i.src === "edit" || (i.src === "inherited" && by[i.inheritedFrom].src === "edit");
+      i.unconf = !i.closed && i.due < T && ED != null && T > ED && i.due >= ED && !userMark;
+      i.overdue = !i.closed && i.due < T && !i.unconf;
       i.overdueDays = i.overdue ? T - i.due : 0;
+      i.lapsedDays = i.unconf ? T - i.due : 0;
       i.soon = !i.closed && i.remain >= 0 && i.remain <= 7;
       i.ctrlPassed = !i.closed && i.ctrl != null && i.ctrl < T;
       i.ctrlDays = i.ctrlPassed ? T - i.ctrl : 0;
@@ -123,6 +130,7 @@ const Engine = (() => {
       if (g.kind !== "group") return;
       g.progress = { closed: g.children.filter((c) => c.closed).length, total: g.children.length };
       g.overdueSubs = g.children.filter((c) => c.overdue && !c.inBase).map((c) => c.num);
+      g.unconfSubs = g.children.filter((c) => c.unconf && !c.inBase).map((c) => c.num);
     });
 
     const work = items.filter((i) => i.kind !== "section");
@@ -137,6 +145,7 @@ const Engine = (() => {
       reached: reached.length,
       reachedClosed: reached.filter((i) => i.closed).length,
       overdue: base.filter((i) => i.overdue).length,
+      unconf: base.filter((i) => i.unconf).length,
       early: base.filter((i) => i.closed && i.due >= T).length,
       ctrlPassed: base.filter((i) => i.ctrlPassed).length,
       active: base.filter((i) => ACTIVE.has(i.status)).length,
@@ -150,7 +159,7 @@ const Engine = (() => {
     const sectionOf = (i) => { const p = i.num.split("."); return p[0] === "2" ? p.slice(0, 2).join(".") : p[0]; };
     const sections = ["1", "2.1", "2.2", "3"].map((sn) => {
       const list = base.filter((i) => sectionOf(i) === sn);
-      return { num: sn, name: by[sn].name, total: list.length, closed: list.filter((i) => i.closed).length, overdue: list.filter((i) => i.overdue).length };
+      return { num: sn, name: by[sn].name, total: list.length, closed: list.filter((i) => i.closed).length, overdue: list.filter((i) => i.overdue).length, unconf: list.filter((i) => i.unconf).length };
     });
 
     // Окна цепочки [Р-47, SPEC 4.7]
@@ -206,16 +215,17 @@ const Engine = (() => {
       open.filter((i) => inChain(i) && i.overdue).sort((a, b) => b.overdueDays - a.overdueDays || ord(a, b)).map((i) => [i, "chain-overdue"]),
       open.filter((i) => inChain(i) && i.soon).sort((a, b) => a.remain - b.remain || ord(a, b)).map((i) => [i, "chain-soon"]),
       open.filter((i) => !inChain(i) && i.inBase && i.overdue).sort((a, b) => b.overdueDays - a.overdueDays || ord(a, b)).map((i) => [i, "overdue"]),
+      open.filter((i) => i.inBase && i.unconf).sort((a, b) => a.due - b.due || ord(a, b)).map((i) => [i, "unconf"]),
       open.filter((i) => !inChain(i) && i.inBase && i.ctrlPassed).sort((a, b) => b.ctrlDays - a.ctrlDays || ord(a, b)).map((i) => [i, "ctrl"]),
       open.filter((i) => !inChain(i) && i.inBase && i.soon).sort((a, b) => a.remain - b.remain || ord(a, b)).map((i) => [i, "soon"]),
     ];
     const seen = new Set(), top5 = [];
     cats.flat().forEach(([i, why]) => { if (top5.length < 5 && !seen.has(i.num)) { seen.add(i.num); top5.push({ item: i, why }); } });
 
-    return { items, by, work, base, kpi, sections, chainNums, chainSet, chainWindows, feeder, chainState, F, cal, T, top5 };
+    return { items, by, work, base, kpi, sections, chainNums, chainSet, chainWindows, feeder, chainState, F, cal, T, ED, top5 };
   }
 
-  /** Текст повестки [SPEC 6, Р-33, Р-50]. */
+  /** Текст повестки [SPEC 6, Р-33, Р-50, Р-74]. */
   function agenda(M) {
     const line = (i) => {
       let c = i.comment || i.s.status_mark || "";
@@ -227,19 +237,27 @@ const Engine = (() => {
     const base = M.base.filter((i) => !i.closed);
     const groupWithSubs = (i) => i.kind === "group" && i.overdueSubs.length;
     const s1 = base.filter((i) => i.overdue || groupWithSubs(i));
-    const s2 = base.filter((i) => !s1.includes(i) && i.ctrlPassed);
-    const s3 = base.filter((i) => !s1.includes(i) && !s2.includes(i) && i.remain >= 0 && i.remain <= 14);
+    const su = base.filter((i) => !s1.includes(i) && i.unconf);
+    const s2 = base.filter((i) => !s1.includes(i) && !su.includes(i) && i.ctrlPassed);
+    const s3 = base.filter((i) => !s1.includes(i) && !su.includes(i) && !s2.includes(i) && i.remain >= 0 && i.remain <= 14);
+    // Раздел «Подтвердить выполнение» — только при расчёте на дату позже даты отметок [Р-74]
+    const late = M.ED != null && M.T > M.ED;
+    const sections = [
+      { key: "overdue", title: "Просрочено", list: s1 },
+      ...(late ? [{ key: "unconf", title: `Срок прошёл после ${fmt(M.ED)} — подтвердить выполнение`, list: su }] : []),
+      { key: "ctrl", title: "Контрольная дата прошла", list: s2 },
+      { key: "soon", title: "Срок в ближайшие 14 дней", list: s3 },
+    ];
+    const ROMAN = ["I", "II", "III", "IV"];
+    sections.forEach((x, k) => { x.head = `${ROMAN[k]}. ${x.title}`; });
     const out = [`Повестка оперативки по этапу 1 ОКР «ЯМГ-ИИМ» на ${fmt(M.T)}`, ""];
-    const sec = (title, list) => {
-      out.push(title);
-      if (!list.length) out.push("— позиций нет");
-      list.forEach((i, k) => out.push(`${k + 1}. ${line(i)}`));
+    sections.forEach((x) => {
+      out.push(x.head);
+      if (!x.list.length) out.push("— позиций нет");
+      x.list.forEach((i, k) => out.push(`${k + 1}. ${line(i)}`));
       out.push("");
-    };
-    sec("I. Просрочено", s1);
-    sec("II. Контрольная дата прошла", s2);
-    sec("III. Срок в ближайшие 14 дней", s3);
-    return { text: out.join("\n").trim(), counts: [s1.length, s2.length, s3.length], lists: [s1, s2, s3] };
+    });
+    return { text: out.join("\n").trim(), sections, counts: [s1.length, s2.length, s3.length], lists: [s1, s2, s3], unconf: su };
   }
 
   /**
