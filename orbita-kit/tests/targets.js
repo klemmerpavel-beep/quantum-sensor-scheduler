@@ -10,7 +10,7 @@ const ROOT = path.resolve(__dirname, "..");
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
     await useFontCache(ctx);
     const p = await ctx.newPage();
-    await p.goto(`file://${ROOT}/versions/${ver}.html?view=${v}&today=2026-09-28`, { waitUntil: "load" });
+    await p.goto(`file://${ROOT}/versions/${ver}.html?view=${v}&today=2026-10-06`, { waitUntil: "load" });
     await p.waitForTimeout(300);
     if (v === "focus") { await p.click('[data-k="f-2.1.7"]'); await p.click('[data-k="st-Закрыто"]'); }
     if (v === "board") { await p.evaluate(() => { try { localStorage.setItem("orbita.ymg-iim.s1.edits.v1", JSON.stringify({ "2.1.7": { status: "Закрыто" }, "2.1.5": { comment: "Ответ до 02.10" } })); } catch (e) {} }); await p.reload(); await p.click('[data-k="marks"]'); }

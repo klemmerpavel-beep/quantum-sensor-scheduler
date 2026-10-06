@@ -13,7 +13,7 @@ const ACCEPTED = new Set(["target-size"]);
     // «Статусы» + open: окно «Отметки в этом браузере» в состоянии подтверждения сброса (Р-71)
     const marks = v === "board" && extra === "open";
     if (marks) await p.addInitScript(() => { try { localStorage.setItem("orbita.ymg-iim.s1.edits.v1", JSON.stringify({ "2.1.7": { status: "Закрыто", closeDoc: { name: "Акт", letter: "", date: "2026-09-28" } }, "2.1.5": { comment: "Ответ до 02.10" } })); } catch (e) {} });
-    await p.goto(`file://${ROOT}/versions/v1-panel.html?view=${v}&today=2026-09-28&theme=${th}`); await p.waitForTimeout(300);
+    await p.goto(`file://${ROOT}/versions/v1-panel.html?view=${v}&today=2026-10-06&theme=${th}`); await p.waitForTimeout(300);
     if (marks) { await p.click('[data-k="marks"]'); await p.click('[data-k="mk-reset"]'); }
     else if (extra === "open") { await p.locator("[data-open]:visible").first().click(); if (v === "focus") { await p.keyboard.press("Escape"); await p.click('[data-k="agenda"]'); } }
     await p.addScriptTag({ content: AXE });

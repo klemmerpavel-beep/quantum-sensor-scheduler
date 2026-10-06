@@ -21,7 +21,7 @@ const SIZES = [["1440", { width: 1440, height: 900 }], ["390", { width: 390, hei
     const page = await ctx.newPage();
     page.on("console", (m) => { if (m.type() === "error") errors.push(`${ver} ${v} ${sz} ${th}: ${m.text()}`); });
     page.on("pageerror", (e) => errors.push(`${ver} ${v} ${sz} ${th}: PAGEERROR ${e.message}`));
-    const url = `file://${ROOT}/versions/${ver}.html?view=${v}&today=2026-09-28&theme=${th}`;
+    const url = `file://${ROOT}/versions/${ver}.html?view=${v}&today=2026-10-06&theme=${th}`;
     await page.goto(url, { waitUntil: "load" });
     await page.evaluate(() => document.fonts && document.fonts.ready);
     await page.waitForTimeout(600);

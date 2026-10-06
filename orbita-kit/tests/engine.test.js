@@ -6,7 +6,9 @@ const E = require(path.join(ROOT, "src/engine.js"));
 const ctx = {};
 vm.runInNewContext(fs.readFileSync(path.join(ROOT, "src/config.js"), "utf8") + "\nthis.CONFIG = CONFIG;", ctx);
 const C = ctx.CONFIG;
-const SEED = JSON.parse(fs.readFileSync(path.join(ROOT, "data/seed_ymg_stage1.json"), "utf8"));
+// Эталонные числа ниже — на архивной редакции 28.09.2026 (правила расчёта не зависят от редакции); текущая — в конце файла [Р-75]
+const SEED = JSON.parse(fs.readFileSync(path.join(ROOT, "data/archive/seed_ymg_stage1_2026-09-28.json"), "utf8"));
+const CUR = JSON.parse(fs.readFileSync(path.join(ROOT, "data/seed_ymg_stage1.json"), "utf8"));
 const T0 = E.dn("2026-09-28");
 
 const results = [];
@@ -131,6 +133,30 @@ test("Проверка отметок из хранилища: чужие раб
   assert.deepStrictEqual(r.dropped.sort(), ["1", "2.1.6", "9.9.9"]);
   assert.deepStrictEqual(E.sanitizeEdits(SEED, [1, 2]).dropped, ["*"]);
   assert.deepStrictEqual(E.sanitizeEdits(SEED, null), { edits: {}, dropped: [] });
+});
+
+// ── Текущая редакция «Важного» на 06.10.2026 [Р-75]
+test("Редакция 06.10.2026: выполнено 10, просрочено 8 (все подтверждены), путь — угроза срыва, повестка 8/0/2", () => {
+  const T = E.dn("2026-10-06"), M6 = E.build(CUR, C, {}, T);
+  assert.strictEqual(CUR.project.demo_today, "2026-10-06");
+  assert.strictEqual(M6.kpi.closed, 10);
+  assert.strictEqual(M6.kpi.overdue, 8);
+  assert.strictEqual(M6.kpi.unconf, 0);
+  assert.strictEqual(M6.kpi.toDemoWd, 38);
+  assert.deepStrictEqual(M6.base.filter((i) => i.overdue).map((i) => i.num), ["1.4", "2.1.1", "2.1.1.5", "2.1.2", "2.1.6", "2.1.7", "2.1.8", "2.1.9"]);
+  assert.strictEqual(M6.chainState, "breach");
+  assert.deepStrictEqual(E.agenda(M6).counts, [8, 0, 2]);
+  assert.strictEqual(M6.by["2.1.5"].closeDate, E.dn("2026-10-01"));
+  assert.strictEqual(M6.by["2.1.8"].status, "В работе");
+  assert.strictEqual(M6.by["2.1.8"].ctrl, E.dn("2026-10-02"));
+});
+test("Редакция 06.10.2026 отличается от 28.09.2026 только полями «Важного»", () => {
+  const F = ["status", "status_mark", "closed_date", "control_date", "horizon"];
+  CUR.items.forEach((i, k) => {
+    const o = SEED.items[k];
+    assert.strictEqual(i.num, o.num);
+    Object.keys(i).filter((f) => !F.includes(f)).forEach((f) => assert.deepStrictEqual(i[f], o[f], `${i.num}.${f}`));
+  });
 });
 
 const pad = (s, n) => (s + " ".repeat(n)).slice(0, n);

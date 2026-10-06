@@ -38,7 +38,17 @@ function stressPage() {
     await page.waitForTimeout(700);
     return { ctx, page, errs };
   }
-  const V1 = path.join(ROOT, "versions/v1-panel.html");
+  // Сценарии с эталонными числами работают на архивной редакции 28.09.2026: проверяется поведение на зафиксированных данных (Р-75).
+  // Текущая редакция проверяется сценарием 19.
+  const editionPage = (seedFile, name) => {
+    const html = fs.readFileSync(path.join(ROOT, "versions/v1-panel.html"), "utf8");
+    const seed = fs.readFileSync(path.join(ROOT, seedFile), "utf8");
+    const f = path.join(OUT, name);
+    fs.writeFileSync(f, html.replace(/window\.SEED = (\{.*?\});\n<\/script>/s, () => `window.SEED = ${seed};\n</script>`));
+    return f;
+  };
+  const V1 = editionPage("data/archive/seed_ymg_stage1_2026-09-28.json", "_edition_2026-09-28.html");
+  const V1CUR = path.join(ROOT, "versions/v1-panel.html");
   const kpi = (page, id) => page.$eval(`[data-k="kpi-${id}"] .val`, (e) => e.textContent.trim());
 
   // 1. Закрытие позиции отражается во всех режимах и KPI (критерий 3)
@@ -127,7 +137,7 @@ function stressPage() {
 
   // 4. Все позиции закрыты (через правки) — пустое состояние «Топ-5»
   {
-    const seed = JSON.parse(fs.readFileSync(path.join(ROOT, "data/seed_ymg_stage1.json"), "utf8"));
+    const seed = JSON.parse(fs.readFileSync(path.join(ROOT, "data/archive/seed_ymg_stage1_2026-09-28.json"), "utf8"));
     const edits = {};
     seed.items.filter((i) => i.kind !== "section").forEach((i) => { edits[i.num] = { status: "Закрыто", closeDoc: { name: "Документ", letter: "", date: "2026-09-28" } }; });
     const init = `try{localStorage.setItem("orbita.ymg-iim.s1.edits.v1", ${JSON.stringify(JSON.stringify(edits))});}catch(e){}`;
@@ -390,6 +400,27 @@ function stressPage() {
     await ctx.close();
   }
 
+  // 19. Текущая редакция «Важного» на 06.10.2026 (Р-75)
+  {
+    const { ctx, page, errs } = await open(V1CUR, "today=2026-10-06");
+    const r = {};
+    r.ed = await page.evaluate(() => window.SEED.project.demo_today === "2026-10-06");
+    r.h1 = (await page.textContent("#h-main")).includes("8 обязательств просрочено");
+    r.kpi = (await kpi(page, "closed")).startsWith("10") && (await kpi(page, "overdue")) === "8";
+    r.noEdn = !(await page.$(".today .edn"));
+    r.foot = (await page.textContent("footer")).includes("редакция на 06.10.2026");
+    r.pill = (await page.textContent("#h-ch")).includes("угроза срыва");
+    r.closed215 = await page.evaluate(() => { const i = window.__orbita.model.by["2.1.5"]; return i.closed && i.closeDate === Date.UTC(2026, 9, 1) / 864e5; });
+    r.open218 = await page.evaluate(() => window.__orbita.model.by["2.1.8"].status === "В работе");
+    await page.click('[data-k="tab-focus"]');
+    await page.click('[data-k="agenda"]');
+    const txt = await page.inputValue("#ag-text");
+    r.agenda = /I\. Просрочено\n1\. /.test(txt) && !/подтвердить выполнение/.test(txt) && /III\. Срок в ближайшие 14 дней/.test(txt);
+    const bad = Object.entries(r).filter(([, v]) => !v).map(([k]) => k);
+    ok("Редакция 06.10.2026: 10 из 47, просрочено 8, путь — угроза срыва; 2.1.5 закрыто 01.10, 2.1.8 в работе; повестка без раздела подтверждения", !bad.length && !errs.length, bad.join(", ") || "9 сверок");
+    await ctx.close();
+  }
+
   // 10. Согласованность чисел между режимами (итоги не расходятся)
   {
     const { ctx, page, errs } = await open(V1, "today=2026-09-28");
@@ -422,6 +453,7 @@ function stressPage() {
   }
 
   await b.close();
+  fs.unlinkSync(V1); // тестовая копия архивной редакции не хранится
   const pad = (s, n) => (s + " ".repeat(n)).slice(0, n);
   results.forEach(([r, n, i]) => console.log(`${r}  ${pad(n, 88)} ${i}`));
   const fails = results.filter((r) => r[0] === "FAIL").length;
